@@ -1,0 +1,1247 @@
+=head1 NAME
+
+IC::Controller::Tutorial -- A high-level introduction to MVC in Interchange
+
+=head1 INTRODUCTION
+
+This document provides a high-level overview and initial introduction to MVC as
+implemented within the Interchange application framework.  It will address key
+concepts within the MVC system, give a gentle introduction to use of the various
+parts of the system, and serve as a general reference point from which initial
+work in MVC can be derived.
+
+The IC::Controller (and other IC::* spaces related to MVC) space is fully
+object-oriented and includes a variety of new modules.  Each module contains its
+own specific documentation, to which one should refer for any details regarding
+a given module; this tutorial is by no means comprehensive in its coverage of all
+aspects of the Interchange MVC system, and cross-referencing with the POD in the
+relevant modules is encouraged (and probably utterly necessary).
+
+=head1 CONVENTIONS
+
+It is bad form to customize anything within the IC::* namespace for extending
+or utilizing MVC.  The object-oriented design and clear documentation of all
+interfaces makes such extensions unnecessary (hopefully).  Therefore, it is assumed
+that all work is done in an application-specific namespace.  For the purposes of
+this tutorial, we'll use the wonderfully-generic "App::" namespace for organizing
+our application-specific constructs.
+
+This document assumes that you know what you're doing when making new Perl modules
+(naming them properly, placing them in a directory tree that is part of the Interchange/Perl
+search path for your deployment, etc.).  We will not go into the minutiae of creating new modules
+beyond saying things like "now create Module::Foo".
+
+This system depends heavily upon Moose, an object system provided to CPAN and maintained
+by Stevan Little.  While it is not necessary to be a Moose expert, some basic familiarity
+with Moose may be helpful.  The critical things to understand in order to get working
+with MVC in Interchange:
+
+=over
+
+=item *
+
+Object attributes in Moose are accessed through methods, breaking from the old Perl
+tradition of using simple blessed hashrefs as the base of an object and representing
+object attributes as key/value pairs within the hashref.  In Moose, it happens that by
+default an object is a blessed hashref, but that's an implementation detail about which
+the consumer should be entirely unconcerned and agnostic.
+
+=item *
+
+Unlike other object systems available in CPAN, Moose attributes are get and set through the
+same method; invoking the attribute without any arguments is a get/read call, while providing
+arguments makes it a set/write call.
+
+=back
+
+IC::Controller itself and other modules within the Interchange MVC implementation introduce
+the notion of "class attributes" or "package attributes"; these are effectively the same as
+regular Moose object attributes, except that they correspond to the package/class level
+(i.e. they are tied to the package namespace against which the attribute method is invoked)
+rather than pertaining to a specific object instance.  This is far less confusing than it
+may seem at first glance; providing class attributes of this nature makes it quite easy to
+configure a subclass of IC::Controller, for instance, and the end result is fairly intuitive.
+
+=head1 TUTORIAL
+
+=head2 MVC IN THE ABSTRACT
+
+Much noise has been made about "MVC" in recent years in the free webapp ecosystem, with a variety of
+"MVC Frameworks" cropping up in the Perl, Python, PHP, and Ruby spaces (Brickolage, Jifty, Catalyst,
+Django, Ruby on Rails, etc.).  Given that "MVC" as a design concept came of age in the seventies,
+it is something of an embarrassment that the webapp world is only now catching on.
+
+"MVC" is an acronym for the "Model-View-Controller" design pattern.  That's really all it is: a
+design pattern that results in nice separation of concern in an application, splitting the engineering
+areas into data structure/access (the "model"), presentation-oriented logic/templating (the "view"),
+and business logic (the "controller").
+
+The MVC frameworks all implement this differently, but generally speaking, they result in a glorification
+of the MVC design pattern into the basis of an entire webapp development framework, rather than a mere
+pattern to call upon when the technical problems require it.  So, in general terms, an MVC framework
+typically results in three major chunks:
+
+=over
+
+=item *
+
+The "model" usually appears as a data abstraction layer (not necessarily a "database abstraction layer") in which
+any persistent data is represented with an object class that encapsulates concerns specific to that data:
+accessing it, manipulating it, validating new instances, etc.  It is most frequently the case that the "model"
+will be some kind of object-relational mapper (ORM) in which each table in a database has a corresponding class,
+with classes offering interfaces for traversing relationships, performing simple queries, etc.
+
+=item *
+
+The "view" tends to be one or more templating tools for generating client-oriented markup (typically (X)HTML, Javascript,
+raw XML, etc.); providing a pluggable interface for adding templating languages is a key component, as templating
+tools are often best-suited to a single purpose (for instance, Ruby on Rails offers basic embedded Ruby as a nice
+basis for ASP-style templates in which arbitrary markup and Ruby intermix, while also offering the Builder templating
+language for efficient programmatic generation of XML output; while embedded Ruby could certainly generate the same
+XML markup, it wouldn't be nearly as productive or manageable to use it for that purpose compared to the XML-oriented
+Builder).
+
+=item *
+
+The "controller" is an object that binds it all together in some fashion, using models to get at relevant data based
+on the details of the request and session, using views to "render" client-oriented markup based on the model data
+retrieved, and ultimately building the response to send to a client.  The controller is generally made to be quite
+high-level in these frameworks, providing interfaces to access the details of the request, the response object
+structure, the session(s), etc.  A controller typically makes one or more of its methods public as "actions",
+which are invoked via the client calling a URL matching a particular pattern; these action methods will be the highest-level
+methods we work with, as they should approximate the domain language outlining the business logic in question.
+
+=back
+
+Ideological debates rage about how much knowledge the controller should have versus the model or the view, but
+ultimately this kind of question is about craft rather than science.  Separation of concerns, code reuse, and
+code maintainability are the guiding forces when designing MVC applications; if a number of controllers/actions
+perform very similar queries via a particular model, then perhaps it makes sense to add a method to the model
+that implements the query in a generic manner, such that knowledge about working with the underlying data
+structure remains encapsulated in the model rather than dispersed throughout various points of your application.
+Similarly, if a number of view templates render similar constructs, it may make sense to abstract things out
+into a common template that is used by others, or into a helper function that any view can invoke.
+
+These kinds of concerns apply to software engineering regardless of framework, but MVC is intended to make it
+easy to organize your code effectively.  If you do not take the trouble to thoughtfully refactor code, then your
+choice of framework really isn't relevant; the end quality of your code will be poor.  MVC provides nice guidelines,
+though, about where things belong when you do refactor.
+
+=head2 Interchange MVC
+
+Interchange's MVC implementation follows the above tendencies faithfully:
+
+=over
+
+=item *
+
+The B<IC::Controller> package defines the basic interface and functionality for controllers.  At a very high
+level, it knows how to process HTTP requests, ties into the Interchange request representation, Interchange
+sessions, etc.  It provides rendering methods for calling out to views for response generation.  Controllers
+within your application can subclass B<IC::Controller>, define their own attributes specific to their needs,
+define action methods for representing URL-fronted resources, etc.  Your business logic tying URLs to data
+processing to presentation will reside in subclasses of B<IC::Controller> (or subclasses of other
+B<IC::Controller> derivatives).
+
+=item *
+
+The model space is fairly open and amorphous, though presently supports B<Rose::DB::Object>.  Other tools could
+be added as needed, though B<Rose::DB::Object> is a comprehensive, fast, high-quality ORM; it would almost certainly
+be foolhardy to mix in other ORMs like B<DBIx::Class>.  At present, the B<IC::Model> module provides a generic
+interface for high-level model functions (amounting to finding, updating, deleting, and counting instances of the
+structure wrapped by a given model class); the actual implementation for B<Rose::DB::Object> resides in
+B<IC::Model::Rose::Object>, which ties the interface of B<IC::Model> to the underlying interface of
+B<Rose::DB::Object>, and also provides intelligence for auto-creating B<Rose::DB::Object::Manager>-based
+modules for each subclass.  Classes based on B<IC::Model::Rose::Object> will have the interface of B<IC::Model>
+for bulk operations (effectively eliminating any need to directly use B<Rose::DB::Object::Manager>), and will
+otherwise function like B<Rose::DB::Object> classes.
+
+=item *
+
+Given that this MVC implementation resides in Interchange, it is natural to expect that ITL would be the templating
+tool.  ITL is available for use in any MVC view; however, the B<Text::ScriptTemplate> templating tool is also
+available for use in MVC views, and is in fact recommended over ITL due to the shallower learning curve, greater
+maintainability, and vastly greater applicability to object-oriented Perl.  As ITL has no easy means of making
+objects available, pretty much any object you would provide from the controller to a view would need to have
+some kind of ITL usertag to front it, or the controller would need to take pains to deconstruct the object in
+some manner to make object attributes directly available in some "flat" fashion.  In contrast, B<Text::ScriptTemplate>
+will simply make variables available to embedded Perl as they are given to it when a controller renders a view; this
+means that objects can be used directly, which is a huge win.  The filename extension on a given view determines the
+type of templating tool invoked for rendering that view.
+
+=back
+
+As stated earlier, reasonable people can disagree about where to put certain pieces of "glue code" that cross over
+between "business logic" and "data access".  Therefore, no assumptions are made on this front.  B<IC::Controller>
+and B<IC::Model::Rose::Object> are designed to make it easy to implement high-level resource/business-rule-focused
+controllers with straightforward methods for getting at relevant data via models.  This maximizes flexibility, hopefully
+enhances productivity in the average case, and otherwise doesn't get in the way.  However, views are a different matter,
+as a guiding rule has been kept in mind.
+
+=head3 VIEWS SHOULD BE STUPID
+
+Putting business logic in a view is a far more egregious transgression than putting data access trickery in a controller.
+For one, controllers are fairly centralized; given the nature of web applications, it is likely that an application
+will have relatively few controllers compared to relatively many views.  Views can (and should, when possible) be designed
+with reuse in mind, but the basic horror of plopping business logic in something that cranks out HTML remains unmitigated.
+Furthermore, views cannot be subclassed or inherited, and have a limited interface for configuration (by their very nature)
+when invoking.  So just don't do it.
+
+A view should be stupid.  How stupid?  As stupid as possible, meaning that it knows no more than what is absolutely necessary
+for it to accomplish its task.  With this as a guiding principle, Interchange MVC offers:
+
+=over
+
+=item B<view context>
+
+When a view is rendered, the structure that causes the rendering (usually a controller) defines the view's I<context>; it
+specifies in the render call name/value pairs that should be made to available to the view.  Those name/value pairs are
+then exposed to the view in a manner idiomatic to the view language employed by the view itself: for ITL, the name/value
+pairs are mapped into the B<$Stash> hash, which is a temporary space rather like B<$Scratch> except it never touches the
+session and is redefined per view invocation; for B<Text::ScriptTemplate> embedded Perl views, the name/value pairs are
+marshalled into local Perl space as lexical variables.
+
+=item B<helper modules>
+
+It is unavoidable that different views will need to perform similar tasks.  These tasks may simply be tedious (like
+spitting out an HTML "select" element given a list of values), or may cross-over into application-specific corner cases
+like needing a list of languages supported by the application.  Rather than define that kind of logic within a view (or,
+even worse, multiple views), you can define a B<helper module>, the functions of which are exported to the view language
+automatically so they may be invoked directly within a view.  This "export" is really only relevant to B<Text::ScriptTemplate>
+as of this writing, since it is entirely idiomatic to embedded Perl; it is not at all idiomatic to ITL, unfortunately, meaning
+that any helper module function desired in ITL needs to be wrapped with a custom usertag.  Helper modules are created by
+defining a module as a subclass of B<IC::Controller::HelperBase>, as well as B<Exporter>; the indicated subs will be
+exported to the view language whenever a view is invoked.
+
+=back
+
+Take the trouble to maintain the purity of view stupidity.  Your life as an engineer will be improved.
+
+=head3 NAVIGATING YOUR APPLICATION: URLS AND ROUTES
+
+A web application, adhering to the principles of HTTP, will be resource-oriented, with each URI representing a given
+resource and the request method combined with GET/POST/PUT parameters determining the application behavior relative
+to the resource.  With traditional Interchange programming, we don't typically think much about URL design; the
+framework does it for us, with any URL path relative to the linker program corresponding by default to a template
+page within the Interchange catalog's I<pages> directory.  We occasionally think about URL design when using actionmaps,
+as the first path segment within the URL (again, relative to the linker program portion of the path) identifying the
+actionmap to invoke, and any additional path segments being entirely up to the discretion of the actionmap programmer.
+
+The Interchange MVC implementation changes that, requiring that the programmer give more thought to URL design
+within an application.  There aren't any out-of-the-box defaults for URLs in this system; rather, steps must
+be taken to expose a controller's actions through the URL path space via subclasses of B<IC::Controller::Route>.
+
+The B<IC::Controller::Route> module provides a simple interface for grouping together a set of "routes"; each
+route is an instance of B<IC::Controller::Route::Object>, wrapping a particular URI path pattern with a list
+of valid controllers and default parameters.  A route's pattern can express named parameters that should be
+extracted from the URI path, which then get mapped into the resulting controller object's B<parameters> hash.
+
+Since a single route expresses a path I<pattern>, a single route can potentially match multiple URI paths and
+map to any number of controller/action/parameter combinations.  Consequently, it is easy and convenient to set
+up a default, low-priority route for your application enforcing some sane default pattern such that "foo/bar/blah"
+would map to the "bar" action on the "foo" controller with the "argument" parameter set to "blah".
+
+With such a system, and assuming domain "example.com" with "/cgi-bin/catalog" being our URI path entry point to
+the Interchange application, we could set up a URI path space along the lines of:
+
+ http://example.com/cgi-bin/catalog/specials
+   => App::Products controller's "show_specials" action
+ 
+ http://example.com/cgi-bin/catalog/contact
+   => App::Service controller's "contact_form" action
+ 
+ http://example.com/cgi-bin/catalog/foo/bar/ble
+   => App::Foo controller's "bar" action
+      with $controller->parameters->{argument} = 'ble'
+
+We'll go into more detail about defining these kinds of patterns later, but suffice to say that routes give you
+complete control over how you arrange the URI paths within your application.
+
+When the Interchange MVC subsystem is enabled (via using the B<mvc_dispatcher> sub as an AutoLoad on your catalog),
+every path is checked against the known routes; the first route whose path pattern matches the current request path
+is used to determine the controller and action to invoke, along with parameters to extract from the path.  If no
+such match exists, then the B<mvc_dispatcher> routine simply returns control to the standard Interchange page process,
+meaning that regular actionmap processing and page processing continues as usual.  In the event of a match, however,
+the request is handled entirely within MVC-land and circumvents the rest of Interchange's usual page processing entirely.
+
+Because of this and the control you have over your URI design, an application can be split between traditional Interchange
+and MVC Interchange, without any conflict, as long as care is taken with the URIs.
+
+=head2 A SIMPLE EXAMPLE
+
+Let's pull this together with the requisite "hello world" example that we all cherish so deeply.
+
+First, we need to deal with some housekeeping items to get your Interchange catalog MVC-enabled.
+
+In your B<catalog.cfg> file (or related file that it includes), add:
+
+ AutoLoad mvc_dispatcher
+
+If you already have an "AutoLoad" directive in there, just add "mvc_dispatcher" to the list of Autoload subs.  Remember
+that these are invoked in order, so if you have critical stuff that you want to run before the MVC system, make sure
+that critical stuff goes first in the space-or-comma-separated list of sub names.
+
+(Note that "mvc_dispatcher" is part of the standard Interchange MVC package and should be available to you already
+as a Globalsub).
+
+In the same file, add directives to get the modules we'll be creating to load:
+
+ Require module App::Demo
+ Require module App::Routes
+
+Now tell the mvc_dispatcher the name of the routes package to use in order to find the routing patterns
+that determine MVC dispatch:
+
+ Variable MVC_ROUTE_PACKAGE App::Routes
+
+That's all we need in B<catalog.cfg> to get started with a simple setup.  We'll go into more advanced, elegant
+configurations later.
+
+Now we need to set up the basic routing package.  This tells the MVC system how to map from a URI path to a given
+controller/action combination.  We should only need one such package per application, and routes within that package
+can be edited, removed, etc. as your URI design needs evolve.  So, create a new module "App::Routes" for this purpose:
+
+ package App::Routes
+ # make sure IC::Controller::Route is loaded and subclass it
+ use IC::Controller::Route;
+ use base qw(IC::Controller::Route);
+ use strict;
+ use warnings;
+ # register a very simple route.
+ __PACKAGE__->route(
+     pattern  => ':controller/:action',
+ );
+ 1;
+
+This creates the App::Routes routing handler package; because it is named in the MVC_ROUTE_PACKAGE variable, the
+mvc_dispatcher sub will use it to process the request path and determine if the request maps to an MVC
+controller/action combination.  The "__PACKAGE__->route(...)" call registers a single route within the handler,
+consisting only of the pattern ":controller/:action".  The ":controller" token means that the URI path 
+(relative to the IC linker path portion) of the request must start with a segment that matches the registered
+name of a known controller.  The ":action" token means that whatever comes next in the path will be assumed to
+be the action to invoke on the controller identified via ":controller".
+
+Next, we need a controller to implement the profoundly advanced business logic behind this dazzling feature.  Let's
+say we want a "demo" controller in our "App::" namespace.  Therefore, we'll set up an App::Demo module that subclasses
+B<IC::Controller>.  Each controller should set a "registered name", which is a simple URI-friendly name by which
+the controller can be uniquely identified within the application; we'll want to set that as well.
+
+ package App::Demo
+ # make sure IC::Controller is loaded, and subclass it.
+ use IC::Controller;
+ use base qw(IC::Controller);
+ # always do this, unless you enjoy pain and suffering.
+ use strict;
+ use warnings;
+ 
+ # set the registered_name off this to "demo".
+ __PACKAGE__->registered_name('demo');
+ 
+ 1;
+
+That gives us the App::Demo controller, with registered name "demo".  The registered name means that any URI route
+that includes ":controller" in its path pattern will map a path with the word "demo" in place of that ":controller"
+token to the App::Demo controller.  Thus, the registered name is effectively the way a controller says "this is
+how I should be identified in a URI".
+
+Now we need an action to do the "heavy lifting" of the "hello world" program.  We're free to name the action
+whatever we want, but consider: an action can potentially be (and probably often will be) explicitly specified
+directly in a URI path segment, thanks to the magic of routes.  Consequently, it makes sense to name our action
+methods in a manner consistent with how we would want to think of the actions from the perspective of the public-facing
+URI space.  In this case, probably "hello" is a reasonable name.
+
+Therefore, within our App::Demo module, we add:
+
+ sub hello {
+     # the controller instance itself is the first and only argument
+     my $self = shift;
+     # This is dirt simple, so we can just do all the work right here, right?
+     $self->response->headers->content_type('text/html');
+     $self->response->headers->status('200 OK');
+     $self->response->buffer('<html><head><title>Hello, world!</title></head><body><h2>Hello, world!</h2></body></html>');
+     return;
+ }
+
+Restart your Interchange and point your browser to your domain/catalog with "demo/hello" as the path following the IC
+linker portion.  For instance: http://example.com/cgi-bin/catalog/demo/hello.  You should see the "hello world" document
+defined above.
+
+What have we done?  Well, the request to ".../demo/hello' is parsed by the ':controller/:action' route in App::Routes and
+maps to the "demo" controller (via App::Demo's registered name) with action "hello"; from there, the framework instantiates
+App::Demo for you and invokes the I<hello()> method on that instance.  In our I<hello()> method,
+the B<response()> method of B<IC::Controller> gives access to the B<IC::Controller::Response>
+object through which we construct our response to the client.  What we've done with that should be fairly self explanatory:
+
+=over
+
+=item *
+
+We identified the content type as 'text/html'.
+
+=item *
+
+We set the HTTP response status line to '200 OK'.
+
+=item *
+
+We set the body of the HTTP response to be a simple HTTP document with the "Hello, world!" level two header.
+
+=item *
+
+We returned I<undef> (via the bare I<return()> issued); the return value doesn't matter, as the framework is only
+concerned with the state of the B<IC::Controller::Response> object accessed via the controller's I<response()>
+method.  Given that the result doesn't matter, Perl custom (according to Damian Conway) requires issuing a bare
+return as done here.
+
+=back
+
+Of course, we've violated some MVC principles.  For instance, the presentation details of the "hello world" feature
+are implemented directly within the controller's I<hello()> action method.  Lame!  Unmaintainable!  Inextensible!
+Such an act is clearly grounds for persecution by one's peers.
+
+Let's abstract that HTML generation step out of the controller and into a view.  It's presentation-oriented stuff,
+after all, and that's the whole point of the View in the MVC triad.
+
+=head3 USING A SIMPLE VIEW
+
+Create a directory called 'views' under your catalog directory, and another directory 'demo' within the 'views'
+directory.  Now, within views/demo/, create a new file 'hello.tst':
+
+ <html>
+   <head>
+     <title>Hello, world!</title>
+   </head>
+   <body>
+     <h2>Hello, world!</h2>
+   </body>
+ </html>
+
+This is a B<Text::ScriptTemplate> view by virtue of its '.tst' extension; however, it is effectively a simple HTML file,
+since it doesn't include any embedded Perl to evaluate.  We could have named this '.html' or '.itl' to use an ITL file
+instead, but let's get into the habit of B<Text::ScriptTemplate> early.
+
+Now, we just need to tell the I<hello()> action method to use that view:
+
+ sub hello {
+     my $self = shift;
+     $self->render();
+     return;
+ }
+
+Well, that's pretty simple, isn't it?  There's some magic under the hood here, but don't worry.  It's sensible, documented,
+understandable magic based on the idea of making your life easier.
+
+The I<render()> method renders a view and puts the resulting content into the response buffer (which we previously did
+with "$self->response->buffer('...')").  It also sets the status line and the content type for you by default.  You're of
+course welcome to tweak those settings after invoking the I<render()> call should the defaults be inappropriate.  In a webapp,
+they'll be correct more often than not.
+
+The I<render()> method can be passed the name (or names) of a view to render, which it will then look for within the file
+system (under the catalog's "views" directory).  However, if no view is specified, it will by default look for a view
+named for the action invoked, under the directory named for the controller (in this case, "demo/hello").  Thus, it defaults
+to an assumption of a specific view per action.
+
+=head3 LAYOUTS
+
+We've built a simple controller with a dirt-simple action and associated dirt-simple view, and seen a bit about how
+controllers and views knit together.  Let's take it a step further.
+
+The bulk of the 'demo/hello.tst' view we created earlier consists of fairly boilerplate stuff: the HTML tag itself, the
+head and body tags, etc.  In a web application, we can be sure that almost every action will want to use that stuff,
+and in order to have a consistent look/feel throughout our application, we'll want that stuff to be consistent between
+actions.  Clearly a way to reuse presentation-oriented code/templates is in order.
+
+The B<layouts> feature of B<IC::Controller> fulfills this niche; it provides a high-level templating mechanism by which
+a view can be specified that is responsible for generating the overall layout/design of the documents within an application,
+with the expectation that action-specific views will be used to generate action-specific content that is injected into
+this higher level template.
+
+Let's pursue this for our "hello world" project, even though it's clearly functional overkill at this time.  First,
+within your 'views' directory, create a 'layouts' directory.  From there, create a new file 'demo.tst', which will
+serve as the layout for the App::Demo controller:
+
+ <html>
+   <head>
+     <title><%= (defined($page_title) && $page_title =~ /\S/) ? $page_title : 'Demonstration Application' %></title>
+   </head>
+   <body>
+     <%= $action_content %>
+   </body>
+ </html>
+
+The first thing you'll notice are the "<%= ... %>" blocks.  If you're familiar with ASP, then these probably make
+sense to you; they're the tokens by which we drop into Perl within B<Text::ScriptTemplate>.  The "<%=" starter
+token indicates that the block will result in a value that should replace the block in the outoing content; the
+"<%" starter token (not used here) is for control structure statements that indicate nesting (loops, conditionals)
+and do not actually return content themselves.
+
+Within each of the "<%= ... %>" blocks, you see standard Perl.  One sets the title to "$page_title" if it's defined
+and has something meaningful, otherwise defaulting to a title of "Demonstration Application".  The action simply
+returns whatever's in the "$action_content" variable.
+
+Next, add the following to the App::Demo module:
+
+ use Moose;
+ has page_title => (is => 'rw', isa => 'Str');
+
+That pulls in Moose for its class metaprogramming functionality, and then uses the resulting I<has> sub to create
+a new I<page_title> attribute.  Note that this coincides with the name "$page_title" used in the layout view we
+created above.  This is not an accident.
+
+Revise the "demo/hello.tst" view to be the following:
+
+ <h2>Hello, world!</h2>
+
+Not much there now, is there?  That's because the bulk of the templating work is done by the layout view, as will
+be explained momentarily.
+
+Finally, revise the I<hello()> action method in App::Demo to be:
+
+ sub hello {
+     my $self = shift;
+     $self->page_title('Hello, world!');
+     $self->render();
+     return;
+ }
+
+We've now effectively spread things out and separated concerns quite cleanly.  The controller has a layout that
+determines the basic document "shape" (so to speak) for any of its actions.  The I<hello()> action's view only needs to
+generate content specific to the I<hello()> action.  The controller's I<page_title> attribute determines what goes
+in the "<title>...</title>" tag of the resulting document.  This is far more than a "hello world" program needs,
+but it illustrates the way things are organized in Interchange MVC.
+
+How it all fits together: the I<render()> method still uses the default action-specific view of "demo/hello"
+when invoked; however, it also by default attempts to use a default controller-specific B<layout> view (the
+default layout name is always the controller's registered name underneath the "layouts" directory within
+the general view path).  In our previous example, that layout view did not exist, so it wasn't used.  Now that
+the layout view does exist, it's used; furthermore, when working with a layout, I<render()> marshalls the
+attributes of the controller object into the layout view, meaning that each attribute of the invoking controller
+is available within the view.   This is how the "$page_title" variable used in the layout view comes to be
+set, based on the value of the I<page_title> attribute of the controller when I<render()> is invoked.  Finally,
+the I<render()> method renders the view first, the layout second, making the content of the first view available
+to the layout view at the name of I<action_content>; this is how the "$action_content" variable used in the
+layout view comes to be.
+
+=head3 DATA-DRIVEN FUNCTIONALITY WITH MODELS
+
+At this point we've seen very basic routing and request dispatch, rendering of views, templating with views/layouts,
+basic marshalling of data from controller to view (in the layout only).  That's a fair amount of high-level stuff
+without a lot of code.
+
+Let's take this example a little further.  What if we wanted to extend our system so it could function as the front-end
+of a dirt-simple (dirt-unimpressive) wiki?
+
+For our wiki, let's outline some basic assumptions/requirements:
+* a wiki article consists of little beyond a URI path fragment uniquely identifying the article, a title, and the article body.
+* if the wiki article requested doesn't exist, we want to show that in friendly fashion but return a sane 404 response code.
+* if the wiki article requested does exist, we want to display it within the context of some consistent look and feel
+* all our wiki articles will live in the URI space of 'wiki/I<article_name>', where I<article_name> corresponds to the path fragment
+that uniquely identifies the article.
+
+So, we need a single database table for this.  Along the lines of:
+
+ CREATE TABLE wiki_articles (
+     name     VARCHAR(50) NOT NULL PRIMARY KEY,
+     title    VARCHAR(100) NOT NULL DEFAULT '',
+     body     TEXT NOT NULL DEFAULT ''
+ );
+
+We want a model class to wrap this table and make working with it nice and simple.  So, let's define one.  Create a new
+module (in the appropriate new path) called "App::Models::WikiArticle", like so:
+
+ package App::Models::WikiArticle
+ use warnings;
+ use strict;
+ use IC::Model::Rose::Object;
+ use base qw(IC::Model::Rose::Object);
+ # bind this class to the wiki_articles table
+ __PACKAGE__->meta->table('wiki_articles');
+ # use Rose::DB::Object's auto_initialization feature to set up the class
+ # based on the table structure.
+ __PACKAGE__->meta->auto_initialize();
+ 1;
+
+The above design wouldn't be so hot for production use, as it queries the database to find the structure of the table, meaning
+locks on system tables would prevent the initialization step from completing and block a restart of your app.  For discussion
+on how to deal with this properly in Rose, consult the B<Rose::DB::Object::Tutorial>.
+
+Despite expressed misgivings, we now have a simple model class that gives a nice object interface for working with our
+wiki_articles table.
+
+Now, let's consider the URL design and how routes should be structured to address it.  Our existing route package (App::Routes)
+has a single route with pattern ":controller/:action".  We I<could> rely on that route to handle our wiki URLs, but it doesn't
+map very well; we would need a new controller with registered name "wiki", which isn't a problem, but it would also need to
+expose a method for every single wiki article such that the ":action" token in the path would result in calling a sub that
+mapped to the right article.  While this is possible using an AUTOLOAD sub, it would be an extremely foolhardy design for
+reasons that are hopefully obvious.
+
+Instead, let's note that the layout used for our later iterations of the "hello world" example would be quite well-suited
+to the purpose of a wiki layout, and also note the anemic nature of our App::Demo controller; there's plenty of room to
+implement the wiki therein, and it's entirely appropriate since this wiki is just a demo anyway.
+
+Therefore, let's conclude:
+
+=over
+
+=item *
+
+The App::Demo controller will provide the relevant action(s) for navigating the wiki.
+
+=item *
+
+A new route is needed to address the URL requirements of the wiki navigation.
+
+=back
+
+The single route in App::Routes is really quite general and serves as kind of a fallback route.  Our wiki requirements
+are more specific, so we need our new route to come earlier in the list of routes registered within App::Routes, so it
+gets evaluated before the more general route currently implemented.  Therefore, in App::Routes, add the following above
+the existing route registration:
+
+ __PACKAGE__->route(
+     pattern     => 'wiki/:article',
+     controller  => 'demo',
+     defaults    => {
+         article => 'main_page',
+         action  => wiki_display,
+     },
+ );
+
+This sets up a pattern that must start with a path segment "wiki" and have only one additional path segment, the value
+of which goes to the controller's B<parameters> hash under the name "article" (by virtue of using ":article" as the
+token within the pattern's corresponding path segment).  Furthermore, we specify a default value for "article" within
+the route's I<defaults> hash, which means that the ":article" portion of the path pattern can in fact be unfilled; 
+this means that paths "wiki" and "wiki/" will both match this route, and will result in an "article" value of "main_page".
+
+Note that the action always defaults to "wiki_display", meaning that a successful match on this route means that the
+I<wiki_display()> method in the "demo" controller (App::Demo) will be invoked.
+
+Now, we want to implement the I<wiki_display()> method in order to provide the read-access functionality for the wiki.
+This means that we'll need to use the model we created earlier.  So, the first step is to add the following to the
+App::Demo controller:
+
+ use App::Models::WikiArticle;
+
+That loads the appropriate model at compile time, so we can now proceed with the meat of our wiki display.
+
+In App::Demo:
+
+ sub wiki_display {
+     my $self = shift;
+     my ($article) = @{
+         App::Models::WikiArticle->find(
+             query => [ name => $self->parameters->{article}, ],
+         )
+     };
+     if ($article) {
+         $self->page_title( $article->title );
+         render( context => { article => $article } );
+     }
+     else {
+         $self->page_title( 'Article not found' );
+         render( view => $self->registered_name() . '/wiki_not_found' );
+         $self->response->headers->status( '404 Not Found' );
+     }
+     return;
+ }
+
+Let's break this down a bit.
+
+=over
+
+=item *
+
+The I<find()> call on App::Models::WikiArticle performs a simple lookup against the wiki_articles table, with
+B<Rose::DB::Object> building the query for you and returning an arrayref of all matching records (with each
+record wrapped as an instance of App::Models::WikiArticle).  The arrayref will be empty if there are no matches.  Since
+it's a query on the primary key, we know we'll get one or no matches, so it's safe to structure the logic as shown
+such that $article is guaranteed to be set if a match was found and undefined if not.
+
+=item *
+
+In the case that $article is defined, meaning that the requested URI identified an article successfully via
+the model query, we simple call I<render()>, relying on the default behaviors for layout and view determination.
+However, we also specify the I<context> hash within that call, in which we provide name/value pairs for marshalling
+into the view (the layout doesn't receive these; it always instead receives the attributes of the controller as
+discussed earlier in the tutorial).
+
+=item *
+
+In the event that $article cannot be found, we want to render an alternate view (which we do in our I<render()> call
+by specifying the "view" within the params hash; in this case, it will live at 'demo/wiki_not_found').  We also
+want to set the status code to 404 to communicate to the client that the article isn't real.
+
+=back
+
+So, we need the views to make this actually happen.  Create a new view "views/demo/wiki_display.tst":
+
+ <h1 id="article_title"><%= $article->title %></h1>
+ <div id="article_body">
+   <%= $artile->body %>
+ </div>
+
+That's pretty simple, isn't it?  The I<render()> call made our article object pulled from the database available
+to the view via the name "$article", and we can simply invoke the methods on "$article" that allow us to access
+the underlying data of the record.  Since we don't get into reparsing of this data, we don't need to be as
+concerned here with escaping the contents of the article title or body as we would with ITL (though it would
+be sensible for a more robust solution to escape them for HTML entities).
+
+A successful article retrieval, then, will render the above view for the article found, generating an HTML fragment
+that displays the article in some appropriate form; the default layout ("layouts/demo") that we already used earlier
+in our "hello world" example will be used again, setting up the surrounding HTML document and placing the content
+fragment from the view properly therein.
+
+Finally, let's create the view for the error case at "views/demo/wiki_not_found.tst":
+
+ <h2>Not found</h2>
+ <p>The article you requested cannot be found.  Sorry!</p>
+
+Not the most useful response ever, but suitable for now.  In this case, there's no data marshalled to the view,
+so all we do is spit out some HTML that again is placed within the controller's default layout.
+
+Note that it would not be unreasonable to argue that our use of I<find()> in the I<wiki_display()> action method
+is suboptimal; it requires knowledge of the table structure (namely, the primary key) as currently implemented.
+While the primary key of a table could be considered part of its "public interface", such data access concerns tend to
+be points where poor usage or outright idiocy creep into large systems.  Therefore, it would be reasonable to
+assert that instead of having this I<find()> call, we should instead implement a I<get_article_by_name()>
+method within the App::Models::WikiArticle module, and simply call that from I<wiki_display()> with
+$self->parameters->{article} as the only argument.  The value added by such an exercise depends on your own
+priorities and practices as a developer, but one thing is clear: the resulting code within the controller will
+be simpler and closer to the domain language of the business logic itself, making the controller easier to
+understand and maintain.  The advantages of higher-level code that is closer to the language of the problem domain
+become more pronounced as considerations like engineering team growth/turnover, system growth, and system longevity
+are factored in.
+
+This little exploration of encapsulation and code organization is left as an exercise to the reader.
+
+=head3 USER INTERACTION: URLS, ADVANCED ROUTING, MORE MODEL USE
+
+So now we have this nice front-end interface for viewing wiki articles.  But there's no way to get articles in
+place, which is the point of a wiki!
+
+For this last step in our demo application, we'll check out more advanced routing, in which the same URL dispatches
+to different actions depending on the request type.  We'll also see how to generate URLs for links within your
+application.
+
+We'll set aside the fact that any decent wiki should record change sets against a given resource, and for demonstration
+purposes simplify the matter such that a wiki resource (i.e. an article) is simply set whole-hog.  This is by no means
+ideal, but will illustrate the important concepts and techniques relevant to MVC Interchange design.
+
+A few basic functions/features are needed to enable initial use of the wiki:
+
+=over
+
+=item *
+
+An editing form by which the contents of an article can be specified.
+
+=item *
+
+A form processor that takes the form data submitted and updates the database appropriately.
+
+=back
+
+In conventional Interchange, we might expect to have a whole bunch of logic (ITL with some Perl mixed in) all residing
+in a single, monolithic template page that is difficult to maintain, follow, extend, etc.  We would also expect that the
+form defined in this page would submit to the "process" system actionmap, so the core Interchange form processing
+tricks can be utilized.  There are of course any number of problems with that approach.  The most blatant being that
+the "process" actionmap results in a URL that maps to any number of resources and business rules, with no clear way
+of knowing what the request will do at a high level without having access to the POST data and intimate knowledge of
+the inner workings of the page invoked by "process" based on the settings in the POST data.  Furthermore, the mixing
+of business logic and presentation in a single page like this is not good for code reuse, maintainability, extensibility,
+etc.  You don't get any interfaces to the stuff doing the work.  And so on.
+
+So, we set aside the usual way of form processing in Interchange and proceed like we have elsewhere in this tutorial:
+consider the URL design first, as the URL space along with the HTTP request method form our public interface to this
+wiki functionality.
+
+A URI path of the form "wiki/some_article" already successfully maps to the "some_article" article in our data layer.
+Therefore, we already have a nice URI scheme for article identification.  So, let's think in terms of REST, in which
+we think of the URI as a "noun", and the request method as a "verb".  While we didn't explicitly say anything about
+it earlier when making that "wiki/:article" route, it is effectively implied that the request for a particular wiki
+article is a GET.  GET requests are effectively read-only; they mean "please give me the representation of the resource
+identified by this URI".  GET is a verb.  There are other verbs available to us in HTTP, of course.  Along with GET,
+we have:
+
+=over
+
+=item *
+
+HEAD: a "read" in which we ask for only the HTTP headers of the resource identified by the URI; like GET except
+the representation of the resource isn't sent, only the metadata.
+
+=item *
+
+POST: a "write" in which the data sent is intended to represent a resource B<subordinate to> the resource
+identified by the URI.  Strictly speaking, a POST should create a new subordinate resource, which then has its
+own URI via which PUT and DELETE may make further alterations.
+
+=item *
+
+PUT: this is intended as a way of sending a new representation of the resource identified by the URI; a "write".
+
+=item *
+
+DELETE: also a "write", meaning that the resource identified by the URI should be removed.
+
+=back
+
+The original purpose of POST may come as a surprise, given the overloaded manner in which POST is used on the web
+today.  The reason for this is annoyingly simple: the HTTP specification defines the format for postdata, so
+web forms had something to follow for constructing the data to send from client to server; the HTTP specification
+does B<not> define anything formal for PUT data.  We can choose to implement PUT however we might like, but it
+cannot be done without Javascript fanciness in order for a browser to work with it.  Therefore, in the land of
+webapps, we generally have to stick with overloaded POST.
+
+Given that background, we can decide at this point that we'll use POST in the manner that PUT was intended; a
+POST to "wiki/some_article" should mean that the postdata contains a new representation of "some_article" within
+our wiki, and the application should take the necessary steps to store that new representation.
+
+That decided, now we need a way to get at the form that lets us perform the edit of an article.  Thinking in terms
+of resources, it's clear that this is in fact a different resource from the article itself; it is the editing form
+for a given article, rather than a representation of the article alone.  Consequently, we can design an entirely
+different URI pattern for this.  It probably makes sense to keep that URI pattern in the "wiki/*" path space, for
+organization and clarity.  We can just tack on an "edit" path segment to that pattern and it'll do.  So, let's say
+that our URI will take the form "wiki/edit/some_article".
+
+At this point, we've decided what our URL design is, and we need to update the App::Routes package accordingly.  So,
+go into App::Routes, remove the existing route definition for "wiki/:article", and replace it with:
+
+ # Our GET read-only route, effectively replacing the old route
+ __PACKAGE__->route(
+     pattern    => 'wiki/:article',
+     method     => 'get',
+     controller => 'demo',
+     defaults   => {
+         article => 'main_page',
+         action  => 'wiki_display',
+     },
+ );
+ # Our new POST "write" route, also for the wiki/:article pattern
+ __PACKAGE__->route(
+     pattern    => 'wiki/:article',
+     method     => 'post',
+     controller => 'demo',
+     defaults   => {
+         action => 'wiki_write',
+     },
+ );
+ # Our new edit route.  We won't specify a method here, though GET is assumed.
+ __PACKAGE__->route(
+     pattern    => 'wiki/edit/:article',
+     controller => 'demo',
+     defaults   => {
+         action => 'wiki_edit',
+     },
+ );
+
+What does this achieve?
+
+=over
+
+=item *
+
+If the URL path matches "wiki/:article" and the request is a GET, we invoke App::Demo's I<wiki_display()> action method.
+
+=item *
+
+If the URI path matches "wiki/:article" and the request is a POST, we invoke App::Demo's I<wiki_write()> action.
+
+=item *
+
+If the URI path matches "wiki/edit/:article", we invoke App::Demo's I<wiki_edit()> action.
+
+=back
+
+Note that while the GET route for "wiki/:article" has a default value for "article", the POST route does not.  This makes sense;
+we don't want people POSTing data for an article without explicitly indicating the article to be created/modified.
+
+You might wonder: what happens if I want to name my article "edit"?  That would mean a URI of "wiki/edit"; will that conflict with
+"wiki/edit/:article"?  Fortunately, the answer is no.  There is no default value for "article" in the "wiki/edit/:article" route,
+which means that the URL must have exactly three path segments to match that route's pattern, the first two of which must be
+"wiki" and "edit" in that order.  Therefore, for an article named "edit", we would have URI paths "wiki/edit" and "wiki/edit/edit".
+If the edit route had a default value for "article", then there could theoretically be a conflict, because a default value on
+the trailing path segment in the pattern means that the path segment is effectively optional; however, the "wiki/:article" form
+takes precedence in the order of routes, and a two-element path of "wiki/edit" would be captured by it before it got to the "wiki/edit/:article"
+route.
+
+So, let's create our editor.
+
+In App::Demo, add the following method:
+
+ sub wiki_edit {
+     my $self = shift;
+     my ($article, $article_specified, $article_exists);
+     # the article name should contain something other than whitespace to be considered "specified".
+     $article_specified = (defined($self->parameters->{article}) && $self->parameters->{article} =~ /\S/);
+     if ($article_specified) {
+         # instantiate article object and perform a speculative load.
+         $article = App::Models::WikiArticle->new( name => $self->parameters->{article} );
+         unless ( $article_exists = $article->load( speculative => 1 ) ) {
+             # article is new (speculative load returned false) so default the title to the article's URL name
+             $article->title( $article->name );
+         }
+     }
+     render(
+         context => {
+             article    => $article,
+             new        => !$article_exists,
+             invalid    => !$article_specified,
+         },
+     );
+     return;
+ }
+
+Hopefully this logic is easy enough to follow.  If the article specified in the URI comes through and turns out to be
+empty or whitespace, it isn't considered valid and we ultimately indicate to the view that this is the case via the
+"invalid" member of the context hash in the I<render()> call.  If the article is properly specified in the path parameters,
+then we try to fetch it from the database using the B<Rose::DB::Object> speculative load, which returns Perly true if the
+load succeeded and false if not (true if the record exists and false if it doesn't).  If successful, the $article object
+will have the data for that article; if not, we want to default the article title to the name specified in the URL.  We
+ultimately indicate to the view that the article is new or not via the "new" member of the context hash, and marshall the
+article object along to the view as well.
+
+Now for the view.  We're relying on the I<render()> defaults for layout and view, and our general layout should serve
+just fine, so we just need to create the view for this action at "views/demo/wiki_edit.tst":
+
+ <% if ($invalid) { %>
+     <h2>Invalid article specification</h2>
+     <p>The article name you indicated is invalid; article names must contain at least one non-whitespace character.
+        Please correct the name within the URL and try again.</p>
+ <% }
+    else { %>
+     <h2>Editing article: <%= $article->name %></h2>
+     <% if ($new) { %><h3>(new article)</h3><% } %>
+     <form method="post" action="<%= url(
+                                         controller => 'demo',
+                                         action => 'wiki_modify',
+                                         parameters => { method => 'post' },
+                                     ) %>">
+         Title: <input type="text" name="title" value="<%= $article->title %>" /><br />
+         Body: <textarea name="body"><%= $article->body %></textarea><br />
+         <input type="submit" value="Save" />
+     </form>
+ <% } %>
+
+A few new items are introduced here.
+
+=over
+
+=item *
+
+This is the first example to use the '<%' token for flow control structures within B<Text::ScriptTemplate>.  The
+structure and use of these should be fairly clear and intuitive.  Just make sure to balance your blocks and such
+when using these, or the Perl that is constructed from your view will fail to compile.
+
+=item *
+
+We're building form elements with values set to the values pulled from the $article object.  This isn't particularly
+special, but it's the first example of such a thing.  Note that we aren't escaping the values for HTML entities; that's
+a problem that deserves to be fixed by the enterprising programmer.
+
+=item *
+
+We're using the I<url()> view helper method to generate a URL for the action of the form.  We give I<url()> the
+name of the controller, the action to invoke, and any arbitrary parameters we want for the request, and I<url()>
+goes back to the route handler for the current request (App::Routes) to build a URL that maps to the desired
+request.  In this case, we indicate that we want I<wiki_modify()> as the action, since that's our POST target in
+the URL scheme for updating an article.  We tell I<url()> that we want the POST form of the URL by specifying
+a "method" of "post" in the parameters hash.
+
+=back
+
+The really critical thing here is the use of I<url()>; this is how we create links within our MVC application.  We
+don't need to know the details of the URL construction at any point within our application in order to generate
+links; we just need to know what controller/action we want to invoke, what parameters we want expressed for that
+action, and the HTTP request method (as needed).  The knowledge for constructing the path remains encapsulated
+within the route package.  In some cases, it might be less typing to just build the URL yourself, but this way
+is more maintainable and let's us think in terms of the application flow rather than mentally mapping between
+URLs and underlying business logic.
+
+Now that we have the edit form/action set up, we need to implement I<wiki_modify()> to handle the form
+post.  In App::Demo, add:
+
+ sub wiki_modify {
+     my $self = shift;
+     die "Attempt to update/create article without specifying article name!\n"
+         unless defined($self->parameters->{article}) and $self->parameters->{article} =~ /\S/) {
+     my $article = App::Models::WikiArticle->new( name => $self->parameters->{article} );
+     # perform a speculative load so Rose can determine if an update is needed or not.
+     $article->load( speculative => 1 );
+     eval {
+         $article->title( $self->parameters->{title} );
+         $article->body( $self->parameters->{body} );
+         $article->save;
+     };
+     die "Failed to save article: $@\n" if $@;
+     # successful save of article; now let's redirect to it so the user gets the new representation
+     # as the ultimate result.
+     $self->redirect(
+         action     => 'wiki_display',
+         parameters => { article => $article->name, method => 'get', },
+     );
+     return;
+ }
+
+The critical stuff to notice here:
+
+=over
+
+=item *
+
+Rather than issuing a rendered response indicating that input or URI was invalid, we just throw an
+exception (vie die()) in a couple of places.  This is an aesthetic choice.  As currently implemented,
+the user would receive an internal server error in response to this (because the Interchange process itself
+would die and not complete its response to Apache).  That's not an ideal interface design, but more on
+this topic momentarily.
+
+=item *
+
+We're again using the speculative load feature of B<Rose::DB::Object> via App::Models::WikiArticle to
+populate the $article object with the data from the underlying table if that article already exists.  We
+then set our changes (from the POST data, which is automatically propagated into the I<parameters()> hash
+by the routing process) in the object and save it.  If we didn't load the object initially, then Rose
+would think the object represented a new object and would always try to INSERT, which would cause problems.
+The speculative load guarantees that the object is bound to the extant record if one exists, and should
+still result in an INSERT if the speculative load is unsuccessful (meaning the record doesn't already exist).
+
+=item *
+
+Notice that we're not rendering a view for this action.  A POST should modify a resource, but what
+should it show in response?  With REST as a guiding principle, and the HTTP standard itself as well,
+it's clear that the proper response is to show the resource we just created/modified.  However, we
+don't want a "write" operation to show that new resource; we want our "read" operation to handle that.
+Consequently, we issue a redirect (via the handy I<redirect()> method) to the "wiki_display" action.
+Note that the argument hash for I<redirect()> is pretty similar to that of I<url()> used earlier.  Here,
+because the control to which we want the redirect to point is the same as the controller calling
+I<redirect()>, we don't specify the controller in the argument hash.
+
+=back
+
+That's it!  Restart your Interchange server.  Point your browser to your application, hitting the "edit"
+function for the wiki to set up a new page:
+
+ http://example.com/cgi-bin/catalog/wiki/edit/my_first_page
+
+You should get the edit form as a result, with "my_first_page" as the default title, a level-three header
+indicating that the article is new, and an empty text area for the body.  Put some plain text in the body,
+set the title however you like, and submit the form.  You should get redirected to the "wiki/my_first_page"
+URI for this resource, and receive a representation of the resource based on the I<wiki_display()> action
+we implemented in the previous iteration.
+
+Now, regarding the matter of throwing exceptions in an action rather than wrapping up error messages
+in pretty, user-focused packages: this is definitely not an ideal manner in which to report input errors
+or data validation issues to a user.  However, it conveniently allows us to consider the topic of
+exception handling.
+
+When your action (or code used by your action) throws an exception, it can by default percolate up the
+stack and result in an ugly "Internal Server Error" 500 page.  However, you can easily catch these
+exceptions and handle them appropriately, which typically means displaying them in some nice,
+application-appropriate manner.  Let's try this to round out this aspect of our tremendous wiki application.
+
+Within the App::Demo controller, add the following:
+ # Our demo controller will use its catch_exception method to handle exceptions
+ __PACKAGE__->error_handler( 'catch_exception' );
+
+That tells the MVC system that exceptions thrown when invoking an action within the demo controller should
+be handled by the demo controller's I<catch_exception()> method.
+
+Now, also within the App::Demo controller, let's implement a simple method:
+
+ sub catch_exception {
+     my ($self, $error) = @_;
+     my $response = IC::Controller::Response->new;
+     $response->buffer(
+         $self->render_local(
+             view       => $self->registered_name() . '/exception',
+             layout     => 'layouts/' . $self->registered_name(),
+             context    => {
+                 error  => $error,
+             }
+         )
+     );
+     $response->headers->status( '500 Internal Server Error' );
+     $response->headers->content_type( 'text/html' );
+     return $response;
+ }
+
+When an exception is trapped during MVC processing, the exception is wrapped in a B<IC::Controller::Exception::Request>
+object; the original exception thrown will be available via that object's I<error()> method, and might be another exception
+object or just a raw string/code depending on the nature of the exception.  Other details about the request are encoded
+within the exception object as well.  That object is passed to the exception handler method (I<catch_exception> in this case)
+as the second argument (the first argument being, as usual, the method invocant itself).  We ultimately need to return an
+instance of B<IC::Controller::Response> to represent the response to the client.
+
+We could just use good old I<render()> here and then return $self->response(); however, this isn't completely reliable,
+because you cannot necessarily count on the controller actually being instantiated or having a response object instantiated
+by the time the exception is thrown.  Therefore, we make a new B<IC::Controller::Response> instance and build it
+using the I<render_local()> method; this method is basically like I<render()> except it returns the resulting content directly
+to the caller, without directly making any adjustments to $self->response().  It also doesn't have the same default behaviors
+for view and layout, so we need to explicitly specify them as shown above.
+
+In other respects, this is basically like an action, though.  All we need now is an exception handler view, the resulting
+content of which will be laid out in our usual layout view.  So, let's make the "views/demo/exception.tst" view:
+
+ <h2>An error occurred:</h2>
+ Error:<br />
+ <pre><%= $error->error() %></pre><br />
+ Controller: <%= defined($error->controller) && $error->controller->registered_name %><br />
+ Action: <%= defined($error->action) && $error->action %><br />
+ <p>
+   We're sorry for any inconvenience this may have caused you and your loved ones.
+ </p>
+
+The $error variable references our exception object that was marshalled in by the I<render_local()> call; it really is
+just like a regular view from a regular action.
+
+Restart your Interchange daemon.  Now if conditions arise that cause an exception, it'll be handled by the above
+code and view.
+ 
+=head3 WHERE TO GO FROM HERE
+
+This tutorial gives a high-level overview and a very basic introduction to Interchange MVC.  However,
+there's a lot more to this framework, so further study of more detailed documentation could be handy.
+
+Some places to look:
+
+=over
+
+=item *
+
+The routing system is quite powerful and is absolutely central to the MVC request dispatching process.
+Therefore, it merits further reading if you really want to understand how to organize your URLs and
+control the public interface of your web application/service.  Therefore, B<IC::Controller::Route>
+is a good place to start.
+
+=item *
+
+The controller functionality offers a lot of flexibility and power not discussed here.  With this tutorial
+under your belt, you're probably in a good position to dive into the docs for B<IC::Controller>, which
+goes into detail about I<render()> and its sibling I<render_local()>, configuration options for
+controller objects and classes, page caching, and more.  This is essential to making the most of MVC
+in Interchange.
+
+=item *
+
+If you want to understand working with B<Rose::DB::Object>, then those docs are a must.  The
+B<Rose::DB::Object::Tutorial> is extensive (rather like this tutorial) but indispensable.
+
+=item *
+
+With routing and controller operations mentally secure, check out B<IC::Controller::Route::Binding>;
+this powerful construct lets your effectively encapsulate URL rules within an object, such that
+different pieces of an application can work together, generating links for each other, expressing
+the rules for link generation in binding objects rather than coupling these pieces of logic with
+knowledge about each other's required parameters and such.
+
+=item *
+
+The B<IC::Component> module allows the creation of semi-standalone components that can be shared
+between controllers (or between separate catalogs/applications); the component is almost like a mini-controller,
+except that it has a simplified public interface oriented towards one task (or very few tasks) and it
+depends on the controller that invokes it for rendering know-how.  In combination with binding objects,
+components allow for a great deal of abstraction and flexibility in your application design.
+
+=back
+
+=head1 CONFIGURATION SCHEMES
+
+In the tutorial, we start by issuing "Require module ..." directives in I<catalog.cfg> in order to
+enable MVC within the catalog.  This is fine and needs to be done at least once; however, the problem is
+we end up having to issue these "Require" directives for every controller class.  The result is fairly
+annoying to maintain and rather brittle.
+
+A more sensible approach is to make a top-level module that does all the module loading for you, then
+require that module and only that module.  That top-level module becomes the means by which you load
+up the entire MVC application, and has the added benefit of making your tools more testable outside of
+Interchange.  If you use this approach, you can always just use that top level module from unit tests,
+utility scripts, etc., and trust in your top-level module to make everything available.
+
+If we were to do this with the code for the tutorial demonstration application, we might do the following:
+
+=over
+
+=item *
+
+Replace the "Require module ..." directives added to I<catalog.cfg> with:
+
+ Require module App::Base
+
+=item *
+
+Create a new module App::Base that loads in what you need:
+
+ package App::Base;
+ use strict;
+ use warnings;
+ # load all the controllers before you load the routing package
+ use App::Demo;
+ 
+ # now its safe to load the routes
+ use App::Routes;
+
+ 1;
+
+=back
+
+You'll note that in the example above, we didn't "use App::Models::WikiArticle".  This is a personal choice;
+given that any controllers are likely to issue those kinds of "use ..." statements to get any models they
+require, it isn't strictly necessary to load the models.  You could certainly decide that you always want to
+be sure that all of your models are available, in which case feel free to issue the required "use ..."
+statements here in App::Base.  Again, this is a matter of choice; do what makes sense for your work environment.
+From the perspective of the application, the critical things are the controllers and the routes.
+
+Also take care to note the comment regarding loading controllers before routes.  When a routing module is compiled,
+its list of available controllers is frozen to the list of known controllers (and their registered names), meaning
+that it can only use and route to controllers that were already compiled.  This is an important point to remember,
+whether you're configuring your application in the manner described here or according to an entirely different
+scheme.
+
+The B<mvc_dispatcher> Globalsub that you register as an Autoload for your Interchange daemon or catalog references
+a few different variables to determine how it behaves.  This lets you customize the behavior of your MVC dispatch
+at a global, Interchange-wide level or within a single catalog, as it consults these variables in the order of
+catalog scope first, Interchange scope second, and falling back to a hard-coded default otherwise.  The options
+are:
+
+=over
+
+=item B<MVC_ROUTE_PACKAGE>
+
+The package name of the B<IC::Controller::Route>-derived module the routes of which should be used for request
+dispatch.  This allows you to use entirely different routing packages for different catalogs within a single
+Interchange daemon, and to specify a global routing package that can be overridden on a per-catalog basis.
+
+If unset, B<mvc_dispatcher> defaults to using B<IC::Controller::Route>, which by default is entirely devoid
+of routes.
+
+=item B<MVC_CONTROLLER_PACKAGE>
+
+The B<mvc_dispatch> sub needs to use some controller package (i.e. B<IC::Controller> or a derivative thereof)
+in order to invoke the I<process_request()> method, where the heavy lifting of request processing occurs in MVC.
+The B<MVC_CONTROLLER_PACKAGE> variable lets you specify the controller package name to use for this purpose,
+meaning that the request processing behavior could theoretically be customized in your Interchange daemon or
+per-catalog.
+
+If unset, B<mvc_dispatcher> defaults to using B<IC::Controller> for this purpose.  The only thing this really
+affects is the high-level behavior of request processing; it does not affect the controller that ultimately
+handles the request in any way.
+
+=item B<MVC_VIEW_PATH>
+
+The B<MVC_VIEW_PATH> variable tells the controller where to look for views within the filesystem.  This defaults
+to "views" underneath the catalog root for the current catalog.  The default behavior thus naturally segregates
+views along catalog lines, which is probably ideal for most cases; however, you're free to customize this
+as you see fit.
+
+Note that "view_path" is actually an attribute of the controller object itself, so you could theoretically set
+up controllers that specify their own view path in a manner that conflicts with what gets passed in by
+B<mvc_dispatcher>.  The result of this would be that the controller's views differ when invoked through the full
+page process by B<mvc_dispatcher> than they would in pure-Perl land (like unit tests) where you work with the
+controller module/instances directly yourself.
+
+=back
+
+=head1 CREDITS
+
+Original author: Ethan Rowe (ethan@endpoint.com)
+

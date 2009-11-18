@@ -1,0 +1,10 @@
+- Remove need for:
+
+    EndPoint::Config
+    Interchange::Deployment
+
+- Build dependency list
+
+- Confirm all unit tests pass
+
+- Check IC::Model::Rose structure
