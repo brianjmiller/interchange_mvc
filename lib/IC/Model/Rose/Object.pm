@@ -27,14 +27,6 @@ sub set_logger {
     return $self->_logger(@args);
 }
 
-=cut
-
-sub init_db {
-    return Model::Rose::DB->new;
-}
-
-=cut
-
 my $determine_manager_package = sub {
     my $invocant = shift;
     my $class = ref($invocant) || $invocant;
@@ -66,20 +58,23 @@ sub make_manager_package {
 # The model class must have done the make_manager_package() call,
 # or followed its lead in implementing its own manager package.
 my %delegations = qw(
-    _find       get_instances
-    _count      get_instances_count
+    _find           get_instances
+    _count          get_instances_count
     _find_by_sql    get_objects_from_sql
-    _set        update_instances
-    _remove     delete_instances
+    _set            update_instances
+    _remove         delete_instances
 );
 for my $method (keys %delegations) {
     my $target = $delegations{$method};
+
     my $subref = sub {
         my $self = shift;
         my $package = $self->$determine_manager_package();
         my $sub = $package->can($target);
+
         return $package->$sub( @_ );
     };
+
     no strict 'refs';
     *$method = $subref;
 }
@@ -103,7 +98,11 @@ for my $method (keys %delegations) {
 	my $resolve_associations = sub {
 		my ($self, $relations) = @_;
 		my (%structures, @start, %struct_seen, %start_seen, %assoc_lists, %processing);
-		my $result = { associations => \%structures, base => \@start, processing => \%processing };
+		my $result = {
+            associations => \%structures,
+            base         => \@start,
+            processing   => \%processing,
+        };
 		return $result unless $relations and @$relations;
 
 		%assoc_lists = map { $_ => [ split /\.+/, $_ ] } @$relations;
@@ -122,9 +121,9 @@ for my $method (keys %delegations) {
 		return $result;
 	};
 
-	my ($itl_loop, $resolve_structure);
+	my $itl_loop;
 
-	$resolve_structure = sub {
+	my $resolve_structure = sub {
 		my ($self, $loop_name, $assoc_name, $relations, $assoc_map) = @_;
 		my $name = $loop_name;
 		$name .= ':' . $assoc_name if $assoc_name;
@@ -229,7 +228,7 @@ for my $method (keys %delegations) {
         
 		$self->$reset_loop( $loop_name, $relations );
 		my $processing_info = $self->$resolve_associations( $relations );
-#print STDERR "resolved associations:\n" . Dumper($processing_info) . "\n\n";
+        #print STDERR "resolved associations:\n" . Dumper($processing_info) . "\n\n";
 		for my $item (@$targets) {
 			$item->$itl_loop( $loop_name, '', @$processing_info{qw(base associations)} );
 		}
