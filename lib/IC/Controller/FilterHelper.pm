@@ -7,12 +7,12 @@ use strict;
 use warnings;
 
 use Exporter;
-use IC::Controller::HelperBase;
 use File::Spec;
 
-use base qw(Exporter IC::Controller::HelperBase);
+use IC::Controller::HelperBase;
+use IC::Config;
 
-use EndPoint::Config;
+use base qw(Exporter IC::Controller::HelperBase);
 
 use vars qw/@EXPORT/;
 
@@ -57,7 +57,7 @@ unless (%filter_sub) {
     # module is so supremely bad, otherwise we could actually
     # use it.
     my (%filter_flag, %filter_alias);
-    for my $file (glob( File::Spec->catfile(EndPoint::Config->adhoc_ic_path, 'code', 'Filter', '*.filter'))) {
+    for my $file (glob( File::Spec->catfile( IC::Config->adhoc_ic_path, 'code', 'Filter', '*.filter' ) )) {
         open(my $fh, '<', $file) or die "Failed to open filter file '$file': $!\n";
         my ($in_string, $code, $marker);
         while ($_ = <$fh>) {

@@ -3,6 +3,8 @@ package IC::Model::Rose::Object;
 use strict;
 use warnings;
 
+use IC::Model::Rose::DB;
+
 use Rose::DB::Object;
 use base qw(Rose::DB::Object IC::Model);
 
@@ -13,6 +15,20 @@ use base qw(Rose::DB::Object IC::Model);
 # use Rose tool for generating a "_logger" attribute.
 use Rose::Object::MakeMethods::Generic (
     'scalar --get_set' => '_logger',
+);
+
+use Rose::Object::MakeMethods::Generic (
+    hash => [
+        tracked_columns => { interface => 'get_set_inited' },
+    ],
+);
+
+use Rose::Class::MakeMethods::Set (
+    inheritable_set => [
+        observer => {
+            test_method => 'observed_by',
+        },
+    ],
 );
 
 # wrap _logger attribute with more explicitly-named methods
@@ -54,29 +70,31 @@ sub make_manager_package {
     $target_package->make_manager_methods( 'instances' );
 }
 
-# implement the IC::Model interface...
-# The model class must have done the make_manager_package() call,
-# or followed its lead in implementing its own manager package.
-my %delegations = qw(
-    _find           get_instances
-    _count          get_instances_count
-    _find_by_sql    get_objects_from_sql
-    _set            update_instances
-    _remove         delete_instances
-);
-for my $method (keys %delegations) {
-    my $target = $delegations{$method};
+{
+    # implement the IC::Model interface...
+    # The model class must have done the make_manager_package() call,
+    # or followed its lead in implementing its own manager package.
+    my %delegations = qw(
+        _find           get_instances
+        _count          get_instances_count
+        _find_by_sql    get_objects_from_sql
+        _set            update_instances
+        _remove         delete_instances
+    );
+    for my $method (keys %delegations) {
+        my $target = $delegations{$method};
 
-    my $subref = sub {
-        my $self = shift;
-        my $package = $self->$determine_manager_package();
-        my $sub = $package->can($target);
+        my $subref = sub {
+            my $self = shift;
+            my $package = $self->$determine_manager_package();
+            my $sub = $package->can($target);
 
-        return $package->$sub( @_ );
-    };
+            return $package->$sub( @_ );
+        };
 
-    no strict 'refs';
-    *$method = $subref;
+        no strict 'refs';
+        *$method = $subref;
+    }
 }
 
 # Lexical block enclosing looping structure transform data.
@@ -255,8 +273,59 @@ for my $method (keys %delegations) {
     }
 }
 
-#**************************************
+#
+# method to consistently serialize a PK
+#
+sub as_hashkey {
+    my $self = shift;
 
+    # C<sort> here just to force consistency
+    return join '_', map { $self->$_ } sort @{ $self->meta->primary_key_columns };
+}
+
+sub add_tracked_columns {
+    my $self = shift;
+    my $meta = $self->meta;
+    for my $column (@_) {
+        $meta->column($column)->add_trigger(
+            code  => sub { shift->_track_column_value($column); },
+            event => 'on_load',
+        );
+    }
+}
+
+sub _track_column_value {
+    my ($self, $column) = @_;
+    my $sub = $self->can( $self->meta->column_accessor_method_name($column) );
+    return $self->tracked_columns->{$column} = $self->$sub();
+}
+
+sub boilerplate_columns {
+    return (
+        date_created          => { type => 'timestamp', default => 'now', not_null => 1 },
+        created_by            => { type => 'varchar', default => '', length => 32, not_null => 1 },
+        last_modified         => { type => 'timestamp', not_null => 1 },
+        modified_by           => { type => 'varchar', default => '', length => 32, not_null => 1 },
+    );
+}
+
+sub init_db {
+    return IC::Model::Rose::DB->new;
+}
+
+sub transaction_aware_notification {
+    my $self = shift;
+    return unless $self->observers;
+
+    return $self->notify_observers(@_) unless $self->db->in_transaction;
+
+    my @args = @_;
+    $self->db->add_commit_callbacks( sub { $self->notify_observers(@args) } );
+
+    return 1;
+}
+
+#############################################################################
 package IC::Model::Rose::Object::Manager;
 
 use strict;
@@ -268,3 +337,146 @@ use base qw(Rose::DB::Object::Manager);
 1;
 
 __END__
+
+=pod
+
+=head1 NAME
+
+B<IC::Model::Rose::Object> -- custom B<Rose::DB::Object>-derived baseclass for model classes wishing to use RDBO
+
+=head1 SYNOPSIS
+
+Largely just provides basic B<Rose::DB::Object> behaviors, with a few additions:
+
+=over
+
+=item *
+
+Automatically initializes the database as needed to use B<IC::Model::Rose::DB>.
+
+=item *
+
+Class-method I<boilerplate_columns()> provides metadata for common columns (timestamp and user information).
+
+=item *
+
+Publisher/observable behavior: the I<observers> interface allows external observers to subscribe to
+object-level state changes, for event-driven side-effects like cache management and such.
+
+=item *
+
+Tracked columns: specify per-model-class what columns you want to track, and their original (as loaded from
+the db) values will be preserved in a hash.
+
+=back
+
+=head1 OBSERVERS INTERFACE
+
+The I<observers> interface allows an external class to act as a subscriber to the following operations
+for instances of the observed class:
+
+=over
+
+=item C<insert()>
+
+=item C<update()>
+
+=item C<save()>
+
+=item C<delete()>
+
+=back
+
+In each case, all observers registered with the relevant class are notified of the operation taking
+place.  This means that the observer (which is assumed to be a package/class name) has its I<update()>
+method invoked, and is passed the B<IC::Model>-derived instance and the name of the method invoked
+(from the above list).
+
+Because a C<save()> will ultimately invoke either an C<insert()> or an C<update()>, you will find that
+C<save()> invocations result in two invocations of the observer.
+
+The notification can be transaction-aware; if the above methods are invoked within a transaction, and the
+B<IC::Model> is transaction-aware, then C<commit_callbacks()> functionality is used such that notification 
+only occurs after the transaction succeeds.  This means that notification may be delayed by some time relative to
+its corresponding causal method invocation.
+
+Outside a transaction, the notifications are immediate.
+
+You can manipulate observers with various methods:
+
+=over
+
+=item C<add_observer( $classname )>
+
+This will add C<$classname> as an observer of the relevant B<IC::Model> subclass.  Similarly,
+you can use C<add_observers> (plural) and specify multiple observers to add.
+
+=item C<observed_by( $classname )>
+
+Returns true/false based on the presence/absence of C<$classname> in the observers list for class.
+
+=item C<observers()>
+
+Returns the list of observers in no particular order.  In scalar context returns an arrayref of the
+observers
+
+=item C<delete_observer( $classname )>
+
+Removes C<$classname> from the observers list.  Like "add_", you can pluralize this and specify
+multiple classnames.
+
+=back
+
+A basic example: suppose C<MyApp::Cache> manages a cache for MyApp::Model instances, and we want to
+use this behavior to keep the cache accurate.
+
+ package MyApp::Model;
+ use base qw(IC::Model::Rose::Object);
+ # ...assume the usual Rose metadata blather...
+ 
+ package MyApp::Cache;
+ # ...cache management particulars to skip
+ 
+ # update method is invoked at notification time
+ sub update {
+     my ($self, $rose_obj, $action) = @_;
+     # an update or a delete requires clearing the cache.  Other actions
+     # can be ignored and let the cache get built on demand.
+     $self->clear_cache_by_key( $rose_obj->id )
+         if $action eq 'delete' or $action eq 'update';
+ }
+ 
+ # now subscribe this to the model class
+ MyApp::Model->add_observer( __PACKAGE__ );
+
+There you go.
+
+This interface is noisy and low-level, rather akin to row-level triggers versus statement-level
+triggers.  The Manager interface bypasses this stuff entirely, and your observers only get visiblity
+into individual instance operations rather than groups of operations.
+
+=head1 TRACKED COLUMNS
+
+The column-tracking mechanism allows you to see, after changing the attributes of an instance,
+what the values originally loaded into the tracked columns were prior to changing.
+
+These are only populated at load time, and only preserved for the columns specified on a given
+model class.  They are not updated by update operations; you would need to reload the object to get
+the freshen db values in ther.
+
+=over
+
+=item B<add_tracked_columns( @column_names )>
+
+Class method: invoke on your model class and give names of columns you want tracked in the manner described above.
+
+=item B<tracked_columns()>
+
+Instance method: returns a hashref where the keys correspond to the column names of the tracked columns for
+the instance's class.  The values are the original (raw) values from the database for those columns as they
+were at load time.
+
+=back
+
+=cut
+

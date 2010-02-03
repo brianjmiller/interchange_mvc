@@ -3,6 +3,8 @@ package IC::Model;
 use strict;
 use warnings;
 
+use Scalar::Util ();
+
 use IC::Log::Logger;
 
 sub find {
@@ -28,6 +30,56 @@ sub set {
 sub remove {
     my $invocant = shift;
     return $invocant->_remove( @_ );
+}
+
+sub save {
+    my $self = shift;
+
+    my $result = $self->SUPER::save(@_);
+    $self->transaction_aware_notification('save');
+
+    return $result;
+}
+
+sub insert {
+    my $self = shift;
+
+    my $result = $self->SUPER::insert(@_);
+    $self->transaction_aware_notification('insert');
+
+    return $result;
+}
+
+sub delete {
+    my $self = shift;
+
+    my $result = $self->SUPER::delete(@_);
+    $self->transaction_aware_notification('delete');
+
+    return $result;
+}
+
+sub update {
+    my $self = shift;
+
+    my $result = $self->SUPER::update(@_);
+    $self->transaction_aware_notification('update');
+
+    return $result;
+}
+
+sub notify_observers {
+    my $self = shift;
+    my $class = Scalar::Util::blessed($self) || $self;
+
+    my $count;
+    ++$count && $_->update($self, @_) for $class->observers;
+
+    return $count;
+}
+
+sub transaction_aware_notification {
+    IC::Exception->throw('transaction_aware_notification should be overridden by the implementation subclass');
 }
 
 1;

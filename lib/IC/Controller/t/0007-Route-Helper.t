@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Interchange::Deployment;
-use EndPoint::Config;
 
 use Test::More (tests => 29);
 

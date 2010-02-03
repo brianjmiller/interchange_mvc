@@ -3,36 +3,81 @@ package IC::Model::Rose::DB;
 use strict;
 use warnings;
 
+use IC::Config;
+
 use Rose::DB;
 use base qw( Rose::DB );
 
-=cut
-use Moo::Config;
-
-my $conf = 'Moo::Config';
-$conf->parse();
-
-# Use a private registry for this class
-__PACKAGE__->use_private_registry;
-
-# Set the default domain and type
-__PACKAGE__->default_domain('production');
-__PACKAGE__->default_type('main');
-
-# Register the data sources
-
-# Production:
-
-__PACKAGE__->register_db(
-    domain   => 'production',
-    type     => 'main',
-    driver   => 'Pg',
-    database => $conf->parameter('PGDATABASE') || undef,
-    host     => $conf->parameter('PGHOST') || undef,
-    username => $conf->parameter('SQLUSER') || undef,
-    password => $conf->parameter('SQLPASS') || undef,
+use Rose::Object::MakeMethods::Generic (
+    array => [
+        'commit_callbacks'       => { interface => 'get_set_inited', hash_key => 'commit_callbacks' },
+        'clear_commit_callbacks' => { interface => 'clear', hash_key => 'commit_callbacks' },
+        'reset_commit_callbacks' => { interface => 'reset', hash_key => 'commit_callbacks' },
+        '_push_commit_callbacks' => { interface => 'push', hash_key => 'commit_callbacks' },
+    ], 
 );
-=cut
+
+IC::Config->initialize;
+
+if (defined IC::Config->smart_variable('SQLDSN')) {
+    warn "Registering db: " . IC::Config->smart_variable('SQLDSN') . "\n";
+    __PACKAGE__->standard_base_configuration;
+    __PACKAGE__->register_db(
+        username        => IC::Config->smart_variable( 'SQLUSER' ),
+        password        => IC::Config->smart_variable( 'SQLPASS' ),
+        dsn             => IC::Config->smart_variable( 'SQLDSN'  ),
+        connect_options => {
+            AutoCommit        => 1,
+            RaiseError        => 1,
+            pg_enable_utf8    => 1,
+        },
+    );
+}
+
+sub add_commit_callbacks {
+    my $self = shift;
+
+    die "Database handle must be in a transaction in order to add commit callbacks.\n"
+        unless $self->in_transaction;
+
+    return $self->_push_commit_callbacks(@_);
+}
+
+sub begin_work {
+    my $self = shift;
+
+    $self->clear_commit_callbacks;
+
+    return $self->SUPER::begin_work(@_);
+}
+
+sub commit {
+    my $self = shift;
+
+    my $result = $self->SUPER::commit(@_);
+    $self->process_commit_callbacks if $result;
+
+    return $result;
+}
+
+sub rollback {
+    my $self = shift;
+
+    $self->clear_commit_callbacks;
+
+    return $self->SUPER::rollback(@_);
+}
+
+sub process_commit_callbacks {
+    my $self = shift;
+
+    my $count = 0;
+    ++$count && $_->() for $self->commit_callbacks;
+
+    $self->clear_commit_callbacks;
+
+    return $count;
+}
 
 sub standard_base_configuration {
     my $invocant = shift;
@@ -45,10 +90,11 @@ sub standard_base_configuration {
     return;
 }
 
-# override register_db to enforce common defaults for BC (domain, type, driver)
+# override register_db to enforce common defaults for site (domain, type, driver)
 sub register_db {
     my $invocant = shift;
     my %params = @_;
+
     my %defaults = qw(
         domain      production
         type        main
@@ -59,16 +105,17 @@ sub register_db {
             if ! defined $params{$default}
         ;
     }
-#    use Data::Dumper ();
-#    printf STDERR "Parameters for register_db after defaults: %s\n", Data::Dumper::Dumper(\%params);
+
     return $invocant->SUPER::register_db( %params );
 }
 
+#
 # We're using a lexical variable to hold the first instance created,
 # such that this package and any subclass packages can each get a singleton
 # handle by default, stored in %singleton_repository keyed by the package name.
 # Each class MUST provide one and only one domain/type handle or this system
 # breaks down.
+#
 
 my %singleton_repository;
 
@@ -95,3 +142,103 @@ sub clear_singleton {
 1;
 
 __END__
+
+=pod
+
+=head1 NAME
+
+B<IC::Model::Rose::DB> -- B<Rose::DB> derivative
+
+=head1 SYNOPSIS
+
+This class works basically like any other B<Rose::DB> class,
+though it configures the registry and gets Rose/DBI
+talking to the proper database based on your configuration
+based on settings derived from B<IC::Config>.
+
+The special behaviors:
+
+=over
+
+=item *
+
+By default, the constructor returns a singleton connection.  This ensures that the same handle gets used throughout a request.  See below for details.
+
+=item *
+
+A "commit callback" feature lets you register callbacks to invoke upon successful commit of the current transaction.
+
+=back
+
+=head1 CONSTRUCTOR
+
+By default, B<new()> will return a singleton instance of
+B<IC::Model::Rose::DB>, which ensures that database handle
+overhead is minimized.
+
+However, if you want an independent handle, you can provide
+a Perly-true value for I<override_singleton>.
+
+ use IC::Model::Rose::DB;
+ my $db_a = IC::Model::Rose::DB->new;
+ my $db_b = IC::Model::Rose::DB->new;
+ my $db_c = IC::Model::Rose::DB->new(override_singleton => 1);
+ # $db_a and $db_b are the same; $db_c is unique.
+
+=head1 CALLBACKS
+
+When the handle is within a transaction (a transaction
+managed by the B<IC::Model::Rose::DB> object interface,
+not by the underlying DBI handle interface), you can
+register anonymous callback subs.  They will be invoked in
+order of registration upon successful commit of the
+current transaction.
+
+This allows for things like cache rebuilds and such to
+wait until commit success, while still being tied to
+event-driven cache-on-write strategies.
+
+The interface involved:
+
+=over
+
+=item I<commit_callbacks( [ ARRAYREF | subref1, subref2, ... ] )>
+
+Get/set method for the commit callbacks queue on the current object.  Returns the queue contents in list context,
+or the actual array reference in scalar context.
+
+You can invoke this as a setter, in which case you may pass
+an arrayref of subrefs, or a list of subrefs.
+
+It is recommended that you not invoke as a setter directly,
+and instead affect the stack via I<add_commit_callbacks()>.
+
+The queue should be empty between transactions.  You
+could set it outside a transaction, but it will be cleared
+upon beginning the next transaction.
+
+Additionally, after rollback or commit, the queue is
+cleared.
+
+=item I<clear_commit_callbacks()>
+
+Empties the callback list.
+
+=item I<add_commit_callbacks( CODEREF1, CODEREF2, ... )>
+
+Given a list of subrefs as input, appends those subrefs
+in order onto the callback queue.
+
+This will throw an exception if invoked outsid the context of a transaction.
+
+Use of this method is encouraged over direct setting,
+as it allows for encapsulated, isolated code paths to
+affect the callback queue.
+
+=back
+
+=head1 BLAME
+
+Mostly me, but probably some of him, too.
+
+=cut

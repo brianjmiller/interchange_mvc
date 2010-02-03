@@ -1,10 +1,4 @@
-- Remove need for:
-
-    EndPoint::Config
-    Interchange::Deployment
-
+- Improve use of IC::Config to allow for registering a config module to be used
+  so that subclassing may be used to override all functionality
 - Build dependency list
-
 - Confirm all unit tests pass
-
-- Check IC::Model::Rose structure

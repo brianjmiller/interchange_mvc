@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Interchange::Deployment;
-use EndPoint::Config;
+
 use Test::More (tests => 59);
 
 my $class = 'IC::Controller::Route::Object';

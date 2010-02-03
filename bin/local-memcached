@@ -1,0 +1,83 @@
+#!/usr/local/bin/perl
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use File::Spec;
+use Interchange::Deployment;
+use IC::Config;
+
+my %opt;
+
+GetOptions(
+    \%opt,
+    'usage',
+    'size=i',
+    'action=s'
+);
+
+my ($pidfile, $socket) = map { File::Spec->catfile(Interchange::Deployment->base_path, 'var', 'run', $_) } qw(memcached.pid memcached.socket);
+
+action_error() unless defined $opt{action} and length($opt{action});
+
+if ($opt{action} eq 'start') {
+    exit(check_status('Memcached is already running (pid %d)') || start());
+}
+elsif ($opt{action} eq 'stop') {
+    exit(check_status(undef, 'Memcached is not running') && stop());
+}
+elsif ($opt{action} eq 'restart') {
+    check_status(undef, 'Memcached is not running') && stop();
+    exit start();
+}
+elsif ($opt{action} eq 'status') {
+    exit ! check_status('Memcached is running (pid %d)', 'Memcached is not running');
+}
+else {
+    action_error();
+}
+
+sub start {
+    # default size to 5 meg
+    my $size = defined($opt{size})
+        ? $opt{size}
+        : (IC::Config->variable(undef, 'MEMCACHED_MAX_SIZE') || 5);
+    my $cmd = "/usr/bin/memcached -d -s $socket -P $pidfile -m $size -a 600";
+    print "Starting memcached\nsocket: $socket\npidfile: $pidfile\nmax memory: $size\n";
+    return do_cmd($cmd);
+}
+
+sub stop {
+    print "Stopping memcached...\n";
+    return do_cmd("kill -s 15 `cat $pidfile && rm $pidfile && rm $socket`");
+}
+
+sub check_status {
+    my ($running, $not_running) = @_;
+    my ($result, $pid);
+    if (! -f $pidfile) {
+        $result = 0;
+    }
+    else {
+        open(my $fh, '<', $pidfile) or die "Failed to open $pidfile: $?\n";
+        $pid = <$fh>;
+        die "No pid found in $pidfile!\n" unless defined($pid) and $pid > 0;
+        $result =  kill(0, $pid);
+    }
+
+    my $msg = $result ? $running : $not_running;
+    printf("$msg\n", $pid) if $msg;
+
+    return $result;
+}
+
+sub action_error {
+    die "Please specify an action (start|stop|restart).\n"
+}
+
+sub do_cmd {
+    system(@_) == 0
+        or die "Error executing @_: $?\n";
+    return 1;
+}
