@@ -32,42 +32,6 @@ sub remove {
     return $invocant->_remove( @_ );
 }
 
-sub save {
-    my $self = shift;
-
-    my $result = $self->SUPER::save(@_);
-    $self->transaction_aware_notification('save');
-
-    return $result;
-}
-
-sub insert {
-    my $self = shift;
-
-    my $result = $self->SUPER::insert(@_);
-    $self->transaction_aware_notification('insert');
-
-    return $result;
-}
-
-sub delete {
-    my $self = shift;
-
-    my $result = $self->SUPER::delete(@_);
-    $self->transaction_aware_notification('delete');
-
-    return $result;
-}
-
-sub update {
-    my $self = shift;
-
-    my $result = $self->SUPER::update(@_);
-    $self->transaction_aware_notification('update');
-
-    return $result;
-}
-
 sub notify_observers {
     my $self = shift;
     my $class = Scalar::Util::blessed($self) || $self;
@@ -79,7 +43,23 @@ sub notify_observers {
 }
 
 sub transaction_aware_notification {
-    IC::Exception->throw('transaction_aware_notification should be overridden by the implementation subclass');
+    IC::Exception->throw('transaction_aware_notification() should be overridden by the implementation subclass');
+}
+
+sub save {
+    IC::Exception->throw('save() should be overridden by the implementation subclass');
+}
+
+sub insert {
+    IC::Exception->throw('insert() should be overridden by the implementation subclass');
+}
+
+sub delete {
+    IC::Exception->throw('delete() should be overridden by the implementation subclass');
+}
+
+sub update {
+    IC::Exception->throw('update() should be overridden by the implementation subclass');
 }
 
 1;

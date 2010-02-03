@@ -325,6 +325,42 @@ sub transaction_aware_notification {
     return 1;
 }
 
+sub save {
+    my $self = shift;
+
+    my $result = $self->SUPER::save(@_);
+    $self->transaction_aware_notification('save');
+
+    return $result;
+}
+
+sub insert {
+    my $self = shift;
+
+    my $result = $self->SUPER::insert(@_);
+    $self->transaction_aware_notification('insert');
+
+    return $result;
+}
+
+sub delete {
+    my $self = shift;
+
+    my $result = $self->SUPER::delete(@_);
+    $self->transaction_aware_notification('delete');
+
+    return $result;
+}
+
+sub update {
+    my $self = shift;
+
+    my $result = $self->SUPER::update(@_);
+    $self->transaction_aware_notification('update');
+
+    return $result;
+}
+
 #############################################################################
 package IC::Model::Rose::Object::Manager;
 
