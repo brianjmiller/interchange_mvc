@@ -38,7 +38,7 @@ subtype ControllerErrorHandler
 
 has package => (is => 'rw', isa => 'Str',);
 has content_type => (is => 'rw', isa => 'Str',);
-has page_cache_handler => (is => 'rw', isa => 'CacheHandler' );
+has page_cache_handler => (is => 'rw', isa => 'Maybe[CacheHandler]' );
 has helper_modules => (is => 'rw', isa => 'ArrayRef', auto_deref => 1, default => sub { return []; } );
 has page_cache_no_reads => (is => 'rw', isa => 'Bool', default => sub { return 0 });
 has error_handler => (is => 'rw', isa => 'ControllerErrorHandler');

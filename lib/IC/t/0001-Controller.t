@@ -1178,7 +1178,9 @@ for my $conf (
     $controller_class->default_page_cache_handler( $conf->{default_handler} );
     $cache_controller = $controller_class->new( %common_conf );
     IC::Controller::HelperBase->bind_to_controller( $cache_controller );
-    $cache_controller->page_cache_handler( $conf->{object_handler} );
+    if (defined $conf->{object_handler}) {
+        $cache_controller->page_cache_handler( $conf->{object_handler} );
+    }
     $cache_controller->response->buffer( $conf->{name} );
     $cache_controller->response->headers->status( '200 ok' );
     eval { $cache_controller->set_page_cache( $common_params ) };

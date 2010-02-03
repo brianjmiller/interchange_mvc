@@ -4,7 +4,7 @@ use warnings;
 
 use Interchange::Deployment;
 
-use Test::More tests => 13;
+use Test::More tests => 16;
 
 my ($class, $subclass, $global_class);
 BEGIN {
@@ -27,8 +27,24 @@ isa_ok(
 );
 
 ok(
+    !( $obj->has_logger ),
+    'has_logger() not been explicitly set',
+);
+
+ok(
     !defined($obj->get_logger),
     'get_logger() attribute defaults to undef',
+);
+
+$obj->set_logger( undef );
+ok(
+    !defined($obj->get_logger),
+    'get/set_logger() undef attribute',
+);
+
+ok(
+    $obj->has_logger,
+    'has_logger() with attribute unset',
 );
 
 my $logger = IC::Log::Base->new;
@@ -67,7 +83,7 @@ ok(
 );
 
 ok(
-    !( $obj->has_logger ),
+    $obj->has_logger,
     'has_logger() with attribute unset',
 );
 

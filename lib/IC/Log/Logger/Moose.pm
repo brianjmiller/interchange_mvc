@@ -18,7 +18,7 @@ has logger => (
 	reader =>		'get_logger',
 	writer =>		'set_logger',
 	predicate =>	'has_logger',
-	isa =>			'ICLogger',
+	isa =>			'Maybe[ICLogger]',
 );
 
 1;
@@ -107,6 +107,9 @@ a value that does not support the I<log()> or I<logger()> methods will throw an 
 
 The attribute is unset by default, meaning that I<logger()> will use the default logging
 choice.
+
+Note: I<has_logger()> returns whether the attribute has been specifically set, not whether
+it has a value/is defined.
 
 =back
 

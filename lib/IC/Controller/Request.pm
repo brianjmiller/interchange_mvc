@@ -151,8 +151,10 @@ around cookies => sub {
 around headers => sub {
 	my $code = shift;
 	my $self = shift;
+
 	my $result = $self->$code(@_);
-	$self->cookies( undef ) if @_;
+	$self->cookies( [] ) if @_;
+
 	return $result;
 };
 
