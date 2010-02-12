@@ -1,0 +1,1999 @@
+package IC::Manage;
+
+use strict;
+use warnings;
+
+use Encode qw( encode_utf8 );
+use File::MimeInfo::Magic ();
+use File::Path ();
+use File::Spec ();
+use IO::Scalar;
+
+use IC::Config;
+use IC::M::File;
+use IC::M::FileResource;
+
+#
+# TODO: these should be overridable
+#
+use IC::C::Manage::Component::FunctionResult::Generic;
+use IC::C::Manage::Component::FunctionResult::Form;
+use IC::C::Manage::Component::FunctionResult::DetailView;
+use IC::C::Manage::Component::FunctionResult::ListPaginated;
+
+use Moose;
+use MooseX::ClassAttribute;
+
+class_has '_root_model_class'          => ( is => 'ro', default => 'IC::M' );
+class_has '_icon_path'                 => ( is => 'ro', default => undef );
+class_has '_model_class'               => ( is => 'ro', default => undef );
+class_has '_model_class_mgr'           => ( is => 'ro', default => undef );
+class_has '_model_display_name'        => ( is => 'ro', default => undef );
+class_has '_model_display_name_plural' => ( is => 'ro', default => undef );
+class_has '_sub_prefix'                => ( is => 'ro', default => undef );
+class_has '_func_prefix'               => ( is => 'ro', default => undef );
+class_has '_parent_manage_class'       => ( is => 'ro', default => undef );
+class_has '_parent_model_link_field'   => ( is => 'ro', default => undef );
+class_has '_role_class'                => ( is => 'ro', default => 'IC::M::Role' );
+class_has '_file_class'                => ( is => 'ro', default => 'IC::M::File' );
+class_has '_file_resource_class'       => ( is => 'ro', default => 'IC::M::FileResource' );
+class_has '_file_resource_class_mgr'   => ( is => 'ro', default => 'IC::M::FileResource::Manager' );
+
+class_has '_list_page_count'           => ( is => 'ro', default => 25 );
+class_has '_list_cols'                 => (
+    is      => 'ro', 
+    default => sub {
+        [
+            { 
+                display => 'Description',
+                method  => 'manage_description',
+            },
+            {
+                display => 'Date Created',
+                method  => 'date_created',
+            },
+            {
+                display => 'Last Modified',
+                method  => 'last_modified',
+            },
+        ],
+    },
+);
+class_has '_list_additional_functions'       => ( is => 'ro', default => sub { [] } );
+class_has '_list_no_filter'                  => ( is => 'ro', default => undef );
+class_has '_list_status_field'               => ( is => 'ro', default => undef );
+class_has '_list_status_class'               => ( is => 'ro', default => undef );
+class_has '_list_status_obj_key_method'      => ( is => 'ro', default => undef );
+class_has '_list_status_obj_name_method'     => ( is => 'ro', default => undef );
+class_has '_list_kind_field'                 => ( is => 'ro', default => undef );
+class_has '_list_kind_class'                 => ( is => 'ro', default => undef );
+class_has '_list_kind_obj_key_method'        => ( is => 'ro', default => undef );
+class_has '_list_kind_obj_name_method'       => ( is => 'ro', default => undef );
+
+class_has '_properties_referrer_no_override' => ( is => 'ro', default => undef );
+
+class_has '_detail_other_mappings'           => ( is => 'ro', default => sub { {} } );
+class_has '_detail_suppress_foreign_objects' => ( is => 'ro', default => undef );
+class_has '_detail_action_log_configuration' => ( is => 'ro', default => sub { {} } );
+
+class_has '_upload_target_directory'         => ( is => 'ro', default => undef );
+class_has '_upload_requires_object'          => ( is => 'ro', default => undef );
+
+has '_class'      => ( is => 'rw', required => 1 );
+has '_method'     => ( is => 'rw', required => 1 );
+has '_controller' => ( is => 'rw', required => 1 );
+has '_step'       => ( is => 'rw', default => 0 );
+
+# indicates whether a response has been set
+has '_response'   => ( is => 'rw', default => 0 );
+
+no Moose;
+no MooseX::ClassAttribute;
+
+#############################################################################
+#
+#
+#
+sub _function { return $_[0]->_class . '_' . $_[0]->_method }
+
+#
+#
+#
+sub execute {
+    my $self = shift;
+    my %args = @_;
+
+    my $method = $self->_method;
+    unless ($self->can( $method )) {
+        IC::Exception::ManageFunctionMethodUnknown->throw( error => $method );
+    }
+
+    # run the method of the function object, which will call set_response()
+    # to configure the response in the controller
+    $self->$method(%args);
+
+    unless ($self->_response) {
+        IC::Exception->throw('Manage function did not call set_response()');
+    }
+
+    return;
+}
+
+#
+#
+#
+sub set_response {
+    my $self = shift;
+    my $args = { @_ };
+
+    unless (defined $args->{type} and $args->{type} ne '') {
+        IC::Exception->throw('Argument missing: type');
+    }
+
+    if ($args->{type} eq 'component') {
+        unless (defined $args->{kind} and $args->{kind} ne '') {
+            IC::Exception->throw("Argument missing: component type requires 'kind'");
+        }
+
+        #
+        # TODO: make this overrideable, and registered
+        #
+        my $component_class = {
+            generic          => 'IC::C::Manage::Component::FunctionResult::Generic',
+            form             => 'IC::C::Manage::Component::FunctionResult::Form',
+            detail_view      => 'IC::C::Manage::Component::FunctionResult::DetailView',
+            list_paginated   => 'IC::C::Manage::Component::FunctionResult::ListPaginated',
+        };
+        if (exists $component_class->{$args->{kind}}) {
+            #$self->_controller->add_stylesheet(
+                #kind => 'controlled',
+                #path => "_components/manage/function/$args->{kind}.css"
+            #);
+
+            my $component = $component_class->{$args->{kind}}->new( 
+                controller => $self->_controller,
+                context    => $args->{context},
+            );
+
+            $self->_controller->render(
+                context => {
+                    _function => $self->_function,
+                    component => $component,
+                },
+            );
+        }
+        else {
+            IC::Exception->throw("Unrecognized component kind: $args->{kind}");
+        }
+    }
+    elsif ($args->{type} eq 'redirect') {
+        unless (defined $args->{url} and $args->{url} ne '') {
+            IC::Exception->throw("Argument missing: redirect type requires 'url'");
+        }
+
+        $self->_controller->redirect(
+            href => $args->{url},
+        );
+    }
+    else {
+        IC::Exception->throw("Unrecognized type: $args->{type}");
+    }
+
+    $self->_response(1);
+
+    return;
+}
+
+#
+#
+#
+sub set_title {
+    my $self = shift;
+    my ($action, @objects) = @_;
+
+    my $desc = '';
+    for my $object (@objects) {
+        $desc .= ' : ' . $object->manage_description;
+    }
+
+    $self->_controller->content_title("$action$desc");
+
+    return;
+}
+
+#
+#
+#
+sub manage_function_uri {
+    my $invocant = shift;
+    my $args = { @_ };
+
+    if (defined $args->{function}) {
+        # do nothing they passed exactly what we want
+    }
+    elsif (defined $args->{class} and defined $args->{method}) {
+        $args->{function} = "$args->{class}\_$args->{method}";
+    }
+    elsif (defined $args->{method}) {
+        $args->{function} = $invocant->_func_prefix.$args->{method};
+    }
+    elsif (ref $invocant) {
+        # in this case pull the class, method, and potentially the step
+        # from the object instance
+        $args->{function} = $invocant->_class . '_' . $invocant->_method;
+    }
+    else {
+        IC::Exception->throw( "Can't determine function for manage_function_uri" );
+    }
+
+    my $controller;
+    if (ref $invocant) {
+        $controller = $invocant->_controller;
+    }
+    else {
+        $controller = $args->{controller};
+    }
+    unless (defined $controller) {
+        my ($package, $filename, $line) = caller(1);
+        warn "$package called manage_function_uri as class method without 'controller' argument at line $line\n";
+        return '';
+    }
+
+    # perform privilege check unless they pass the arg and it is turned off
+    # aka default to on, a failing priv check results in no link rather than
+    # throwing an exception
+    unless (defined $args->{priv_check} and ! $args->{priv_check}) {
+        my $check_func_name = $args->{function};
+        my $check_role;
+        if (defined $args->{role} and UNIVERSAL::isa($args->{role}, $invocant->_role_class)) {
+            $check_role = $args->{role};
+        }
+        elsif (defined $controller->role) {
+            $check_role = $controller->role;
+        }
+        else {
+            my ($package, $filename, $line) = caller(1);
+            warn "$package called manage_function_uri but was unable to determine 'role' properties at line $line\n";
+            return '';
+        }
+
+        my $function_obj = IC::M::ManageFunction->new( code => $args->{function} );
+        unless ($function_obj->load( speculative => 1 )) {
+            my ($package, $filename, $line) = caller(1);
+            warn "Can't locate object for function: $args->{function} called at $package line $line\n";
+            return '';
+        }
+
+        return '' unless $check_role->check_right(
+            'execute', $function_obj,
+        );
+    }
+
+    $args->{step}  ||= 0;
+    $args->{query} ||= {};
+
+    my $url = $controller->url(
+        controller => 'manage',
+        action     => 'function',
+        parameters => {
+            _function => $args->{function},
+            _step     => $args->{step},
+        },
+        get        => $args->{query},
+        secure     => 1,
+    );
+
+    return $url;
+}
+
+#
+#
+#
+sub manage_function_link {
+    my $invocant = shift;
+    my $args = { @_ };
+
+    $args->{link_class} = 'manage_function_link' if not defined $args->{class};
+    $args->{link_id}    = '' if not defined $args->{link_id};
+
+    unless (defined $args->{click_text} and $args->{click_text} ne '') {
+        Vend::Exception::ArgumentMissing->throw( error => 'click_text' );
+    }
+    my $click_text = delete $args->{click_text};
+    my $url = $invocant->manage_function_uri( %$args );
+
+    if ($url ne '') {
+        return "<a id=\"$args->{link_id}\" class=\"$args->{link_class}\" href=\"$url\">$click_text</a>";
+    }
+
+    return '';
+}
+
+#############################################################################
+#
+#
+#
+sub _common_implied_object {
+    my $self = shift;
+
+    my $_model_class = $self->_model_class;
+    my $_object_name = $self->_model_display_name;
+    my $params       = $self->_controller->parameters;
+
+    my @pk_fields  = @{ $_model_class->meta->primary_key_columns };
+    my @_pk_fields = map { "_pk_$_" } @pk_fields;
+
+    for my $_pk_field (@_pk_fields) {
+        unless (defined $params->{$_pk_field}) {
+            IC::Exception::MissingValue->throw( "PK argument ($_pk_field): Unable to retrieve object" );
+        }
+    }
+
+    my %object_params = map { $_ => $params->{"_pk_$_"} } @pk_fields;
+
+    my $object = $_model_class->new( %object_params );
+    unless (defined $object) {
+        IC::Exception::ModelInstantiateFailure->throw( $_object_name );
+    }
+    unless ($object->load(speculative => 1)) {
+        IC::Exception::ModelLoadFailure->throw( "Unrecognized $_object_name: " . (join ' => ', %object_params) );
+    }
+
+    return $object;
+}
+
+#
+#
+#
+sub _object_manage_function_link {
+    my $self   = shift;
+    my $action = shift;
+    my $object = shift;
+    my $args   = { @_ };
+
+    # set some defaults
+    $args->{label}      ||= '';
+    $args->{url_only}   ||= 0;
+    $args->{addtl_cgi}  ||= {};
+    $args->{addtl_keys} ||= {};
+
+    my $invocant;
+    if (ref $object) {
+        $invocant  = $object;
+    }
+    else {
+        $invocant = $self->_model_class;
+    }
+
+    my %method_params = (
+        function => $self->_func_prefix . $action,
+        query    => {
+            (
+                map { 
+                    my $val;
+                    if ($invocant->can($_)) {
+                        $val = $invocant->$_;
+                    }
+                    elsif (exists $args->{addtl_keys}->{$_}) {
+                        $val = $args->{addtl_keys}->{$_};
+                    }
+                    else {
+                        IC::Exception->throw( "No value found for pk field: $_" );
+                    }
+    
+                    "_pk_$_" => $val
+                } @{ $invocant->meta->primary_key_columns }
+            ),
+            %{$args->{addtl_cgi}},
+        },
+    );
+    if (defined $args->{step}) {
+        $method_params{step} = $args->{step};
+    }
+    if (defined $args->{priv_check}) {
+        $method_params{priv_check} = $args->{priv_check};
+    }
+    if (defined $args->{role}) {
+        $method_params{role} = $args->{role};
+    }
+
+    unless (ref $self) {
+        unless (defined $args->{controller}) {
+            my ($package, $filename, $line) = caller(1);
+            warn "$package called _object_manage_function_link as class method without 'controller' argument at line $line\n";
+            return '';
+        }
+        $method_params{controller} = $args->{controller};
+    }
+
+    if ($args->{url_only}) {
+        return $self->manage_function_uri(%method_params);
+    }
+    else {
+        my $link_format = $args->{link_format} || '[&nbsp;%s&nbsp;]';
+
+        return $self->manage_function_link(
+            %method_params,
+            click_text => (sprintf $link_format, ($args->{label} || $action)),
+        );
+    }
+}
+
+
+#
+#
+#
+sub _referer_redirect_response {
+    my $self = shift;
+
+    my $params = $self->_controller->parameters;
+
+    $self->set_response(
+        type => 'redirect',
+        url  => (defined $params->{redirect_referer} ? $params->{redirect_referer} : $self->_controller->url( controller => 'manage', action => 'menu' ) ),
+    );
+
+    return;
+}
+
+#
+#
+#
+sub _properties_form_hook {
+    my $self = shift;
+    my $args = { @_ };
+
+    my $params = $self->_controller->parameters;
+
+    for my $field (@{ $self->_model_class->meta->columns }) {
+        #warn "$field: $params->{$field}\n";
+        my $value = $params->{$field};
+        next unless defined $value;
+
+        if ($field->type eq 'datetime' or $field->type eq 'timestamp') {
+            my ($date, $time);
+            if ($value =~ /T/) {
+                ($date, $time) = split /T/, $value;
+            }
+            else {
+                ($date, $time) = split / /, $value;
+            }
+
+            @{ $args->{context}->{f} }{ $field.'_yyyy', $field.'_mm', $field.'_dd' } = split /-/, $date;
+            @{ $args->{context}->{f} }{ $field.'_HH', $field.'_MM', $field.'_SS' }   = split /:/, $time;
+        }
+        elsif ($field->type eq 'date') {
+            @{ $args->{context}->{f} }{ $field.'_yyyy', $field.'_mm', $field.'_dd' } = split /-/, $value;
+        }
+        elsif ($field->type eq 'time') {
+            @{ $args->{context}->{f} }{ $field.'_HH', $field.'_MM', $field.'_SS' } = split /:/, $value;
+        }
+    }
+
+    return;
+}
+
+#
+#
+#
+sub _properties_action_hook {
+    my $self = shift;
+
+    my $params = $self->_controller->parameters;
+
+    for my $field (@{ $self->_model_class->meta->columns }) {
+        if (grep { $field->type eq $_ } qw( date time datetime timestamp )) {
+            my ($date, $time) = ('', '');
+
+            if (
+                (defined $params->{$field.'_yyyy'} and $params->{$field.'_yyyy'} ne '')
+                and
+                (defined $params->{$field.'_mm'} and $params->{$field.'_mm'} ne '')
+                and
+                (defined $params->{$field.'_dd'} and $params->{$field.'_dd'} ne '')
+            ) {
+                $date = join '-', delete @$params{ $field.'_yyyy', $field.'_mm', $field.'_dd' };
+            }
+
+            if (
+                (defined $params->{$field.'_HH'} and $params->{$field.'_HH'} ne '')
+                and
+                (defined $params->{$field.'_MM'} and $params->{$field.'_MM'} ne '')
+                and
+                (defined $params->{$field.'_SS'} and $params->{$field.'_SS'} ne '')
+            ) {
+                $time = join ':', delete @$params{ $field.'_HH', $field.'_MM', $field.'_SS' };
+            }
+
+            if ($field->type eq 'datetime' or $field->type eq 'timestamp') {
+                if ($date ne '' and $time ne '') {
+                    $params->{$field} = join ' ', $date, $time;
+                }
+                elsif ($date ne '') {
+                    $params->{$field} = $date . ' ' . '00:00:00';
+                }
+                else {
+                    $params->{$field} = '';
+                }
+            }
+            elsif ($field->type eq 'date') {
+                $params->{$field} = $date;
+            }
+            elsif ($field->type eq 'time') {
+                $params->{$field} = $time;
+            }
+        }
+    }
+
+    return;
+}
+
+#
+# each element of the search by value contains a single
+# query element specification as,
+#
+#   field = operator
+#
+# where field matches a field in the model class being
+# queried, and the operator matches a query operator
+# the model class field understands
+#
+sub _process_search_by {
+    my $self = shift;
+    my $cgi = shift;
+
+    my @return;
+
+    for my $search_by (@{ $cgi->{search_by} }) {
+        if ($search_by =~ /\A(.*)=(.*)\z/) {
+            my $field    = $1;
+            my $operator = $2;
+
+            # confirm operator and field is recognized
+            unless (grep $operator eq $_, qw( ilike like eq ne lt gt le ge )) {
+                IC::Exception::FeatureNotImplemented->throw( "Common list search operator: $operator" );
+            }
+
+            my $value = $cgi->{$field};
+            if ($operator eq 'like' or $operator eq 'ilike') {
+                $value = '%' . $cgi->{$field} . '%';
+            }
+
+            push @return, ( 
+                $field => {
+                    $operator => $value,
+                },
+            );
+        }
+    }
+
+    return @return;
+}
+
+#
+#
+#
+sub _goto_detail_form {
+    my $self = shift;
+    my $args = { @_ };
+    
+    my $_func_prefix = $self->_func_prefix;
+    
+    my %form_action_args;
+    if (defined $args->{form_action_args}) {
+        %form_action_args = %{ $args->{form_action_args} };
+    }
+    $args->{form_content} ||= 'Enter Specific ID #';
+
+    #
+    # TODO: make this a component
+    #
+    my @html;
+    push @html, "<tr>\n";
+    push @html, "<td class=\"list_table_" . (defined $args->{as_title} && $args->{as_title} ? 'title' : 'datum') . "_cell\"> $args->{form_content}: </td>\n";
+    push @html, "<td class=\"list_table_datum_cell\">\n";
+    push @html, "<form action=\"";
+    push @html, $self->manage_function_uri(
+        method => 'DetailView',
+        %form_action_args,
+    );
+    push @html, "\">\n";
+    push @html, "<input type=\"text\" name=\"_pk_id\" size=\"15\" maxlength=\"15\" />\n";
+    push @html, "<input type=\"submit\" value=\"Submit\" />";
+    push @html, "</form>\n";
+    push @html, "<br />\n";
+    push @html, "</td>\n";
+    push @html, "</tr>\n";
+
+    return @html;
+}
+
+#############################################################################
+#
+#
+#
+sub _common_list_display_all {
+    my $self = shift;
+
+    $self->_controller->parameters->{mode} = 'listall';
+
+    # this in effect provides a vector to turn off paging via the URL
+    # for normal common list or on for display all
+    $self->_controller->parameters->{_paginate} = 0;
+
+    $self->_step( 1 );
+
+    return $self->_common_list(@_);
+}
+
+#
+#
+#
+sub _common_list {
+    my $self = shift;
+
+    my $_model_class          = $self->_model_class;
+    my $_model_class_mgr      = $self->_model_class_mgr;
+    my $_object_name          = $self->_model_display_name;
+    my $_plural_name          = $self->_model_display_name_plural;
+
+    my $component_kind = 'generic';
+    my $context        = {};
+
+    my $title    = "List $_plural_name";
+    my $subtitle = '';
+
+    my $add_link = __PACKAGE__->manage_function_link(
+        function   => $self->_func_prefix . 'Add',
+        click_text => "[&nbsp;Add&nbsp;$_object_name&nbsp;]",
+        controller => $self->_controller,
+    );
+    $subtitle .= $add_link;
+
+    #
+    # TODO: test this is correct
+    #
+    $context->{_manage_list_1_allow_filtering} = ! $self->_list_no_filter;
+
+    if ($self->{_step} == 0) {
+        $title .= '&nbsp;:&nbsp;Menu';
+
+        #
+        # TODO: make this a component
+        #
+
+        my $content = [];
+        push @$content, "<table id=\"list_table\">";
+
+        my $total = $_model_class_mgr->get_objects_count;
+        if ($total) {
+            if ($self->can('_list_0_hook')) {
+                my $result = $self->_list_0_hook($content);
+                if ($result) {
+                    # still need or throw exception from hook?
+                    IC::Exception->throw( "Hook returned error: $result" );
+                }
+            }
+
+            push @$content, "<tr>";
+            push @$content, "<td class=\"list_table_title_cell\">List All</td>";
+            push @$content, "<td class=\"list_table_datum_cell_centered\">";
+            push @$content, $self->manage_function_link(
+                step       => $self->_step + 1, 
+                click_text => $total,
+                query      => {
+                    mode => 'listall',
+                },
+            );
+            push @$content, "</td>";
+            push @$content, "</tr>";
+
+            if (defined $self->_list_status_field) {
+                my $field       = $self->_list_status_field;
+                my $key_method  = $self->_list_status_obj_key_method  || 'code';
+                my $name_method = $self->_list_status_obj_name_method || 'display_label';
+
+                push @$content, "<tr><td colspan=\"2\">&nbsp;</td></tr>";
+                push @$content, "<tr>";
+                push @$content, "<td class=\"list_table_title_cell\">List by Status</td>";
+                push @$content, "<td class=\"list_table_title_cell_centered\">Count</td>";
+                push @$content, "</tr>";
+                for my $status_obj (@{ $self->_list_status_class->get_objects }) {
+                    my $key  = $status_obj->$key_method;
+                    my $name = $status_obj->$name_method;
+
+                    my $count = $_model_class_mgr->get_objects_count( query => [ $field => $key ] );
+                    if ($count) {
+                        push @$content, "<tr>";
+                        push @$content, "<td class=\"list_table_datum_cell\">";
+                        push @$content, $self->manage_function_link(
+                            step       => $self->{_step} + 1, 
+                            click_text => $name,
+                            query      => {
+                                mode    => 'list',
+                                list_by => $field,
+                                $field  => $key,
+                            },
+                        );
+                        push @$content, "</td>";
+                        push @$content, "<td class=\"list_table_datum_cell_centered\">$count</td>";
+                        push @$content, "</tr>";
+                    }
+                }
+            }
+            if (defined $self->_list_kind_field) {
+                my $field       = $self->_list_kind_field;
+                my $key_method  = $self->_list_kind_obj_key_method  || 'code';
+                my $name_method = $self->_list_kind_obj_name_method || 'display_label';
+
+                push @$content, "<tr><td colspan=\"2\">&nbsp;</td></tr>";
+                push @$content, "<tr>";
+                push @$content, "<td class=\"list_table_title_cell\">List by Kind</td>";
+                push @$content, "<td class=\"list_table_title_cell_centered\">Count</td>";
+                push @$content, "</tr>";
+                for my $kind_obj (@{ $self->_list_kind_class->get_objects }) {
+                    my $key  = $kind_obj->$key_method;
+                    my $name = $kind_obj->$name_method;
+
+                    my $count = $_model_class_mgr->get_objects_count( query => [ $field => $key ] );
+                    if ($count) {
+                        push @$content, "<tr>";
+                        push @$content, "<td class=\"list_table_datum_cell\">";
+                        push @$content, $self->manage_function_link(
+                            step       => $self->{_step} + 1, 
+                            click_text => $name,
+                            query      => {
+                                mode    => 'list',
+                                list_by => $field,
+                                $field  => $key,
+                            },
+                        );
+                        push @$content, "</td>";
+                        push @$content, "<td class=\"list_table_datum_cell_centered\">$count</td>";
+                        push @$content, "</tr>";
+                    }
+                }
+            }
+
+            #
+            # Old style status handling, this is mostly deprecated in favor of storing
+            # the statuses in the DB, see lines above for _list_status_field
+            #
+            if ($_model_class->can('statuses')) {
+                push @$content, "<tr><td colspan=\"2\">&nbsp;</td></tr>";
+                push @$content, "<tr>";
+                push @$content, "<td class=\"list_table_title_cell\">List by Status</td>";
+                push @$content, "<td class=\"list_table_title_cell_centered\">Count</td>";
+                push @$content, "</tr>";
+                while (my ($key, $name) = each %{ $_model_class->statuses }) {
+                    my $count = $_model_class_mgr->get_objects_count( query => [ status => $key ] );
+                    if ($count) {
+                        push @$content, "<tr>";
+                        push @$content, "<td class=\"list_table_datum_cell\">";
+                        push @$content, $self->manage_function_link(
+                            step       => $self->{_step} + 1, 
+                            click_text => $name,
+                            query      => {
+                                mode    => 'list',
+                                list_by => 'status',
+                                status  => $key,
+                            },
+                        );
+                        push @$content, "</td>";
+                        push @$content, "<td class=\"list_table_datum_cell_centered\">$count</td>";
+                        push @$content, "</tr>";
+                    }
+                }
+            }
+
+        }
+        else {
+            push @$content, "<tr><td class=\"list_table_datum_cell\">No " . lc $_plural_name . " to list.</td></tr>\n";
+        }
+        push @$content, "</table>\n";
+
+        $context->{body} = join '', @$content;
+    }
+    elsif ($self->{_step} == 1) {
+        my $params = $self->_controller->parameters;
+
+        unless (defined $params->{mode} and $params->{mode} ne '') {
+            IC::Exception::MissingValue->throw( 'mode' );
+        }
+
+        my $step0_list_link = $self->manage_function_link(
+            method     => 'List',
+            click_text => "[&nbsp;Up&nbsp;]",
+            role       => $self->_controller->role,
+        );
+        if (defined $step0_list_link) {
+            $subtitle .= $step0_list_link;
+        }
+
+        my $query = [];
+        if (lc $params->{mode} eq 'list') {
+            unless (defined $params->{list_by} and $params->{list_by} ne '') {
+                IC::Exception::MissingValue->throw( 'Missing parameter for mode "list": list_by[]' );
+            }
+
+            my @parts;
+            for my $list_by (@{ $params->{list_by} }) {
+                my $display_value = '';
+                if (defined $params->{$list_by} and $params->{$list_by} ne '') {
+                    if (ref $params->{$list_by} eq 'ARRAY') {
+                        push @$query, $list_by => $params->{$list_by};
+                        $display_value = join ', ', @{ $params->{$list_by} };
+                    }
+                    else {
+                        push @$query, $list_by => $params->{$list_by};
+                        $display_value = $params->{$list_by};
+                    }
+                }
+                else {
+                    for my $field (@{ $_model_class->meta->columns }) {
+                        next unless $field eq $list_by;
+
+                        if (grep { $field->type eq $_ } qw( date datetime time timestamp numeric integer )) {
+                            push @$query, $list_by => undef;
+                            $display_value = '&lt;undef&gt;';
+                        }
+                        else {
+                            push @$query, $list_by => [ '', undef ];
+                            $display_value = '&lt;undef&gt; or &lt;empty&gt;';
+                        }
+                    }
+                }
+
+                if ($list_by eq 'status_code') {
+                    push @parts, "Status = $display_value";
+                }
+                elsif ($list_by eq 'kind_code') {
+                    push @parts, "Kind = $display_value";
+                }
+                else {
+                    #
+                    # TODO: check for how we handle filters
+                    #
+                    push @parts, $::Tag->filter('pretty_field_name_html', $list_by) . "&nbsp;=&nbsp;$display_value";
+                }
+            }
+
+            $title .= ' : By ' . join ', ', @parts;
+        }
+        elsif (lc $params->{mode} eq 'search') {
+            # search_by holds the search specification, which is required
+            unless (defined $params->{search_by} and $params->{search_by} ne '') {
+                IC::Exception::MissingValue->throw( 'search_by' );
+            }
+
+            push @$query, $self->_process_search_by( $params );
+
+            $title .= ' : By Search';
+        }
+        elsif (lc $params->{mode} eq 'listall') {
+            # listing all objects so no query parameters
+            $title .= ' : All';
+        }
+        else {
+            IC::Exception->throw( "Unrecognized mode: $params->{mode}" );
+        }
+
+        my $total = $_model_class_mgr->get_objects_count( query => $query );
+        if ($total) {
+            my $prefix = $self->_func_prefix;
+
+            my @pk_fields  = @{ $_model_class->meta->primary_key_columns };
+
+            if (defined $params->{_paginate} and not $params->{_paginate}) {
+                $context->{page_count} = $self->_list_page_count;
+            }
+            else {
+                $context->{page_count} = $self->_list_page_count || 25;
+            }
+
+            my $_list_cols = $self->_list_cols;
+
+            my ($headers, $fields) = ([] , []);
+            for my $col (@$_list_cols) {
+                push @$fields, $col->{method};
+                push @$headers, {
+                    method    => $col->{method},
+                    display   => $col->{display},
+                    class_opt => $col->{class_opt},
+                };
+            }
+            $context->{headers} = $headers;
+            $context->{fields}  = $fields;
+
+            my $functions = { 
+                $prefix.'Properties' => { display => 'Edit' },
+                $prefix.'Drop'       => { display => 'Drop' },
+                $prefix.'DetailView' => { display => 'Detail' },
+            };
+
+            for (@{ $self->_list_additional_functions }) {
+                $functions->{$prefix . $_->{type}} = { display => $_->{display} };
+            }
+
+            my $list = [];
+            for my $object (@{ $_model_class_mgr->get_objects( query => $query ) }) {
+                my $details = {};
+                push @$list, $details;
+
+                for my $col (@$_list_cols) {
+                    no strict 'refs';
+                    my $method = $col->{method};
+
+                    # force stringification
+                    my $value = $object->$method();
+                    $details->{ $col->{method} } = "$value";
+
+                    $details->{ "$col->{method}\_class_opt" } = $col->{class_opt};
+                }
+
+                my %_pk_params = map { '_pk_'.$_ => $object->$_() } @pk_fields;
+
+                my $details_functions = [];
+                for my $key (qw(DetailView Properties Drop), map { $_->{type} } @{ $self->_list_additional_functions }) {
+                    my $name = "$prefix$key";
+                    push @$details_functions, __PACKAGE__->manage_function_link(
+                        function   => $name,
+                        query      => {
+                            %_pk_params,
+                        },
+                        click_text => "[&nbsp;$functions->{$name}->{display}&nbsp;]",
+                        controller => $self->_controller,
+                    );
+                }
+                $details->{function_options} = $details_functions;
+            }
+            if (@$list) {
+                $context->{rows} = $list;
+            }
+
+            $context->{list_class} = ref $self;
+
+            $component_kind = 'list_paginated';
+        }
+        else {
+            $context->{body} = "No $_plural_name to list.";
+        }
+    }
+    else {
+        IC::Exception->throw( "common list: unrecognized step" );
+    }
+
+    $self->set_title( $title );
+    $context->{subtitle} = $subtitle;
+
+    $self->set_response(
+        type    => 'component',
+        kind    => $component_kind,
+        context => $context,
+    );
+
+    return;
+}
+
+#
+#
+#
+sub _common_add {
+    my $self = shift;
+
+    $self->_controller->parameters->{_properties_mode} = 'add';
+
+    my $sub = $self->_sub_prefix.'Properties';
+    return $self->$sub(@_);
+}
+
+#
+#
+#
+sub _common_properties {
+    my $self = shift;
+    my %args = @_;
+
+    $args{addtl_titles} ||= [];
+
+    my $params = $self->_controller->parameters;
+    $params->{_properties_mode} ||= 'edit';
+
+    if ($params->{_properties_mode} eq 'upload') {
+        return $self->_common_properties_upload;
+    }
+    if ($params->{_properties_mode} eq 'unlink') {
+        $self->_common_properties_unlink;
+        return;
+    }
+
+    my $_model_class     = $self->_model_class;
+    my $_model_class_mgr = $self->_model_class_mgr;
+    my $_object_name     = $self->_model_display_name;
+
+    my @pk_fields  = @{ $_model_class->meta->primary_key_columns };
+    my @_pk_fields = map { "_pk_$_" } @pk_fields;
+    my @fields     = @{ $_model_class->meta->columns };
+
+    if ($self->_step == 0) {
+        my $context = {
+            provided_form    => 0,
+            form_include     => $self->_function . '-' . $self->_step,
+            form_referer     => $ENV{HTTP_REFERER},
+            _function        => $self->_function,
+            _step            => $self->_step + 1,
+            _properties_mode => $params->{_properties_mode},
+        };
+        my $form_values     = $context->{f} = {};
+        my $include_options = $context->{include_options} = {};
+
+        my %hook_params = ( context => $context );
+        if ($params->{_properties_mode} eq 'edit') {
+            my $object = $self->_common_implied_object;
+
+            $self->set_title("Edit $_object_name Properties", $object, @{ $args{addtl_titles} });
+
+            for my $field (@fields) {
+                # this is irritating, and necessary because IC eats "id" parameters
+                if ($field eq 'id') {
+                    $form_values->{_work_around_ic_id} = $object->$field;
+                }
+                else {
+                    $form_values->{$field} = $object->$field;
+                }
+            }
+            for my $_pk_field (@_pk_fields) {
+                $context->{pk_pairs}->{$_pk_field} = $params->{$_pk_field};
+            }
+
+            $hook_params{object} = $object;
+        }
+        else {
+            $self->set_title("Add $_object_name");
+
+            for my $field (@fields) {
+                $form_values->{$field} = $params->{$field} if defined $params->{$field};
+            }
+
+            #
+            # originally didn't want to make this smart, but I've
+            # since decided that creating the symlink every time
+            # we need an add doesn't make sense, so making this
+            # smart to recognize when Add exists to use it, otherwise
+            # fall back to Properties
+            #
+
+            #
+            # TODO: make this configurable per class
+            #
+            my $path = File::Spec->catfile(
+                #
+                # TODO: depending on how things fall out this may be better
+                #       situated as a link under the deployment path
+                #
+                IC::Config->catalog_path,
+                "views/components/manage/function/form/$context->{form_include}.tst",
+            );
+            unless (-e $path) {
+                $context->{form_include} = $self->_func_prefix . 'Properties-' . $self->_step;
+            }
+        }
+
+        if ($self->can('_properties_form_hook')) {
+            $self->_properties_form_hook(%hook_params);
+        }
+
+        $self->set_response(
+            type    => 'component',
+            kind    => 'form',
+            context => $context,
+        );
+    }
+    elsif ($self->_step == 1) {
+        my $result = $self->_properties_action_hook;
+        if ($result) {
+            # TODO: have the properties action hook handle the profile
+            #       processing of old, since we are no longer in a FormAction
+            #       so need to have a return that will redirect back to
+            #       where we were
+        }
+
+        if (defined $params->{_work_around_ic_id} and $params->{_work_around_ic_id} ne '') {
+            $params->{id} = $params->{_work_around_ic_id};
+        }
+
+        my %obj_params;
+        for my $field (@fields) {
+            next unless defined $params->{$field};
+            next if grep { $field eq $_ } qw( date_created last_modified created_by modified_by );
+
+            $obj_params{$field} = $params->{$field};
+        }
+        $obj_params{modified_by} = $self->_controller->role->id;
+
+        for my $field (@fields) {
+            next if grep { $field eq $_ } qw( date_created last_modified );
+
+            # clear empty dates so they become a NULL
+            if (grep { $field->type eq $_ } qw( date datetime time timestamp numeric )) {
+                if ("$obj_params{$field}" eq '') {
+                    $obj_params{$field} = undef;
+                }
+            }
+        }
+
+        # start a transaction, need this so that things
+        # happening in the post action hook will be within
+        # the same transaction, in case of an exception
+        my $db = $_model_class->init_db;
+        $db->begin_work;
+
+        my $object;
+        if ($params->{_properties_mode} eq 'edit') {
+            my %pk_params;
+            for my $_pk_field (@_pk_fields) {
+                my ($key, $val) = ($_pk_field, $params->{$_pk_field});
+                $key =~ s/^_pk_//;
+
+                $pk_params{$key} = $val;
+            }
+
+            # TODO: do we still need to do things this way?
+            my $num_rows_updated = $_model_class_mgr->update_objects(
+                db    => $db,
+                set   => { %obj_params },
+                where => [ %pk_params ],
+            );
+            unless ($num_rows_updated > 0) {
+                IC::Exception->throw( 'Unable to update record based on PK values.' );
+            }
+            if ($num_rows_updated > 1) {
+                IC::Exception->throw( 'Multiple rows updated when single primary key should match. SPEAK TO DEVELOPER!' );
+            }
+
+            my %new_pk_params;
+            for my $field (@pk_fields) {
+                $new_pk_params{$field} = $obj_params{$field};
+            }
+
+            # instantiate the object with new primary key a) to make
+            # sure everything is good, b) to use the object to redirect
+            # to the new detail record
+
+            # TODO: set a message that the record was updated
+            #       to be displayed on the detail view
+
+            $object = $_model_class->new(
+                db => $db,
+                %new_pk_params,
+            )->load;
+        }
+        elsif ($params->{_properties_mode} eq 'add') {
+            $obj_params{created_by} = $self->_controller->role->id;
+
+            $object = $_model_class->new(
+                db => $db,
+                %obj_params,
+            );
+            unless ($object) {
+                IC::Exception::ModelInstantiateFailure->throw( $_object_name );
+            }
+            $object->save;
+
+            # TODO: set a message that the record was created
+            #       to be displayed on the detail view
+            
+            # see if this load is needed when adding
+            $object->load;
+        }
+        else {
+            IC::Exception->throw( "Unrecognized properties mode: $params->{_properties_mode}" );
+        }
+
+        # TODO: verify in new framework
+        if ($self->can('_properties_post_action_hook')) {
+            $self->_properties_post_action_hook($object);
+        }
+
+        $db->commit;
+
+        unless ($self->_properties_referrer_no_override) {
+            my $detail_url = $self->_object_manage_function_link( 'DetailView', $object, url_only => 1 );
+            if ($detail_url) {
+                $params->{redirect_referer} = $detail_url;
+            }
+        }
+
+        $self->_referer_redirect_response;
+
+        return;
+    }
+    else {
+        IC::Exception->throw( "Unrecognized step: " . $self->_step );
+    }
+
+    return;
+}
+
+#
+# TODO: revisit for new framework
+#
+sub _common_properties_upload {
+    my $self = shift;
+
+    my $values = $self->{_controller}->{_values};
+    my $cgi    = $self->{_controller}->{_cgi};
+
+    my $_model_class     = $self->_model_class;
+    my $_model_class_mgr = $self->_model_class_mgr;
+    my $_object_name     = $self->_model_display_name;
+
+    my @pk_fields  = @{ $_model_class->meta->primary_key_columns };
+    my @_pk_fields = map { "_pk_$_" } @pk_fields;
+
+    my $object = $self->_common_implied_object;
+
+    # TODO: this needs to be improved to handle tree structure specification of resource handle
+    unless (defined $cgi->{resource} and $cgi->{resource} ne '') {
+        IC::Exception->throw('Required argument missing: resource');
+    }
+
+    my $attr_refs;
+
+    my $file_resource_obj = $self->_file_resource_class->new(
+        id => $cgi->{resource},
+    );
+    unless ($file_resource_obj->load( speculative => 1 )) {
+        IC::Exception->throw("Can't load file resource obj: $cgi->{resource}");
+    }
+
+    my $attrs = $file_resource_obj->attrs;
+    if (@$attrs) {
+        $attr_refs = [];
+
+        my $properties;
+
+        my $file = $file_resource_obj->get_file_for_object( $object );
+        if (defined $file) {
+            $properties = $file->properties;
+        }
+
+        for my $attr (@$attrs) {
+            my $ref = {
+                id            => $attr->id,
+                code          => $attr->code,
+                kind          => $attr->kind_code,
+                display_label => $attr->display_label,
+            };
+
+            if ($self->{_step} == 0) {
+                if (defined $properties) {
+                    for my $property (@$properties) {
+                        if ($property->file_resource_attr_id == $attr->id) {
+                            $ref->{value} = $property->value;
+                            last;
+                        }
+                    }
+                }
+            }
+            elsif ($self->{_step} == 1) {
+                # retrieve attribute value from CGI space
+                $ref->{value} = $cgi->{'_attr_' . $attr->id};
+            }
+            elsif ($self->{_step} == 2) {
+                # retrieve attribute value from Session
+                $ref->{value} = $self->{_controller}->{_scratch}->{_manage_upload_confirm_attrs}->{$attr->id};
+            }
+
+            push @$attr_refs, $ref;
+        }
+    }
+
+    if ($self->{_step} == 0 or $self->{_step} == 1) {
+        my $_pk_form_elements = [];
+        for my $_pk_field (@_pk_fields) {
+            push @$_pk_form_elements, { name => $_pk_field, value => $cgi->{$_pk_field} };
+        }
+        $self->{_controller}->tmp_scratch( _manage_form_pk_elements => [ $_pk_form_elements, undef, [ keys %{$_pk_form_elements->[0]} ] ] );
+
+        if (defined $attr_refs) {
+            $self->{_controller}->tmp_scratch(
+                _manage_form_attributes_itl => [ $attr_refs, undef, [ keys %{ $attr_refs->[0] } ], ],
+            );
+        }
+    }
+
+    my $temporary_relative_path;
+    my $temporary_path;
+    if ($self->{_step} == 1 or $self->{_step} == 2) {
+        $temporary_relative_path = File::Spec->catfile(
+            'uncontrolled',
+            '_manage_properties_upload',
+            $object->meta->table,
+            $object->serialize_pk,
+            $file_resource_obj->sub_path( '_manage_properties_upload' ),
+        );
+        $temporary_path = File::Spec->catfile(
+            $self->_file_class->_htdocs_path,
+            $temporary_relative_path,
+        );
+    }
+
+    if ($self->{_step} == 0) {
+        #
+        # TODO: check resource is required, already has file, has children descendents, etc.
+        #
+        $self->set_title("Upload $_object_name File ($cgi->{resource})", $object);
+
+        if ($self->can('_properties_upload_form_hook')) {
+            $self->_properties_upload_form_hook(
+                object            => $object,
+                file_resource_obj => $file_resource_obj,
+            );
+        }
+
+        $values->{_step}     = $self->{_step} + 1;
+        $values->{_function} = $self->{_function};
+
+        $self->{_controller}->tmp_scratch( manage_function_form_enctype => 'multipart/form-data' );
+        $self->{_controller}->tmp_scratch( _manage_form_include => "_common_properties_upload-$self->{_step}" );
+        $self->{_controller}->tmp_scratch( _manage_form_referer => $ENV{HTTP_REFERER} );
+
+        $self->response( type => 'itl', file => 'manage/function/form' );
+    }
+    elsif ($self->{_step} == 1) {
+        my $file_contents = $::Tag->value_extended(
+            {
+                name          => 'uploaded_file',
+                file_contents => 1,
+            },
+        );
+        unless (length $file_contents) {
+            IC::Exception->throw('File has no contents');
+        }
+
+        my $contents_io = IO::Scalar->new(\$file_contents);
+        my $mime_type   = File::MimeInfo::Magic::magic($contents_io);
+        unless ($mime_type ne '') {
+            IC::Exception->throw('Unable to determine MIME type from file contents');
+        }
+        my $extension   = File::MimeInfo::extensions($mime_type);
+        unless ($extension ne '') {
+            IC::Exception->throw("Unable to determine file extension from mimetype: $mime_type");
+        }
+
+        my $temporary_filename      = "tmp.$$.$extension";
+        my $temporary_file          = File::Spec->catfile($temporary_path, $temporary_filename);
+        my $temporary_relative_file = File::Spec->catfile($temporary_relative_path, $temporary_filename);
+
+        umask 0002;
+
+        File::Path::mkpath($temporary_path);
+
+        open my $OUTFILE, ">$temporary_file" or die "Can't open file for writing: $!\n";
+        binmode $OUTFILE;
+        print $OUTFILE $file_contents;
+        close $OUTFILE or die "Can't close written file: $!\n";
+
+        if ($mime_type =~ /\Aimage/) {
+            $self->{_controller}->tmp_scratch( _manage_upload_confirm_file => qq{<img src="/$temporary_relative_file" />} );
+        }
+        else {
+            $self->{_controller}->tmp_scratch( _manage_upload_confirm_file => qq{<a href="/$temporary_relative_file"><img src="} . $self->_icon_path . q{" /></a>} );
+        }
+
+        # store the attribute refs to the session for retrieval in step 2 for storage to the DB
+        if (defined $attr_refs) {
+            my $attr_values = {};
+            for my $attr_ref (@$attr_refs) {
+                $attr_values->{$attr_ref->{id}} = $attr_ref->{value};
+            }
+
+            $self->{_controller}->scratch( _manage_upload_confirm_attrs => $attr_values );
+        }
+
+        # TODO: need to walk children determining which need to be generated, etc.
+        #       and provide back a list to allow them to choose to have them override
+
+        $values->{_step}     = $self->{_step} + 1;
+        $values->{_function} = $self->{_function};
+
+        $self->{_controller}->tmp_scratch( _manage_upload_tmp_filename => $temporary_filename );
+        $self->{_controller}->tmp_scratch( _manage_form_include        => "_common_properties_upload-$self->{_step}" );
+        $self->{_controller}->tmp_scratch( _manage_form_referer        => $cgi->{redirect_referer} );
+
+        $self->response( type => 'itl', file => 'manage/function/form' );
+    }
+    elsif ($self->{_step} == 2) {
+        unless (defined $cgi->{tmp_filename} and $cgi->{tmp_filename} ne '') {
+            IC::Exception->throw('Required argument missing: tmp_filename');
+        }
+
+        my $tmp_filename_extension;
+        if ($cgi->{tmp_filename} =~ /\A.+\.\d+\.(.+)\z/) {
+            $tmp_filename_extension = $1;
+        }
+        else {
+            IC::Exception->throw("Unable to determine file extension from temporary filename: $cgi->{tmp_filename}");
+        }
+
+        my $db = $object->db;
+        eval {
+            $db->begin_work;
+
+            my $user_id = $self->{_user}->id;
+
+            my $file = $file_resource_obj->get_file_for_object( $object );
+            if (defined $file) {
+                $file->modified_by( $user_id );
+                $file->save;
+            }
+            else {
+                $file_resource_obj->add_files(
+                    {
+                        db          => $db,
+                        object_pk   => $object->serialize_pk,
+                        created_by  => $user_id,
+                        modified_by => $user_id,
+                    },
+                );
+                $file_resource_obj->save;
+
+                $file = $file_resource_obj->get_file_for_object( $object );
+            }
+
+            if (defined $attr_refs) {
+                # TODO: make this more advanced to do updates when possible
+
+                my $new_properties = [];
+                for my $attr_ref (@$attr_refs) {
+                    push @$new_properties, {
+                        file_resource_attr_id => $attr_ref->{id},
+                        value                 => $attr_ref->{value} || '',
+                        created_by            => $user_id,
+                        modified_by           => $user_id,
+                    };
+                }
+                $file->properties($new_properties);
+                $file->save;
+            }
+
+            my $temporary_file = File::Spec->catfile($temporary_path, $cgi->{tmp_filename});
+            $file->store( $temporary_file, extension => $tmp_filename_extension );
+        };
+        if ($@) {
+            my $exception = $@;
+
+            $db->rollback;
+
+            die $exception;
+        }
+
+        $db->commit;
+
+        $self->_referer_redirect_response;
+
+        return;
+    }
+    else {
+        IC::Exception->throw( "Unrecognized step: $self->{_step}" );
+    }
+
+    return;
+}
+
+#
+# TODO: revisit for new framework
+#
+sub _common_properties_unlink {
+    my $self = shift;
+
+    my $values = $self->{_controller}->{_values};
+    my $cgi    = $self->{_controller}->{_cgi};
+
+    my $_model_class     = $self->_model_class;
+    my $_model_class_mgr = $self->_model_class_mgr;
+    my $_object_name     = $self->_model_display_name;
+
+    my @pk_fields  = @{ $_model_class->meta->primary_key_columns };
+    my @_pk_fields = map { "_pk_$_" } @pk_fields;
+
+    my $object = $self->_common_implied_object;
+
+    # TODO: this needs to be improved to handle tree structure specification of resource handle
+    unless (defined $cgi->{resource} and $cgi->{resource} ne '') {
+        IC::Exception->throw('Required argument missing: resource');
+    }
+
+    my $attr_refs;
+
+    my $file_resource_obj = $self->_file_resource_class->new(
+        id => $cgi->{resource},
+    );
+    unless ($file_resource_obj->load( speculative => 1 )) {
+        IC::Exception->throw("Can't load file resource obj: $cgi->{resource}");
+    }
+    my $file = $file_resource_obj->get_file_for_object( $object );
+
+    if ($self->{_step} == 0 or $self->{_step} == 1) {
+        my $_pk_form_elements = [];
+        for my $_pk_field (@_pk_fields) {
+            push @$_pk_form_elements, { name => $_pk_field, value => $cgi->{$_pk_field} };
+        }
+        $self->{_controller}->tmp_scratch( _manage_form_pk_elements => [ $_pk_form_elements, undef, [ keys %{$_pk_form_elements->[0]} ] ] );
+    }
+
+    if ($self->{_step} == 0) {
+        $self->set_title("Drop $_object_name File ($cgi->{resource})", $object);
+
+        $values->{_step}     = $self->{_step} + 1;
+        $values->{_function} = $self->{_function};
+
+        if (defined $file) {
+            my $url_path = $file->url_path;
+            if ($file->get_mimetype =~ /\Aimage/) {
+                $self->{_controller}->tmp_scratch( manage_drop_file  => qq{<img src="$url_path" />} );
+            }
+            else {
+                $self->{_controller}->tmp_scratch( manage_drop_file  => qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>} );
+            }
+        }
+
+        $self->{_controller}->tmp_scratch( manage_function_form_enctype => 'multipart/form-data' );
+        $self->{_controller}->tmp_scratch( _manage_form_include => "_common_properties_drop-$self->{_step}" );
+        $self->{_controller}->tmp_scratch( _manage_form_referer => $ENV{HTTP_REFERER} );
+
+        $self->response( type => 'itl', file => 'manage/function/form' );
+    }
+    elsif ($self->{_step} == 1) {
+        my $db = $object->db;
+        eval {
+            $db->begin_work;
+
+            my $user_id = $self->{_user}->id;
+
+            my $file = $file_resource_obj->get_file_for_object( $object );
+            if (defined $file) {
+                my $properties = $file->properties;
+                for my $property (@$properties) {
+                    $property->delete;
+                }
+                $file->delete;
+            }
+            else {
+                IC::Exception->throw('Can\'t find file-object ' . $object->id . ' for resource ' . $file_resource_obj->id);
+            }
+        };
+        if ($@) {
+            my $exception = $@;
+            $db->rollback;
+            die $exception;
+        }
+        $db->commit;
+        $self->_referer_redirect_response;
+        return;
+    }
+    else {
+        IC::Exception->throw( "Unrecognized step: $self->{_step}" );
+    }
+
+    return;
+}
+
+#
+# TODO: add handling of file resources to drop files if the mixin is present
+#
+sub _common_drop {
+    my $self = shift;
+    
+    my $_object_name = $self->_model_display_name;
+    my $object       = $self->_common_implied_object;
+
+    $self->set_title("Drop $_object_name", $object);
+
+    if ($self->_step == 0) {
+        my $context = {
+            provided_form    => 0,
+            form_include     => '_common_drop-' . $self->_step,
+            form_referer     => $ENV{HTTP_REFERER},
+            _function        => $self->_function,
+            _step            => $self->_step + 1,
+            f                => {
+                object_desc      => $object->manage_description,
+                object_type      => $_object_name,
+            },
+        };
+        for my $pk_field (@{ $self->_model_class->meta->primary_key_columns }) {
+            $context->{pk_pairs}->{'_pk_'.$pk_field} = $object->$pk_field();
+        }
+
+        if ($self->can('_drop_form_hook')) {
+            $self->_drop_form_hook($object);
+        }
+
+        $self->set_response(
+            type    => 'component',
+            kind    => 'form',
+            context => $context,
+        );
+    }
+    elsif ($self->{_step} == 1) {
+        if ($self->can('_drop_action_hook')) {
+            $self->_drop_action_hook($object);
+        }
+
+        unless ($object->delete) {
+            IC::Exception->( "Failed to delete object: " . $object->error );
+        }
+
+        $self->_referer_redirect_response;
+    }
+    else {
+        IC::Exception->throw( 'Unrecognized step: ' . $self->_step );
+    }
+
+    return;
+}
+
+#
+#
+#
+sub _common_detail_view {
+    my $self = shift;
+
+    my $_model_class = $self->_model_class;
+    my $_object_name = $self->_model_display_name;
+    my $_object_name_plural = $self->_model_display_name_plural;
+    my @pk_fields    = @{ $_model_class->meta->primary_key_columns };
+    my @fields       = @{ $_model_class->meta->columns };
+
+    my $object  = $self->_common_implied_object;
+    my $context = {
+        subtitle => '',
+    };
+
+    $self->set_title("$_object_name Detail", $object);
+
+    my $list_link = $self->manage_function_link(
+        method     => 'List',
+        click_text => "[&nbsp;List&nbsp;$_object_name_plural&nbsp;]",
+        role       => $self->_controller->role,
+    );
+    if (defined $list_link) {
+        $context->{subtitle} .= $list_link;
+    }
+
+    # TODO: test to see if we still need to do stringification
+    
+    my $pk_settings = [];
+    for my $pk_field (@pk_fields) {
+        push @$pk_settings, { 
+            # the following forces stringification
+            # which was necessary to prevent an issue
+            # where viewing the detail page caused 
+            # the user to get logged out
+            field => "$pk_field", 
+            value => $object->$pk_field,
+        };
+    }
+    if (@$pk_settings) {
+        $context->{pk_settings} = $pk_settings;
+    }
+     
+    my @auto_fields = qw(date_created last_modified created_by modified_by);
+    my $auto_settings = [];
+    for my $field (@auto_fields) {
+        my $value = $object->$field;
+        if ($field =~ /_by$/ and $value =~ /^\d+$/) {
+            my $value_obj = $self->_role_class->new( id => $value );
+            if ($value_obj and $value_obj->load( speculative => 1)) {
+                $value = $value_obj->display_label;
+            }
+        }
+        push @$auto_settings, { 
+            # the following forces stringification
+            # which was necessary to prevent an issue
+            # where viewing the detail page caused 
+            # the user to get logged out
+            field => "$field", 
+            value => "$value",
+        };
+    }
+    if (@$auto_settings) {
+        $context->{auto_settings} = $auto_settings;
+    }
+
+    my $foreign_objects = [];
+    unless ($self->_detail_suppress_foreign_objects) {
+        for my $fk (@{ $self->_model_class->meta->foreign_keys }) {
+            my $method      = $fk->name;
+            my $foreign_obj = $object->$method;
+
+            if (defined $foreign_obj) {
+                #
+                # TODO: need to add this to IC::M (or wherever)
+                #
+                my $fo_manage_class = $foreign_obj->manage_class;
+
+                if (defined $fo_manage_class) {
+                    push @$foreign_objects, { 
+                        #
+                        # the following forces stringification
+                        # which was necessary to prevent an issue
+                        # where viewing the detail page caused 
+                        # the user to get logged out
+                        #
+                        field => $fo_manage_class->_model_display_name,
+                        value => $fo_manage_class->_object_manage_function_link(
+                            'DetailView',
+                            $foreign_obj,
+                            label       => $foreign_obj->manage_description,
+                            role        => $self->_controller->role,
+                            #link_format => '%s',
+                        ),
+                    };
+                }
+            }
+        }
+    }
+    if (@$foreign_objects) {
+        $context->{foreign_objects} = $foreign_objects;
+    }
+
+    my $other_setting_value_mappings = $self->_detail_other_mappings;
+
+    my $other_settings = [];
+    for my $field (sort @fields) {
+        next if grep { $field eq $_ } @pk_fields, @auto_fields;
+
+        my $value = $object->$field || '';
+        push @$other_settings, { 
+            # the following forces stringification
+            # which was necessary to prevent an issue
+            # where viewing the detail page caused 
+            # the user to get logged out
+            field => "$field", 
+            value => "$value",
+        };
+        my $other_setting_ref = {
+            # the following forces stringification
+            # which was necessary to prevent an issue
+            # where viewing the detail page caused 
+            # the user to get logged out
+            field => "$field",
+        };
+        push @$other_settings, $other_setting_ref;
+
+        if (defined $other_setting_value_mappings->{$field}) {
+            if (defined $other_setting_value_mappings->{$field}->{alternate_label}) {
+                $other_setting_ref->{field} = $other_setting_value_mappings->{$field}->{alternate_label};
+            }
+
+            my $alt_object = $object;
+            if (defined $other_setting_value_mappings->{$field}->{object_accessor}) {
+                my $alt_object_method = $other_setting_value_mappings->{$field}->{object_accessor};
+                $alt_object = $object->$alt_object_method;
+            }
+
+            if (defined $other_setting_value_mappings->{$field}->{value_accessor}) {
+                my $sub_method = $other_setting_value_mappings->{$field}->{value_accessor};
+                $other_setting_ref->{value} = $alt_object->$sub_method;
+            }
+            else {
+                $other_setting_ref->{value} = $alt_object->manage_description;
+            }
+        }
+        else {
+            if ($field->type eq 'date') {
+                $other_setting_ref->{value} = $object->$field( format => '%Y-%m-%d' );
+            }
+            else {
+                $other_setting_ref->{value} = $object->$field;
+            }
+        }
+    }
+    if (@$other_settings) {
+        $context->{other_settings} = $other_settings;
+    }
+
+    my $action_links = $context->{action_links} = [];
+
+    if (defined $self->_parent_manage_class) {
+        unless (defined $self->_parent_model_link_field) {
+            IC::Exception->throw('_parent_manage_class defined without _parent_model_link_field set');
+        }
+
+        my $package = $self->_parent_manage_class;
+        eval "use $package";
+        if ($@) {
+            warn "Can't load $package to generate parent link in common detail view\n";
+        }
+        else {
+            my $method  = $self->_parent_model_link_field;
+
+            push @$action_links, {
+                html_link => $package->_object_manage_function_link(
+                    'DetailView',
+                    $object->$method,
+                    label      => 'Go to Parent',
+                    role       => $self->_controller->role,
+                    controller => $self->_controller,
+                ),
+            };
+        }
+    }
+
+    push @$action_links, { html_link => $self->_object_manage_function_link('Properties', $object, label => "Edit $_object_name") };
+    push @$action_links, { html_link => $self->_object_manage_function_link('Drop', $object, label => "Drop $_object_name") };
+
+    if ($self->can('_detail_generic_hook')) {
+        my $content = { 
+            left         => [],
+            right        => [],
+            bottom       => [],
+            action_links => $action_links,
+        };
+        my $result = $self->_detail_generic_hook($object, $content);
+        if ($result) {
+            IC::Exception->throw("Hook returned error: $result");
+        }
+        $context->{hook_top_left_content}  = join '', @{$content->{left}};
+        $context->{hook_top_right_content} = join '', @{$content->{right}};
+        $context->{hook_bottom_content}    = join '', @{$content->{bottom}};
+    }
+
+    if (UNIVERSAL::can($object, 'get_file')) {
+        my $has_privs = 0;
+        $has_privs = 1 if $self->_controller->role->check_right( 'execute', $self->_func_prefix . 'Properties' );
+
+        my $file_resource_refs = [];
+
+        my $file_resource_objs = $object->get_file_resource_objs;
+        for my $file_resource_obj (@$file_resource_objs) {
+            my $file_resource_ref = {
+                id      => $file_resource_obj->id,
+                display => $file_resource_obj->lookup_value,
+            };
+
+            my $file = $file_resource_obj->get_file_for_object( $object );
+            my $properties;
+            if (defined $file) {
+                $properties = $file->properties;
+            }
+
+            my $attr_refs;
+            for my $attr (@{ $file_resource_obj->attrs }) {
+                my $attr_ref = {
+                    display_label => $attr->display_label,
+                };
+                if (defined $properties) {
+                    for my $property (@$properties) {
+                        if ($property->file_resource_attr_id == $attr->id) {
+                            $attr_ref->{value} = $property->value;
+                        }
+                    }
+                }
+
+                push @$attr_refs, $attr_ref;
+            }
+            if (defined $attr_refs) {
+                $file_resource_ref->{attrs} = $attr_refs;
+            }
+
+            my $link_text;
+            if (defined $file) {
+                my $url_path = $file->url_path;
+                if ($file->get_mimetype =~ /\Aimage/) {
+                    $file_resource_ref->{url} = qq{<img src="$url_path" />};
+                }
+                else {
+                    $file_resource_ref->{url} = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
+                }
+
+                $link_text = 'Replace';
+
+                if ($has_privs) {
+                    $file_resource_ref->{drop_link} = $self->_object_manage_function_link(
+                        'Properties',
+                        $object,
+                        label     => 'Drop',
+                        addtl_cgi => {
+                            _properties_mode => 'unlink',
+                            resource         => $file_resource_ref->{id},
+                        },
+                    );
+                }
+            }
+            else {
+                $link_text = 'Upload';
+            }
+
+            if ($has_privs) {
+                $file_resource_ref->{link} = $self->_object_manage_function_link(
+                    'Properties',
+                    $object,
+                    label     => $link_text,
+                    addtl_cgi => {
+                        _properties_mode => 'upload',
+                        resource         => $file_resource_ref->{id},
+                    },
+                );
+            }
+
+            push @$file_resource_refs, $file_resource_ref;
+        }
+
+        $context->{file_resources} = $file_resource_refs;
+    }
+
+    if (UNIVERSAL::can($object, 'log_actions')) {
+        my $action_log = [];
+
+        my $configuration = $self->_detail_action_log_configuration;
+
+        for my $entry (@{ $object->action_log }) {
+            my $entry_ref = {
+                label        => $entry->action->display_label,
+                by_name      => $entry->created_by_name,
+                date_created => $entry->date_created,
+                content      => ($entry->content || ''),
+            };
+
+            my @details;
+            my @seen;
+
+            #
+            # TODO: add mapping for from/to actions
+            #
+            if (exists $configuration->{action_code_handlers}->{$entry->action_code}) {
+                my $custom_sub = $configuration->{action_code_handlers}->{$entry->action_code};
+                my ($details, $seen) = $custom_sub->($entry, $self->_controller->role);
+
+                if (defined $details) {
+                    push @details, @$details;
+                }
+                if (defined $seen) {
+                    push @seen, @$seen;
+                }
+            }
+            elsif (grep { $entry->action_code eq $_ } qw( status_change kind_change condition_change location_change )) {
+                my ($from, $to) = ('', '');
+                for my $detail (@{ $entry->details }) {
+                    if ($detail->ref_code eq 'from') {
+                        $from = $detail->value;
+                        push @seen, $detail->ref_code;
+                    }
+                    elsif ($detail->ref_code eq 'to') {
+                        $to = $detail->value;
+                        push @seen, $detail->ref_code;
+                    }
+                }
+                push @details, "from '$from' to '$to'" if (defined $from or defined $to);
+            }
+            for my $detail (@{ $entry->details }) {
+                unless (grep { $detail->ref_code eq $_ } @seen) {
+                    push @details, $detail->ref_code . ': ' . $detail->value;
+                }
+            }
+            $entry_ref->{details} = join '<br />', @details;
+
+            push @$action_log, $entry_ref;
+        }
+
+        if (@$action_log) {
+            $context->{action_log} = $action_log;
+        }
+    }
+
+    $self->set_response(
+        type    => 'component',
+        kind    => 'detail_view',
+        context => $context,
+    );
+
+    return 1;
+}
+
+1;
+
+__END__

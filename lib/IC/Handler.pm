@@ -22,16 +22,10 @@ sub mvc_dispatcher {
                 || 'IC::Controller'
         ;
 
-        my $view_path
-            = $::Variable->{MVC_VIEW_PATH}
-                || $Global::Variable->{MVC_VIEW_PATH}
-                || $Vend::Cfg->{VendRoot} . '/views'
-        ;
         #::logDebug(
-            #'mvc_dispatcher(): route class "%s" controller class "%s" view path "%s" URL "%s"',
+            #'mvc_dispatcher(): route class "%s" controller class "%s" URL "%s"',
             #$route_class,
             #$controller_class,
-            #$view_path,
             #$Vend::FinalPath,
         #);    
 

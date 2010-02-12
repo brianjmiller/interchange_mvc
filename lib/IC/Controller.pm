@@ -915,11 +915,13 @@ my $render_layout = sub {
 
 my $initialize_view = sub {
 	my $self = shift;
+
 	$self->view->base_path( $self->view_path );
 	$self->view->default_extension( $self->view_default_extension )
 		if defined $self->view_default_extension
 	;
     $self->view->helper_modules( [ $self->default_helper_modules ] );
+
 	return;
 };
 
@@ -1132,7 +1134,7 @@ sub process_request {
 	;
 
     $invocant->process_initialization();
-    
+
 	my %params = @_;
     my (
         $route_handler,

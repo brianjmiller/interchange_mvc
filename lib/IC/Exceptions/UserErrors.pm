@@ -10,6 +10,8 @@ use Exception::Class (
     },
 );
 
+use IC::Exceptions::UserErrors::Controller;
+
 1;
 
 __END__

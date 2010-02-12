@@ -62,6 +62,74 @@ sub update {
     IC::Exception->throw('update() should be overridden by the implementation subclass');
 }
 
+#
+#  manage_class() and its helper method _manage_class() calculate, cache
+#  and return the name of the specific manage class associated with
+#  this particular model class.  The logic is designed so if there is
+#  a subclass with an odd pluralization or other abnormality, you can
+#  override _manage_class() in the specific subclass to return the name
+#  of the manage class to use explicitly.
+#
+#  manage_class() does a check for existence in @INC, and does a
+#  runtime require on the class in question.  This makes it suitable
+#  for use in the manage area, where it can make it easier to write
+#  general code without knowing the specific manage classes of the
+#  objects involved until runtime.
+#
+#  _manage_class() returns the name of the class only, and does not
+#  perform any checks to see if the indicated class exists.  In
+#  general, you will want to override _manage_class for specific M.pm
+#  subclasses which do not follow the current conventions of Manage.pm
+#  subclass naming.
+#
+{
+    # local lexical cache so we don't need to calculate each time
+    my %_manage_class_cache;
+
+    sub manage_class {
+        my $self = shift;
+    
+        my $class = ref $self || $self;
+        return $_manage_class_cache{ $class } if defined $_manage_class_cache{ $class };
+
+        my $manage_class = $self->_manage_class;
+        if ($manage_class) {
+            # check to see if the calculated class exists
+            do {
+                local $@;
+
+                eval "require $manage_class";
+                $_manage_class_cache{ $class } = $manage_class unless $@;
+            };
+        }
+        $_manage_class_cache{ $class } ||= undef;
+
+        return $_manage_class_cache{ $class }; 
+    }
+
+    sub _manage_class {
+        my $self = shift;
+        my $class = ref $self || $self;
+
+        if ( $class =~ s/^(.+)::M::// ) {
+            my $prefix = $1;
+
+            # simplistic pluralization algorithm - override for specific
+            # exceptions
+            $class = join '::', map {
+                /y$/ ? s/y$/ies/ : # pluralize -y as -ies and skip the other checks
+                /ss$/ ? s/$/es/  : # pluralize -ss as -sses and skip the other checks
+                !/s$/ && s/$/s/  ; # if we end in -s, don't pluralize, otherwise add an -s
+                $_ 
+            } split '::', $class;
+        
+            return $prefix . '::Manage::' . $class;
+        }
+        return '';
+    }
+}
+
+
 1;
 
 __END__

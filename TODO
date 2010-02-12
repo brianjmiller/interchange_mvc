@@ -1,4 +1,14 @@
 - Improve use of IC::Config to allow for registering a config module to be used
   so that subclassing may be used to override all functionality
+- Define path locations for MVC provided files
+    - Directly served files
+        - CSS
+        - Icons
+    - Views
+        - Default layout
+        - Controllers
+        - Components
+        - Manage function includes
 - Build dependency list
-- Confirm all unit tests pass
+- Setup installable schema definitions
+    - May include adjusting names to have reserved set

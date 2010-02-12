@@ -1,0 +1,6 @@
+#!/bin/sh
+
+for file in [0-9]*.sql; do 
+    echo "Loading $file....";
+    psql_camp ${*:--q} -f $file;
+done

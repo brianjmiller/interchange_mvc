@@ -15,7 +15,7 @@ extends qw(IC::View::Base);
 __PACKAGE__->register();
 
 has _safe_hole => (is => 'rw');
-has _safe => (is => 'rw');
+has _safe      => (is => 'rw');
 
 sub valid_extensions {
 	return qw(
@@ -29,12 +29,12 @@ my $compartment = 0;
 sub render {
 	my ($self, $file, $marshal) = @_;
 	my $template = Text::ScriptTemplate->new;
-#printf STDERR "%s\::render() called for file $file!\n", __PACKAGE__, $file;
+    #printf STDERR "%s\::render() called for file $file!\n", __PACKAGE__, $file;
 	$template->load( $file );
 
     my $obj = IC::View::TST::Eval->new;
 
-#printf STDERR "%s\::render() using namespace %s\n", __PACKAGE__, $namespace;
+    #printf STDERR "%s\::render() using namespace %s\n", __PACKAGE__, $namespace;
     if ($marshal and ref($marshal) eq 'HASH') {
         $template->setq( %$marshal );
     }
@@ -60,7 +60,7 @@ sub render {
 
 sub parse {
     my ($path, $opt) = @_;
-#::logDebug("IC::View::TST::parse started up with " . ::uneval($opt));
+    #::logDebug("IC::View::TST::parse started up with " . ::uneval($opt));
 
     my $template = Text::ScriptTemplate->new;
     # remove ths cache call until I know how to handle it -- Ethan

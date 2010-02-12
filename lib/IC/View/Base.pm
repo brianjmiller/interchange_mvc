@@ -21,8 +21,10 @@ my @subclasses;
 
 sub register {
 	my $package = shift;
-	confess('Already registered!') if grep({ $_ eq $package } @subclasses);
+
+	confess( q{Can't register view class: already registered} ) if grep { $_ eq $package } @subclasses;
 	push @subclasses, $package;
+
 	return $package;
 };
 

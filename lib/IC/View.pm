@@ -45,9 +45,9 @@ known to View::Base will be tried in alphabetical order until a view file is fou
 
 =cut
 
-has base_path => ( is => 'rw', );
+has base_path         => ( is => 'rw', );
 has default_extension => ( is => 'rw', default => sub { return 'html' }, );
-has helper_modules => ( is => 'rw', isa => 'ArrayRef', default => sub { return [] } );
+has helper_modules    => ( is => 'rw', isa => 'ArrayRef', default => sub { return [] } );
 
 =pod
 
@@ -106,7 +106,7 @@ sub slurp_view {
 	my ($self, $view) = @_;
 	local $/ = '';
 	open(my $fh, '<', $view)
-		or confess 'Could not open view for reading!'
+		or confess "Could not open view for reading: $!"
 	;
 	my $result = <$fh>;
 	close $fh;

@@ -23,6 +23,12 @@ sub adhoc_ic_path {
 	return File::Spec->catfile( $self->adhoc_base_path, 'interchange' );
 }
 
+sub adhoc_htdocs_path {
+	my $self = shift;
+
+	return File::Spec->catfile( $self->adhoc_base_path, 'htdocs' );
+}
+
 sub _validate_adhoc_user {
     my $invocant = shift;
 
