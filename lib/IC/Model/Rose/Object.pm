@@ -274,13 +274,28 @@ sub make_manager_package {
 }
 
 #
-# method to consistently serialize a PK
+# TODO: we need to clearly pick a better delimiter than '_'
+# method to consistently serialize a PK...
 #
 sub as_hashkey {
     my $self = shift;
 
     # C<sort> here just to force consistency
     return join '_', map { $self->$_ } sort @{ $self->meta->primary_key_columns };
+}
+
+#
+# TODO: deserialization won't work so well when using '_' as the delimiter
+# ... and a method to deserialize the hashed PK
+#
+sub from_hashkey {
+    my $self = shift;
+    my $hashkey = shift;
+
+    my $hash = {};
+    @$hash{ sort @{ $self->meta->primary_key_columns } } = split /_/, $hashkey;
+
+    return; 
 }
 
 sub add_tracked_columns {
