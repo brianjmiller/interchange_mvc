@@ -16,7 +16,7 @@ __PACKAGE__->meta->setup(
         ref_obj_pk => { type => 'text', not_null => 1 },
     ],
     foreign_keys    => [
-        right_type  => {
+        right  => {
             class       => 'IC::M::Right',
             key_columns => { right_id => 'id' },
         },
@@ -39,8 +39,20 @@ sub implements_type_target {
 }
 
 #
-# TODO: implement method for retrieval of a reference object
+# TODO: need to make this handle multiple field PKs
 #
+sub reference_obj {
+    my $self = shift;
+
+    my $obj_model_class = $self->right->right_type->target_kind->model_class;
+    my ($pk_field)      = $obj_model_class->meta->primary_key_columns;
+
+    my $object = $obj_model_class->new(
+        $pk_field => $self->ref_obj_pk,
+    )->load;
+
+    return $object;
+}
 
 1;
 
