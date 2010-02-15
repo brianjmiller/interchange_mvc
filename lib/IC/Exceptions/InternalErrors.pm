@@ -24,6 +24,14 @@ use Exception::Class (
         description => 'System: Object Init Failure',
         isa         => 'IC::Exception::InternalError',
     },
+    'IC::Exception::ModelLoadFailure' => {
+        description => 'Model Load Failure',
+        isa         => 'IC::Exception::InternalError',
+    },
+    'IC::Exception::ModelInstantiateFailure' => {
+        description => 'Model Instantiation Failure',
+        isa         => 'IC::Exception::InternalError',
+    },
 );
 
 use IC::Exceptions::InternalErrors::Controller;
