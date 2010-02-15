@@ -25,7 +25,7 @@ use Moose;
 use MooseX::ClassAttribute;
 
 class_has '_root_model_class'          => ( is => 'ro', default => 'IC::M' );
-class_has '_icon_path'                 => ( is => 'ro', default => undef );
+class_has '_icon_path'                 => ( is => 'ro', default => '/ic/images/icons/file.png' );
 class_has '_model_class'               => ( is => 'ro', default => undef );
 class_has '_model_class_mgr'           => ( is => 'ro', default => undef );
 class_has '_model_display_name'        => ( is => 'ro', default => undef );
@@ -96,9 +96,6 @@ no MooseX::ClassAttribute;
 #
 sub _function { return $_[0]->_class . '_' . $_[0]->_method }
 
-#
-#
-#
 sub execute {
     my $self = shift;
     my %args = @_;
@@ -119,9 +116,6 @@ sub execute {
     return;
 }
 
-#
-#
-#
 sub set_response {
     my $self = shift;
     my $args = { @_ };
@@ -145,11 +139,6 @@ sub set_response {
             list_paginated   => 'IC::C::Manage::Component::FunctionResult::ListPaginated',
         };
         if (exists $component_class->{$args->{kind}}) {
-            #$self->_controller->add_stylesheet(
-                #kind => 'controlled',
-                #path => "_components/manage/function/$args->{kind}.css"
-            #);
-
             my $component = $component_class->{$args->{kind}}->new( 
                 controller => $self->_controller,
                 context    => $args->{context},
@@ -184,9 +173,6 @@ sub set_response {
     return;
 }
 
-#
-#
-#
 sub set_title {
     my $self = shift;
     my ($action, @objects) = @_;
@@ -201,9 +187,11 @@ sub set_title {
     return;
 }
 
-#
-#
-#
+sub set_subtitle {
+    my $self = shift;
+    $self->_controller->content_subtitle( shift );
+}
+
 sub manage_function_uri {
     my $invocant = shift;
     my $args = { @_ };
@@ -286,9 +274,6 @@ sub manage_function_uri {
     return $url;
 }
 
-#
-#
-#
 sub manage_function_link {
     my $invocant = shift;
     my $args = { @_ };
@@ -342,9 +327,6 @@ sub _common_implied_object {
     return $object;
 }
 
-#
-#
-#
 sub _object_manage_function_link {
     my $self   = shift;
     my $action = shift;
@@ -419,10 +401,6 @@ sub _object_manage_function_link {
     }
 }
 
-
-#
-#
-#
 sub _referer_redirect_response {
     my $self = shift;
 
@@ -436,9 +414,6 @@ sub _referer_redirect_response {
     return;
 }
 
-#
-#
-#
 sub _properties_form_hook {
     my $self = shift;
     my $args = { @_ };
@@ -473,9 +448,6 @@ sub _properties_form_hook {
     return;
 }
 
-#
-#
-#
 sub _properties_action_hook {
     my $self = shift;
 
@@ -570,9 +542,6 @@ sub _process_search_by {
     return @return;
 }
 
-#
-#
-#
 sub _goto_detail_form {
     my $self = shift;
     my $args = { @_ };
@@ -626,9 +595,6 @@ sub _common_list_display_all {
     return $self->_common_list(@_);
 }
 
-#
-#
-#
 sub _common_list {
     my $self = shift;
 
@@ -964,7 +930,7 @@ sub _common_list {
     }
 
     $self->set_title( $title );
-    $context->{subtitle} = $subtitle;
+    $self->set_subtitle( $subtitle );
 
     $self->set_response(
         type    => 'component',
@@ -975,9 +941,6 @@ sub _common_list {
     return;
 }
 
-#
-#
-#
 sub _common_add {
     my $self = shift;
 
@@ -987,9 +950,6 @@ sub _common_add {
     return $self->$sub(@_);
 }
 
-#
-#
-#
 sub _common_properties {
     my $self = shift;
     my %args = @_;
@@ -1635,9 +1595,6 @@ sub _common_drop {
     return;
 }
 
-#
-#
-#
 sub _common_detail_view {
     my $self = shift;
 
@@ -1648,20 +1605,21 @@ sub _common_detail_view {
     my @fields       = @{ $_model_class->meta->columns };
 
     my $object  = $self->_common_implied_object;
-    my $context = {
-        subtitle => '',
-    };
+    my $context = {};
 
     $self->set_title("$_object_name Detail", $object);
 
+    my $subtitle = '';
+    
     my $list_link = $self->manage_function_link(
         method     => 'List',
         click_text => "[&nbsp;List&nbsp;$_object_name_plural&nbsp;]",
         role       => $self->_controller->role,
     );
     if (defined $list_link) {
-        $context->{subtitle} .= $list_link;
+        $subtitle .= $list_link;
     }
+    $self->set_subtitle($subtitle);
 
     # TODO: test to see if we still need to do stringification
     

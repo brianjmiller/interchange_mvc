@@ -1,0 +1,34 @@
+/* Utility */
+.emphasized {
+    font-weight: bold;
+}
+
+.italicized {
+    font-style: italic;
+}
+
+.mini {
+    font-size: 85%;
+}
+
+.micro {
+    font-size: 77%;
+}
+
+.row_odd {
+}
+
+.row_even {
+    background-color: #EEEEEE;
+}
+
+.centered {
+    text-align: center;
+}
+
+.DEBUG {
+    /* display: none;  /* comment out for testing */
+    color: black;
+    background-color: #ffaa33;
+}
+

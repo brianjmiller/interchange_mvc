@@ -27,8 +27,8 @@ sub execute {
     my $ctl  = $self->controller;
 
     $ctl->add_stylesheet(
-        kind => 'controlled',
-        path => '_components/manage/function/' . $self->_kind . '.css',
+        kind => 'ic',
+        path => 'components/manage/function/' . $self->_kind . '.css',
     );
 
     return $self->render(

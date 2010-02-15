@@ -1,0 +1,23 @@
+<input type="hidden" name="_work_around_ic_id" value="<%= $f->{_work_around_ic_id} %>" />
+<tr>
+    <td class="manage_form_table_label_cell">Name:</td>
+    <td class="manage_form_table_input_cell"><input type="text" name="name" value="<%= $f->{name} %>" size="100" maxlength="100" /></td>
+</tr>
+<tr>
+    <td class="manage_form_table_input_cell" colspan="2">
+        Description:
+        <br />
+        <textarea name="description" rows="5" cols="50" /><%= $f->{description} %></textarea>
+    </td>
+</tr>
+<tr>
+    <td class="manage_form_table_label_cell">Target Kind: </td>
+    <td class="manage_form_table_input_cell">
+        <select name="target_kind_code">
+            <option value="">&lt;none&gt;</option>
+            <% for my $option (@{ $opts->{target_kinds} }) { %>
+                <option value="<%= $option->{value} %>"<%= $option->{selected} %>><%= $option->{display} %></option>
+            <% } %>
+        </select>
+    </td>
+</tr>

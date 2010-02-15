@@ -1,0 +1,37 @@
+@import url("_common_elements.css");
+
+td.list_table_title_cell {
+    border-bottom: 1px solid black;
+}
+
+td.list_table_title_cell_centered {
+    border-bottom: 1px solid black;
+}
+
+td.list_table_options_cell_even {
+    text-align: center;
+    font-size: 8pt;
+}
+
+td.list_table_options_cell_odd {
+    text-align: center;
+    font-size: 8pt;
+    background-color: #EEEEEE;
+}
+
+td.list_table_datum_cell_even {
+}   
+ 
+td.list_table_datum_cell_odd {
+    background-color: #EEEEEE;
+}   
+
+td.list_table_datum_cell_even_centered {
+    text-align: center;
+}
+
+td.list_table_datum_cell_odd_centered {
+    text-align: center;
+    background-color: #EEEEEE;
+}
+

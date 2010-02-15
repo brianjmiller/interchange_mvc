@@ -3,11 +3,15 @@ package IC::C;
 use strict;
 use warnings;
 
+use File::Spec ();
+
 use IC::Config;
 use IC::Exception;
 use IC::M::Role;
 use IC::M::Right;
 use IC::M::RightType;
+use IC::Component::HTMLHeader;
+use IC::Component::HTMLFooter;
 
 use Moose;
 extends 'IC::Controller';
@@ -195,6 +199,15 @@ sub BUILD {
     }
     else {
         warn "session unavailable in controller BUILD() ($self)\n";
+    }
+
+    push @{ $self->view->base_paths }, File::Spec->catfile( IC::Config->adhoc_base_path, 'mvc', 'views' );
+
+    if (! defined $self->html_header_component) {
+        $self->html_header_component( IC::Component::HTMLHeader->new( controller => $self ) );
+    }
+    if (! defined $self->html_footer_component) {
+        $self->html_footer_component( IC::Component::HTMLFooter->new( controller => $self ) );
     }
 
     return;

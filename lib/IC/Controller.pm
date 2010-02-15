@@ -916,7 +916,7 @@ my $render_layout = sub {
 my $initialize_view = sub {
 	my $self = shift;
 
-	$self->view->base_path( $self->view_path );
+	unshift @{ $self->view->base_paths }, $self->view_path;
 	$self->view->default_extension( $self->view_default_extension )
 		if defined $self->view_default_extension
 	;

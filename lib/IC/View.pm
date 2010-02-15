@@ -5,6 +5,13 @@ use warnings;
 
 use Moose;
 use File::Spec;
+
+#
+# TODO: are these being done to make sure they are loaded?
+#       if they are extending this class then they should load it
+#       and we should have another lib do the loading of the various
+#       view type classes
+#
 use IC::View::Base;
 use IC::View::ITL;
 use IC::View::TST;
@@ -31,9 +38,10 @@ as a simple accessor.
 
 =over
 
-=item B<base_path>
+=item B<base_paths>
 
-The base path under which all views are expected to live.
+The base path(s) under which all views are expected to live. Order matters as the first path found that contains
+the desired view file will be used.
 
 =item B<default_extension>
 
@@ -45,7 +53,7 @@ known to View::Base will be tried in alphabetical order until a view file is fou
 
 =cut
 
-has base_path         => ( is => 'rw', );
+has base_paths        => ( is => 'rw', isa => 'ArrayRef', default => sub { return [] } );
 has default_extension => ( is => 'rw', default => sub { return 'html' }, );
 has helper_modules    => ( is => 'rw', isa => 'ArrayRef', default => sub { return [] } );
 
@@ -139,7 +147,7 @@ sub identify_file {
 	}
 
 	my $view;
-	while (!$view and @files) {
+	while (! $view and @files) {
 		$view = $self->find_view_file( shift @files );
 	}
 
@@ -149,27 +157,41 @@ sub identify_file {
 sub find_view_file {
 	my ($self, $file) = @_;
 
-	my $full_path = File::Spec->canonpath(
-		File::Spec->file_name_is_absolute( $file )
-			? $file
-			: File::Spec->catfile($self->base_path, $file)
-	);
+	my $full_paths = [];
+    if (File::Spec->file_name_is_absolute( $file )) {
+        push @$full_paths, File::Spec->canonpath($file);
+    }
+    else {
+        unless (@{ $self->base_paths }) {
+            IC::Exception->throw( q{Can't find view file: no base paths specified and file is not absolute} );
+        }
+        for my $base_path (@{ $self->base_paths }) {
+            push @$full_paths, File::Spec->canonpath( File::Spec->catfile($base_path, $file) );
+        }
+    }
 
-	if ($full_path !~ /\.\S+$/) {
-	    my @try_extensions = ();
+	if ($file !~ /\.\S+$/) {
+	    my @try_extensions;
 	    for my $class (IC::View::Base->view_classes) {
 		    push @try_extensions, $class->valid_extensions;
 	    }
 	    @try_extensions = sort @try_extensions;
 	    unshift @try_extensions, $self->default_extension;
-	    for (@try_extensions) {
-		    my $tmp_path = $full_path . ".$_";
-		    return $tmp_path if -e $tmp_path
-	    }
-	    return undef;
-	}
 
-	return -e $full_path ? $full_path : undef;
+        for my $full_path (@$full_paths) {
+	        for my $extension (@try_extensions) {
+		        my $tmp_path = $full_path . '.' . $extension;
+		        return $tmp_path if -e $tmp_path;
+	        }
+        }
+	}
+    else {
+        for my $full_path (@$full_paths) {
+            return $full_path if -e $full_path;
+        }
+    }
+
+	return undef;
 }
 
 sub parse {
