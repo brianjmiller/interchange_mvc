@@ -1,7 +1,7 @@
 BEGIN;
 SET client_min_messages='ERROR';
 
-CREATE VIEW file_resources_tree_view AS
+CREATE VIEW ic_file_resources_tree_view AS
     SELECT 
         tree.id, 
         tree.parent_id, 
@@ -10,7 +10,7 @@ CREATE VIEW file_resources_tree_view AS
         tree.pos 
     FROM 
         connectby(
-            'file_resources'::text,
+            'ic_file_resources'::text,
             'id'::text,
             'parent_id'::text,
             'branch_order,
