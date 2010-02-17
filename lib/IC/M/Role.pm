@@ -105,7 +105,9 @@ sub has_role_by_name {
 }
 
 #
-# TODO: switch this to be a manager method
+# TODO: switch this to be a relationship method on the user model
+#       rename as user_roles implies roles that have 'user',
+#       but it really should be roles that users link to
 #
 sub user_roles {
     my $invocant = shift;

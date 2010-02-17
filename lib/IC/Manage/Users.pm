@@ -15,12 +15,11 @@ class_has '+_model_display_name'        => ( default => 'User' );
 class_has '+_model_display_name_plural' => ( default => 'Users' );
 class_has '+_sub_prefix'                => ( default => 'user' );
 class_has '+_func_prefix'               => ( default => 'Users_user' );
-class_has '+_parent_manage_class'       => ( default => 'IC::Manage::Roles' );
-class_has '+_parent_model_link_field'   => ( default => 'role' );
 
 no Moose;
 no MooseX::ClassAttribute;
 
+my $_role_class            = __PACKAGE__->_root_model_class() . '::Role';
 my $_user_status_class     = __PACKAGE__->_root_model_class() . '::UserStatus';
 my $_user_status_class_mgr = $_user_status_class . '::Manager';
 my $_time_zone_class        = __PACKAGE__->_root_model_class() . '::TimeZone';
@@ -71,30 +70,95 @@ sub _properties_form_hook {
 
     $args->{context}->{include_options}->{time_zones} = $time_zone_options;
 
+    my $user_roles = $_role_class->new( code => 'user' )->load->roles_using;
+
+    my $role_options = [];
+    for my $element (sort { $a->code cmp $b->code } @$user_roles) {
+        push @$role_options, { 
+            value    => $element->id,
+            selected => ((defined $values->{role_id} and $values->{role_id} == $element->id) ? ' selected="selected"' : ''),
+            display  => $element->code,
+        };
+    }
+
+    $args->{context}->{include_options}->{roles} = $role_options;
+
     return;
 }
 
 sub _properties_action_hook {
     my $self = shift;
+    my $args = { @_ };
+
+    unless (defined $args->{db} and $args->{db} ne '') {
+        IC::Exception->throw( '_properties_action_hook: Missing required argument: db' );
+    }
+
+    $self->SUPER::_properties_action_hook(@_);
 
     my $params = $self->_controller->parameters;
 
+    my @required_fields = qw( role_id );
     if ($params->{_properties_mode} eq 'add') {
-        for my $field qw(new_password con_password) {
-            unless (defined $params->{$field} and $params->{$field} ne '') {
-                IC::Exception->throw( "Missing required value for '$field'" );
-            }
+        push @required_fields, qw( new_password con_password );
+
+        #
+        # TODO: handle this appropriately
+        #
+        $params->{version_id} ||= 1;
+    }
+
+    for my $field (@required_fields) {
+        unless (defined $params->{$field} and $params->{$field} ne '') {
+            IC::Exception->throw( "Missing required value for '$field'" );
         }
     }
+
     if (defined $params->{new_password} and $params->{new_password} ne '' and $params->{new_password} ne $params->{con_password}) {
         IC::Exception->throw( q{Passwords don't match.} );
     }
 
+    #
+    # TODO: handle this in the interface
+    #
     $params->{password_failure_attempts} ||= 0;
 
     if (defined $params->{new_password} and $params->{new_password} ne '') {
-        $params->{password} = Digest::MD5::md5_hex( $params->{new_password} );
+        unless (defined $params->{password_hash_kind_code} and $params->{password_hash_kind_code} ne '') {
+            IC::Exception->throw( 'Missing required value for password hash kind' );
+        }
+        
+        $params->{password} = IC::M::User->hash_password( $params->{new_password}, $params->{password_hash_kind_code} );
+
         delete @{$params}{qw( new_password con_password )};
+    }
+
+    my $role;
+    if ($params->{role_id} eq '_new') {
+        $role = $_role_class->new(
+            db            => $args->{db},
+            code          => "user_$params->{username}",
+            display_label => "User: $params->{username}",
+            description   => '',
+            has_roles     => [
+                {
+                    code => 'user',
+                },
+            ],
+        );
+        $role->save;
+
+        $params->{role_id} = $role->id;
+        warn "params: $params->{role_id}\n";
+    }
+    else {
+        $role = $_role_class->new(
+            db => $args->{db},
+            id => $params->{role_id},
+        );
+        unless ($role->load( speculative => 1 )) {
+            IC::Exception->throw( "_properties_action_hook: Unrecognized role: $params->{role_id}" );
+        }
     }
 
     return;

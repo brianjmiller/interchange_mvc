@@ -77,6 +77,9 @@ sub rights_class { 'IC::M::RightTarget::User' }
 
 {
     my $_hash_kind_interface_map = {
+        pass_through => {
+            call => '',
+        },
         md5 => {
             lib  => 'Digest::MD5',
             func => 'md5_hex',
@@ -114,23 +117,42 @@ sub rights_class { 'IC::M::RightTarget::User' }
         IC::Exception->throw("User is disabled: $opt{username}")
             if $user->status_code eq 'disabled';
 
-        #
-        # TODO: restore ability to specify password kind
-        #
-        my $hash_lookup = $_hash_kind_interface_map->{$user->password_hash_kind_code};
-        IC::Exception->throw('Hash kind has no interface map: ' . $user->password_hash_kind_code)
-            unless defined $hash_lookup;
 
-        my $call = $hash_lookup->{call};
-        my $check_password;
-        {
-            no strict 'refs';
-            $check_password = &$call( $password );
+        my $check_password = $invocant->hash_password( $password, $user->password_hash_kind_code );
+        if ($user->password ne $check_password) {
+            IC::Exception->throw('Incorrect password');
         }
-        IC::Exception->throw('Incorrect password')
-            if $user->password ne $check_password;
 
         return $user;
+    }
+
+    #
+    # TODO: move this to the HashKind model class
+    #
+    sub hash_password {
+        my $self = shift;
+        my $password = shift;
+        my $hash_kind = shift;
+
+        my $hash_lookup = $_hash_kind_interface_map->{$hash_kind};
+        unless (defined $hash_lookup) {
+            IC::Exception->throw("Hash kind has no interface map: '$hash_kind'");
+        }
+
+        my $hash;
+
+        my $call = $hash_lookup->{call};
+        if ($call eq '') {
+            $hash = $password;
+        }
+        else {
+            {
+                no strict 'refs';
+                $hash = &$call( $password );
+            }
+        }
+
+        return $hash;
     }
 }
 

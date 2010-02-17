@@ -23,6 +23,7 @@ CREATE TRIGGER ic_hash_kinds_last_modified
 ;
 
 COPY ic_hash_kinds (created_by, modified_by, code, display_label) FROM STDIN;
+schema	schema	pass_through	Pass Through (No hashing)
 schema	schema	md5	MD5
 schema	schema	sha1	SHA-1
 \.

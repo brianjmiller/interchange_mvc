@@ -1050,7 +1050,13 @@ sub _common_properties {
         );
     }
     elsif ($self->_step == 1) {
-        my $result = $self->_properties_action_hook;
+        # start a transaction, need this so that things
+        # happening in the hooks will be within
+        # the same transaction, in case of an exception
+        my $db = $_model_class->init_db;
+        $db->begin_work;
+
+        my $result = $self->_properties_action_hook( db => $db );
         if ($result) {
             # TODO: have the properties action hook handle the profile
             #       processing of old, since we are no longer in a FormAction
@@ -1081,12 +1087,6 @@ sub _common_properties {
                 }
             }
         }
-
-        # start a transaction, need this so that things
-        # happening in the post action hook will be within
-        # the same transaction, in case of an exception
-        my $db = $_model_class->init_db;
-        $db->begin_work;
 
         my $object;
         if ($params->{_properties_mode} eq 'edit') {
@@ -1661,6 +1661,12 @@ sub _common_detail_view {
         $context->{auto_settings} = $auto_settings;
     }
 
+    #
+    # keep track of fields we link to as related objects,
+    # then remove them from the "other" list
+    #
+    my @fo_fields;
+
     my $foreign_objects = [];
     unless ($self->_detail_suppress_foreign_objects) {
         for my $fk (@{ $self->_model_class->meta->foreign_keys }) {
@@ -1668,12 +1674,11 @@ sub _common_detail_view {
             my $foreign_obj = $object->$method;
 
             if (defined $foreign_obj) {
-                #
-                # TODO: need to add this to IC::M (or wherever)
-                #
                 my $fo_manage_class = $foreign_obj->manage_class;
 
                 if (defined $fo_manage_class) {
+                    push @fo_fields, keys %{ $fk->key_columns };
+
                     push @$foreign_objects, { 
                         #
                         # the following forces stringification
@@ -1686,9 +1691,9 @@ sub _common_detail_view {
                             'DetailView',
                             $foreign_obj,
                             label       => $foreign_obj->manage_description,
-                            role        => $self->_controller->role,
+                            controller  => $self->_controller,
                             #link_format => '%s',
-                        ),
+                        ) || $foreign_obj->manage_description,
                     };
                 }
             }
@@ -1702,17 +1707,9 @@ sub _common_detail_view {
 
     my $other_settings = [];
     for my $field (sort @fields) {
-        next if grep { $field eq $_ } @pk_fields, @auto_fields;
+        next if grep { $field eq $_ } @pk_fields, @auto_fields, @fo_fields;
 
         my $value = $object->$field || '';
-        push @$other_settings, { 
-            # the following forces stringification
-            # which was necessary to prevent an issue
-            # where viewing the detail page caused 
-            # the user to get logged out
-            field => "$field", 
-            value => "$value",
-        };
         my $other_setting_ref = {
             # the following forces stringification
             # which was necessary to prevent an issue

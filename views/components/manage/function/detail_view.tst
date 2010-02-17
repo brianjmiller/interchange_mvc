@@ -16,6 +16,22 @@
                 <% } %>
             </table>
             <br />
+            <% if (@$foreign_objects) { %>
+                <table class="detail_sub_table">
+                    <tr>
+                        <td class="detail_table_title_cell" colspan="2">
+                            Referenced Objects
+                        </td>
+                    </tr>
+                    <% for my $element (@$foreign_objects) { %>
+                        <tr>
+                            <td class="detail_table_datum_cell"><%= $element->{field} %>:&nbsp;</td>
+                            <td class="detail_table_datum_cell"><%= $element->{value} %></td>
+                        </tr>
+                    <% } %>
+                </table>
+                <br />
+            <% } %>
             <table class="detail_sub_table">
                 <tr>
                     <td class="detail_table_title_cell" colspan="2">
