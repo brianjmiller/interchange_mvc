@@ -30,6 +30,8 @@ schema	schema	0	user	User	Group role to which all users are assigned by default
 schema	schema	1	ic_site_mgr	IC Site Manager	Group role centered around IC site management interface
 schema	schema	2	user_guest	User: guest	
 schema	schema	3	user_root	User: root	
+schema	schema	4	ic_site_mgr_developer	IC Site Mgr: Developer	
+schema	schema	5	ic_site_mgr_user_maintenance	IC Site Mgr: User Maintenance	
 \.
 
 SELECT setval('ic_roles_id_seq', max(id)) FROM ic_roles;

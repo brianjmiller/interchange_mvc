@@ -34,6 +34,8 @@ CREATE TRIGGER ic_rights_last_modified
 COPY ic_rights (created_by, modified_by, id, role_id, right_type_id, is_granted) FROM STDIN;
 schema	schema	1	3	1	t
 schema	schema	2	1	2	t
+schema	schema	3	4	3	t
+schema	schema	4	5	3	t
 \.
 
 SELECT setval('ic_rights_id_seq', max(id)) FROM ic_rights;
