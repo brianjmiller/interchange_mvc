@@ -27,5 +27,10 @@ CREATE TRIGGER ic_roles_has_roles_last_modified
     FOR EACH ROW
     EXECUTE PROCEDURE ic_update_last_modified();
 
+COPY ic_roles_has_roles (created_by, modified_by, role_id, has_role_id) FROM STDIN;
+schema	schema	2	0
+schema	schema	3	0
+\.
+
 --ROLLBACK;
 COMMIT;
