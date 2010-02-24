@@ -93,7 +93,16 @@ sub url {
     }
     
     if (ref $get eq 'HASH' and %$get) {
-        $get = join("\n", map { "$_=$get->{$_}" } sort { $a cmp $b } keys %$get);
+        my @form;
+        while (my ($key, $val) = each %$get) {
+            if (ref $val eq 'ARRAY') {
+                push @form, map { "$key=$_" } @$val;
+            }
+            else {
+                push @form, "$key=$val";
+            }
+        }
+        $get = join "\n", @form;
         $options{form} = $get;
     }
     else {
