@@ -161,7 +161,8 @@ sub set_response {
         }
 
         $self->_controller->redirect(
-            href => $args->{url},
+            href         => $args->{url},
+            add_dot_html => 0,
         );
     }
     else {
@@ -223,7 +224,7 @@ sub manage_function_uri {
     }
     unless (defined $controller) {
         my ($package, $filename, $line) = caller(1);
-        warn "$package called manage_function_uri as class method without 'controller' argument at line $line\n";
+        warn "$package called manage_function_uri as class method without 'controller' argument at line $line ($args->{function})\n";
         return '';
     }
 
@@ -292,6 +293,28 @@ sub manage_function_link {
     }
 
     return '';
+}
+
+sub is_authorized {
+    my $invocant = shift;
+    my $function = shift;
+    my $args = { @_ };
+
+    my $role;
+    if (defined $args->{role} and $args->{role} ne '') {
+        $role = $args->{role};
+    }
+    elsif (ref $invocant) {
+        $role = $invocant->_controller->role;
+    }
+    else {
+        IC::Exception->throw('is_authorized called as class method without role argument');
+    }
+    unless (ref $function) {
+        $function = IC::M::ManageFunction->new( code => $function )->load;
+    }
+
+    return $role->check_right( 'execute', $function );
 }
 
 #############################################################################
@@ -382,7 +405,7 @@ sub _object_manage_function_link {
     unless (ref $self) {
         unless (defined $args->{controller}) {
             my ($package, $filename, $line) = caller(1);
-            warn "$package called _object_manage_function_link as class method without 'controller' argument at line $line\n";
+            warn "$package called _object_manage_function_link as class method without 'controller' argument at line $line ($method_params{function})\n";
             return '';
         }
         $method_params{controller} = $args->{controller};
@@ -634,7 +657,7 @@ sub _common_list {
         my $total = $_model_class_mgr->get_objects_count;
         if ($total) {
             if ($self->can('_list_0_hook')) {
-                my $result = $self->_list_0_hook($content);
+                my $result = $self->_list_0_hook($content, \$subtitle);
                 if ($result) {
                     # still need or throw exception from hook?
                     IC::Exception->throw( "Hook returned error: $result" );
@@ -676,9 +699,9 @@ sub _common_list {
                             step       => $self->{_step} + 1, 
                             click_text => $name,
                             query      => {
-                                mode    => 'list',
-                                list_by => $field,
-                                $field  => $key,
+                                mode        => 'list',
+                                'list_by[]' => $field,
+                                $field      => $key,
                             },
                         );
                         push @$content, "</td>";
@@ -709,9 +732,9 @@ sub _common_list {
                             step       => $self->{_step} + 1, 
                             click_text => $name,
                             query      => {
-                                mode    => 'list',
-                                list_by => $field,
-                                $field  => $key,
+                                mode        => 'list',
+                                'list_by[]' => $field,
+                                $field      => $key,
                             },
                         );
                         push @$content, "</td>";
@@ -740,9 +763,9 @@ sub _common_list {
                             step       => $self->{_step} + 1, 
                             click_text => $name,
                             query      => {
-                                mode    => 'list',
-                                list_by => 'status',
-                                status  => $key,
+                                mode        => 'list',
+                                'list_by[]' => 'status',
+                                status      => $key,
                             },
                         );
                         push @$content, "</td>";
@@ -984,7 +1007,7 @@ sub _common_properties {
             _step            => $self->_step + 1,
             _properties_mode => $params->{_properties_mode},
         };
-        my $form_values     = $context->{f} = {};
+        my $form_values     = $context->{f}               = {};
         my $include_options = $context->{include_options} = {};
 
         my %hook_params = ( context => $context );
@@ -1175,14 +1198,10 @@ sub _common_properties {
     return;
 }
 
-#
-# TODO: revisit for new framework
-#
 sub _common_properties_upload {
     my $self = shift;
 
-    my $values = $self->{_controller}->{_values};
-    my $cgi    = $self->{_controller}->{_cgi};
+    my $params = $self->_controller->parameters;
 
     my $_model_class     = $self->_model_class;
     my $_model_class_mgr = $self->_model_class_mgr;
@@ -1194,17 +1213,17 @@ sub _common_properties_upload {
     my $object = $self->_common_implied_object;
 
     # TODO: this needs to be improved to handle tree structure specification of resource handle
-    unless (defined $cgi->{resource} and $cgi->{resource} ne '') {
+    unless (defined $params->{resource} and $params->{resource} ne '') {
         IC::Exception->throw('Required argument missing: resource');
     }
 
     my $attr_refs;
 
     my $file_resource_obj = $self->_file_resource_class->new(
-        id => $cgi->{resource},
+        id => $params->{resource},
     );
     unless ($file_resource_obj->load( speculative => 1 )) {
-        IC::Exception->throw("Can't load file resource obj: $cgi->{resource}");
+        IC::Exception->throw("Can't load file resource obj: $params->{resource}");
     }
 
     my $attrs = $file_resource_obj->attrs;
@@ -1226,7 +1245,7 @@ sub _common_properties_upload {
                 display_label => $attr->display_label,
             };
 
-            if ($self->{_step} == 0) {
+            if ($self->_step == 0) {
                 if (defined $properties) {
                     for my $property (@$properties) {
                         if ($property->file_resource_attr_id == $attr->id) {
@@ -1236,11 +1255,15 @@ sub _common_properties_upload {
                     }
                 }
             }
-            elsif ($self->{_step} == 1) {
+            elsif ($self->_step == 1) {
                 # retrieve attribute value from CGI space
-                $ref->{value} = $cgi->{'_attr_' . $attr->id};
+                $ref->{value} = $params->{'_attr_' . $attr->id};
             }
-            elsif ($self->{_step} == 2) {
+            elsif ($self->_step == 2) {
+                #
+                # TODO: fix
+                #
+
                 # retrieve attribute value from Session
                 $ref->{value} = $self->{_controller}->{_scratch}->{_manage_upload_confirm_attrs}->{$attr->id};
             }
@@ -1249,23 +1272,29 @@ sub _common_properties_upload {
         }
     }
 
-    if ($self->{_step} == 0 or $self->{_step} == 1) {
-        my $_pk_form_elements = [];
+    my $context         = {};
+    my $form_values     = $context->{f}               = { resource => $params->{resource} };
+    my $include_options = $context->{include_options} = {};
+
+    if ($self->_step == 0 or $self->_step == 1) {
+        $context->{provided_form}    = 0;
+        $context->{form_include}     = '_common_properties_upload-' . $self->_step;
+        $context->{_function}        = $self->_function;
+        $context->{_step}            = $self->_step + 1;
+        $context->{_properties_mode} = $params->{_properties_mode};
+
         for my $_pk_field (@_pk_fields) {
-            push @$_pk_form_elements, { name => $_pk_field, value => $cgi->{$_pk_field} };
+            $context->{pk_pairs}->{$_pk_field} = $params->{$_pk_field};
         }
-        $self->{_controller}->tmp_scratch( _manage_form_pk_elements => [ $_pk_form_elements, undef, [ keys %{$_pk_form_elements->[0]} ] ] );
 
         if (defined $attr_refs) {
-            $self->{_controller}->tmp_scratch(
-                _manage_form_attributes_itl => [ $attr_refs, undef, [ keys %{ $attr_refs->[0] } ], ],
-            );
+            $include_options->{attributes} = $attr_refs;
         }
     }
 
     my $temporary_relative_path;
     my $temporary_path;
-    if ($self->{_step} == 1 or $self->{_step} == 2) {
+    if ($self->_step == 1 or $self->_step == 2) {
         $temporary_relative_path = File::Spec->catfile(
             'uncontrolled',
             '_manage_properties_upload',
@@ -1279,29 +1308,29 @@ sub _common_properties_upload {
         );
     }
 
-    if ($self->{_step} == 0) {
+    if ($self->_step == 0) {
         #
         # TODO: check resource is required, already has file, has children descendents, etc.
         #
-        $self->set_title("Upload $_object_name File ($cgi->{resource})", $object);
+        $self->set_title("Upload $_object_name File ($params->{resource})", $object);
+
+        $context->{form_enctype} = 'multipart/form-data';
+        $context->{form_referer} = $ENV{HTTP_REFERER};
 
         if ($self->can('_properties_upload_form_hook')) {
             $self->_properties_upload_form_hook(
                 object            => $object,
                 file_resource_obj => $file_resource_obj,
+                context           => $context,
             );
         }
-
-        $values->{_step}     = $self->{_step} + 1;
-        $values->{_function} = $self->{_function};
-
-        $self->{_controller}->tmp_scratch( manage_function_form_enctype => 'multipart/form-data' );
-        $self->{_controller}->tmp_scratch( _manage_form_include => "_common_properties_upload-$self->{_step}" );
-        $self->{_controller}->tmp_scratch( _manage_form_referer => $ENV{HTTP_REFERER} );
-
-        $self->response( type => 'itl', file => 'manage/function/form' );
     }
     elsif ($self->{_step} == 1) {
+        $context->{form_referer} = $params->{redirect_referer};
+
+        #
+        # TODO: how do we get this in the new MVC framework?
+        #
         my $file_contents = $::Tag->value_extended(
             {
                 name          => 'uploaded_file',
@@ -1326,6 +1355,8 @@ sub _common_properties_upload {
         my $temporary_file          = File::Spec->catfile($temporary_path, $temporary_filename);
         my $temporary_relative_file = File::Spec->catfile($temporary_relative_path, $temporary_filename);
 
+        $form_values->{tmp_filename} = $temporary_filename;
+
         umask 0002;
 
         File::Path::mkpath($temporary_path);
@@ -1336,10 +1367,10 @@ sub _common_properties_upload {
         close $OUTFILE or die "Can't close written file: $!\n";
 
         if ($mime_type =~ /\Aimage/) {
-            $self->{_controller}->tmp_scratch( _manage_upload_confirm_file => qq{<img src="/$temporary_relative_file" />} );
+            $include_options->{upload_confirm_file} = qq{<img src="/$temporary_relative_file" />};
         }
         else {
-            $self->{_controller}->tmp_scratch( _manage_upload_confirm_file => qq{<a href="/$temporary_relative_file"><img src="} . $self->_icon_path . q{" /></a>} );
+            $include_options->{upload_confirm_file} = qq{<a href="/$temporary_relative_file"><img src="} . $self->_icon_path . q{" /></a>};
         }
 
         # store the attribute refs to the session for retrieval in step 2 for storage to the DB
@@ -1349,39 +1380,30 @@ sub _common_properties_upload {
                 $attr_values->{$attr_ref->{id}} = $attr_ref->{value};
             }
 
-            $self->{_controller}->scratch( _manage_upload_confirm_attrs => $attr_values );
+            $include_options->{upload_confirm_attrs} = $attr_values;
         }
 
         # TODO: need to walk children determining which need to be generated, etc.
         #       and provide back a list to allow them to choose to have them override
-
-        $values->{_step}     = $self->{_step} + 1;
-        $values->{_function} = $self->{_function};
-
-        $self->{_controller}->tmp_scratch( _manage_upload_tmp_filename => $temporary_filename );
-        $self->{_controller}->tmp_scratch( _manage_form_include        => "_common_properties_upload-$self->{_step}" );
-        $self->{_controller}->tmp_scratch( _manage_form_referer        => $cgi->{redirect_referer} );
-
-        $self->response( type => 'itl', file => 'manage/function/form' );
     }
     elsif ($self->{_step} == 2) {
-        unless (defined $cgi->{tmp_filename} and $cgi->{tmp_filename} ne '') {
+        unless (defined $params->{tmp_filename} and $params->{tmp_filename} ne '') {
             IC::Exception->throw('Required argument missing: tmp_filename');
         }
 
         my $tmp_filename_extension;
-        if ($cgi->{tmp_filename} =~ /\A.+\.\d+\.(.+)\z/) {
+        if ($params->{tmp_filename} =~ /\A.+\.\d+\.(.+)\z/) {
             $tmp_filename_extension = $1;
         }
         else {
-            IC::Exception->throw("Unable to determine file extension from temporary filename: $cgi->{tmp_filename}");
+            IC::Exception->throw("Unable to determine file extension from temporary filename: $params->{tmp_filename}");
         }
 
         my $db = $object->db;
         eval {
             $db->begin_work;
 
-            my $user_id = $self->{_user}->id;
+            my $user_id = $self->_controller->role->id;
 
             my $file = $file_resource_obj->get_file_for_object( $object );
             if (defined $file) {
@@ -1418,7 +1440,7 @@ sub _common_properties_upload {
                 $file->save;
             }
 
-            my $temporary_file = File::Spec->catfile($temporary_path, $cgi->{tmp_filename});
+            my $temporary_file = File::Spec->catfile($temporary_path, $params->{tmp_filename});
             $file->store( $temporary_file, extension => $tmp_filename_extension );
         };
         if ($@) {
@@ -1439,17 +1461,19 @@ sub _common_properties_upload {
         IC::Exception->throw( "Unrecognized step: $self->{_step}" );
     }
 
+    $self->set_response(
+        type    => 'component',
+        kind    => 'form',
+        context => $context,
+    );
+
     return;
 }
 
-#
-# TODO: revisit for new framework
-#
 sub _common_properties_unlink {
     my $self = shift;
 
-    my $values = $self->{_controller}->{_values};
-    my $cgi    = $self->{_controller}->{_cgi};
+    my $params = $self->_controller->parameters;
 
     my $_model_class     = $self->_model_class;
     my $_model_class_mgr = $self->_model_class_mgr;
@@ -1461,68 +1485,65 @@ sub _common_properties_unlink {
     my $object = $self->_common_implied_object;
 
     # TODO: this needs to be improved to handle tree structure specification of resource handle
-    unless (defined $cgi->{resource} and $cgi->{resource} ne '') {
+    unless (defined $params->{resource} and $params->{resource} ne '') {
         IC::Exception->throw('Required argument missing: resource');
     }
 
     my $attr_refs;
 
     my $file_resource_obj = $self->_file_resource_class->new(
-        id => $cgi->{resource},
+        id => $params->{resource},
     );
     unless ($file_resource_obj->load( speculative => 1 )) {
-        IC::Exception->throw("Can't load file resource obj: $cgi->{resource}");
+        IC::Exception->throw("Can't load file resource obj: $params->{resource}");
     }
     my $file = $file_resource_obj->get_file_for_object( $object );
-
-    if ($self->{_step} == 0 or $self->{_step} == 1) {
-        my $_pk_form_elements = [];
-        for my $_pk_field (@_pk_fields) {
-            push @$_pk_form_elements, { name => $_pk_field, value => $cgi->{$_pk_field} };
-        }
-        $self->{_controller}->tmp_scratch( _manage_form_pk_elements => [ $_pk_form_elements, undef, [ keys %{$_pk_form_elements->[0]} ] ] );
+    unless (defined $file) {
+        IC::Exception->throw( q{Can\'t find file-object } . $object->id . ' for resource ' . $file_resource_obj->id );
     }
 
-    if ($self->{_step} == 0) {
-        $self->set_title("Drop $_object_name File ($cgi->{resource})", $object);
+    my $context         = {};
+    my $form_values     = $context->{f}               = { resource => $params->{resource} };
+    my $include_options = $context->{include_options} = {};
 
-        $values->{_step}     = $self->{_step} + 1;
-        $values->{_function} = $self->{_function};
+    if ($self->_step == 0) {
+        $self->set_title("Unlink $_object_name File ($params->{resource})", $object);
 
-        if (defined $file) {
-            my $url_path = $file->url_path;
-            if ($file->get_mimetype =~ /\Aimage/) {
-                $self->{_controller}->tmp_scratch( manage_drop_file  => qq{<img src="$url_path" />} );
-            }
-            else {
-                $self->{_controller}->tmp_scratch( manage_drop_file  => qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>} );
-            }
+        $context->{provided_form}    = 0;
+        $context->{form_include}     = '_common_properties_unlink-' . $self->_step;
+        $context->{_function}        = $self->_function;
+        $context->{_step}            = $self->_step + 1;
+        $context->{_properties_mode} = $params->{_properties_mode};
+        $context->{form_referer}     = $ENV{HTTP_REFERER};
+
+        for my $_pk_field (@_pk_fields) {
+            $context->{pk_pairs}->{$_pk_field} = $params->{$_pk_field};
         }
 
-        $self->{_controller}->tmp_scratch( manage_function_form_enctype => 'multipart/form-data' );
-        $self->{_controller}->tmp_scratch( _manage_form_include => "_common_properties_drop-$self->{_step}" );
-        $self->{_controller}->tmp_scratch( _manage_form_referer => $ENV{HTTP_REFERER} );
+        my $url_path = $file->url_path;
+        if ($file->get_mimetype =~ /\Aimage/) {
+            $include_options->{display_file} = qq{<img src="$url_path" />};
+        }
+        else {
+            $include_options->{display_file} = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
+        }
 
-        $self->response( type => 'itl', file => 'manage/function/form' );
+        $self->set_response(
+            type    => 'component',
+            kind    => 'form',
+            context => $context,
+        );
     }
     elsif ($self->{_step} == 1) {
         my $db = $object->db;
         eval {
             $db->begin_work;
 
-            my $user_id = $self->{_user}->id;
-
-            my $file = $file_resource_obj->get_file_for_object( $object );
-            if (defined $file) {
-                my $properties = $file->properties;
-                for my $property (@$properties) {
-                    $property->delete;
-                }
-                $file->delete;
+            my $properties = $file->properties;
+            for my $property (@$properties) {
+                $property->delete;
             }
-            else {
-                IC::Exception->throw('Can\'t find file-object ' . $object->id . ' for resource ' . $file_resource_obj->id);
-            }
+            $file->delete;
         };
         if ($@) {
             my $exception = $@;
@@ -1530,11 +1551,13 @@ sub _common_properties_unlink {
             die $exception;
         }
         $db->commit;
+
         $self->_referer_redirect_response;
+
         return;
     }
     else {
-        IC::Exception->throw( "Unrecognized step: $self->{_step}" );
+        IC::Exception->throw( 'Unrecognized step: ' . $self->_step);
     }
 
     return;
@@ -1799,7 +1822,13 @@ sub _common_detail_view {
 
     if (UNIVERSAL::can($object, 'get_file')) {
         my $has_privs = 0;
-        $has_privs = 1 if $self->_controller->role->check_right( 'execute', $self->_func_prefix . 'Properties' );
+
+        my $function_obj = IC::M::ManageFunction->new( code => $self->_func_prefix . 'Properties' );
+        if ($function_obj->load( speculative => 1 )) {
+            if ($self->_controller->role->check_right( 'execute', $function_obj )) {
+                $has_privs = 1;
+            }
+        }
 
         my $file_resource_refs = [];
 

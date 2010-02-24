@@ -27,10 +27,9 @@ sub menu {
 
     my $role = $self->role;
 
-    my $context = {
-        menu_left  => [],
-        menu_right => [],
-    };
+    my $context = $self->context;
+    $context->{menu_left}  = [] unless defined $context->{menu_left};
+    $context->{menu_right} = [] unless defined $context->{menu_right};
 
     # we have finer grained control over functions, so we are
     # not calling the controller's check_right

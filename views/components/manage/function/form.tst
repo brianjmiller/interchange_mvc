@@ -15,6 +15,9 @@
                 secure => 1,
             );
         %>"
+        <% if (defined $form_enctype) { %>
+            enctype="<%= $form_enctype %>"
+        <% } %>
     >
 <% } %>
 
@@ -51,7 +54,7 @@
     <% unless ($provided_form) { %>
         <tr>
             <td class="manage_form_table_button_cell_centered">
-                <input type="submit" value="Submit" />
+                <input type="submit" value="<%= (defined $form_button_value ? $form_button_value : 'Submit') %>" />
             </td>
         </tr>
     <% } %>
