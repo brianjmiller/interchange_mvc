@@ -445,7 +445,7 @@ sub _properties_form_hook {
 
     for my $field (@{ $self->_model_class->meta->columns }) {
         #warn "$field: $params->{$field}\n";
-        my $value = $params->{$field};
+        my $value = defined $params->{$field} ? $params->{$field} : $args->{context}->{f}->{$field};
         next unless defined $value;
 
         if ($field->type eq 'datetime' or $field->type eq 'timestamp') {

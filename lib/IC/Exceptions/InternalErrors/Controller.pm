@@ -3,6 +3,13 @@ package IC::Exceptions::InternalErrors::Controller;
 use strict;
 use warnings;
 
+use Exception::Class (
+    'IC::Exception::ManageFunctionMethodUnknown' => {
+        description => 'System: Unknown Manage Function Method',
+        isa         => 'IC::Exception::InternalError',
+    },
+);
+
 1;
 
 __END__

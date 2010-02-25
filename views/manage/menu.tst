@@ -3,7 +3,13 @@
     <tr>
         <% if (defined $content_left) { %>
             <td id="manage_menu_table_content_cell" style="vertical-align: top;">
-                <%= $content_left->content %>
+                <% for my $element (@$content_left) { %>
+                    <% if (ref $element) { %>
+                        <%= $element->content %>
+                    <% } else { %>
+                        <%= $element %>
+                    <% } %> 
+                <% } %>
             </td>
         <% } %>
         <td id="manage_menu_table_left_cell" class="half_top">

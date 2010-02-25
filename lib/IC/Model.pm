@@ -99,7 +99,12 @@ sub update {
                 local $@;
 
                 eval "require $manage_class";
-                $_manage_class_cache{ $class } = $manage_class unless $@;
+                if ($@) {
+                    warn "Failed to require manage class ($manage_class): $@";
+                }
+                else {
+                    $_manage_class_cache{ $class } = $manage_class;
+                }
             };
         }
         $_manage_class_cache{ $class } ||= undef;
@@ -122,9 +127,10 @@ sub update {
                 !/s$/ && s/$/s/  ; # if we end in -s, don't pluralize, otherwise add an -s
                 $_ 
             } split '::', $class;
-        
+
             return $prefix . '::Manage::' . $class;
         }
+
         return '';
     }
 }
