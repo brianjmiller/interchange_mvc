@@ -43,6 +43,18 @@ sub _validate_adhoc_user {
     return $invocant->_setting_get('user');
 }
 
+sub is_camp {
+    eval { __PACKAGE__->camp_number };
+
+    return $@ ? 0 : 1;
+}
+
+sub is_live {
+    eval { __PACKAGE__->camp_number };
+
+    return $@ ? 1 : 0;
+}
+
 1;
 
 __END__
