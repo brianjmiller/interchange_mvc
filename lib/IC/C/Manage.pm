@@ -52,10 +52,10 @@ sub menu {
                     parameters => {
                         _function => $function->code,
                     },
+                    secure        => 1,
                 ),
                 display_label => $function->display_label,
                 #extra_params  => $function->extra_params,
-                secure        => 1,
             };
         }
 
