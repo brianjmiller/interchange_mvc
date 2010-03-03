@@ -35,7 +35,7 @@ CREATE TABLE ic_user_statuses (
 CREATE TRIGGER ic_users_last_modified
     BEFORE INSERT OR UPDATE ON ic_user_statuses
     FOR EACH ROW
-    EXECUTE PROCEDURE update_last_modified()
+    EXECUTE PROCEDURE ic_update_last_modified()
 ;
 
 INSERT INTO ic_user_statuses (code, created_by, modified_by, display_label) VALUES ('disabled', 'schema', 'schema', 'Disabled');

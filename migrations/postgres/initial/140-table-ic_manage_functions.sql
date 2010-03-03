@@ -43,7 +43,7 @@ ALTER TABLE ONLY ic_manage_functions
 CREATE TRIGGER ic_manage_functions_last_modified
     BEFORE INSERT OR UPDATE ON ic_manage_functions
     FOR EACH ROW
-    EXECUTE PROCEDURE update_last_modified();
+    EXECUTE PROCEDURE ic_update_last_modified();
 
 COPY ic_manage_functions (code, date_created, created_by, last_modified, modified_by, section_code, developer_only, in_menu, sort_order, display_label, extra_params, help_copy) FROM stdin;
 ManageFunctions__Sections_sectionAdd	2009-01-12 14:02:24.395965	1	2009-01-12 14:02:24.061873	1	_development	t	f	1	Add Manage Function Section		

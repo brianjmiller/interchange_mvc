@@ -33,7 +33,7 @@ CREATE TABLE ic_user_versions (
 CREATE TRIGGER ic_users_last_modified
     BEFORE INSERT OR UPDATE ON ic_user_versions
     FOR EACH ROW
-    EXECUTE PROCEDURE update_last_modified()
+    EXECUTE PROCEDURE ic_update_last_modified()
 ;
 
 INSERT INTO ic_user_versions (id, created_by, modified_by, display_label) VALUES (1, 'schema', 'schema', '1 - Initial');

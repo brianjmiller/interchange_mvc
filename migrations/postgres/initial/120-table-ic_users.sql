@@ -67,7 +67,7 @@ CREATE TABLE ic_users (
 CREATE TRIGGER ic_users_last_modified
     BEFORE INSERT OR UPDATE ON ic_users
     FOR EACH ROW
-    EXECUTE PROCEDURE update_last_modified()
+    EXECUTE PROCEDURE ic_update_last_modified()
 ;
 
 COPY ic_users (created_by, modified_by, id, username, role_id, version_id, status_code, time_zone_code, email, password_hash_kind_code, password) FROM STDIN;
