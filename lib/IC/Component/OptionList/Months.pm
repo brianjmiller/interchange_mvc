@@ -10,7 +10,7 @@ extends 'IC::Component';
 has 'current' => (
     is => 'rw',
     default => sub {
-        (localtime)[4]
+        (localtime)[4] + 1
     },
 );
 has 'selected' => (
