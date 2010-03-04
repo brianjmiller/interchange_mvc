@@ -1,0 +1,36 @@
+MVC2 is an implementation of an MVC architecture and corresponding base application suite on top of existing Interchange core source.
+
+Some key points:
+
+* MVC2 *is* Interchange. Session handling is still handled by IC, anything you could do is still doable in the exact same manner. So it should be seen as more of a bolt on rather than a replacement.
+
+* MVC2 is essentially a 4th generation technology. The system was developed over multiple years for multiple clients and is the combination of two systems; one which started out using the ActionMap/FormAction approach.
+
+* MVC2 has been open sourced (though has next to no community, yet).
+
+* There are at least two other projects actively developing on the platform with likely a third in the wings, therefore improvements others make can be incorporated easily.
+
+* The way in which we setup the application allows for easy upgrades of both IC and MVC2 *but* only when explicitly desired, keeping the ability to easily customize, and allowing for testing.
+
+* The model portion uses a well recognized CPAN suite of modules that are actively maintained and have a readily accessible user community that has caught the eye of several players in the Perl community.
+
+* The recommended view "language" uses standard ASP tagging notation and essentially boils down to pure embedded Perl. There is a simple API interface for marshaling context from the controllers into the views. Additional view languages (or interfaces) are relatively easy to implement, opening the door to such systems as Template::Toolkit and the like. With that said, using ITL for views is still completely supported the only difficulty being the need to serialize data in scratch/session space to have it marshaled to the view. (This is the approach of the 3rd generation system.)
+
+* MVC within MVC2, there is support for a component based approach such that a component wraps up a view in a controller-esque library that can be utilized across multiple controllers.
+
+* MVC2 has a layout system that is integrated with the controllers such that site templates themselves are shared to element duplication of code. It is flexible at the controller level to allow for multiple layouts to be utilized by the same site.
+
+* MVC2 has a fully implemented URL routing system to allow for easy, and complete control over the URL space which is critical for SEO.
+
+* MVC2 hooks in very early to the IC request handling to be optimized for performance. Preventing IC from doing any processing that isn't essential.
+
+* MVC2 is theoretically unit testable though some kinks may still need to be worked out to allow for full testing.
+
+* MVC2 has a provided exception model and is developed using defensive coding techniques.
+
+* MVC2 has built in support for smart cache expiration and currently hooks into memcached natively. Support for additional caching engines should be simple to add.
+
+* MVC2 is camps aware.
+
+* MVC2 has an application portion that can be utilized or completely ignored. The application portion provides a base set of relations, their models, and a CRUD data management interface. Out of the box it provides user handling, role handling, and extremely fine grained access control. The role model is a DAG which allows for modeling complex relationships. The rights management allows for restriction on a per object (or row) basis. Also provided is a file resource mgmt component that allows for attaching an arbitrary set of files to any row in the database with management of the underlying file system and URL space.
+
