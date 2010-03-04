@@ -38,8 +38,8 @@ CREATE TRIGGER ic_manage_function_sections_last_modified
     EXECUTE PROCEDURE ic_update_last_modified();
 
 COPY ic_manage_function_sections (code, date_created, created_by, last_modified, modified_by, status, display_label) FROM stdin;
-_development	2009-01-12 14:02:23.89016	1	2009-01-12 14:02:23.571935	1	1	_Development
-general_maint	2009-01-12 14:02:23.892017	1	2009-01-12 14:02:23.571935	1	1	General Maintenance
+_development	2009-01-12 14:02:23.89016	schema	2009-01-12 14:02:23.571935	schema	1	_Development
+general_maint	2009-01-12 14:02:23.892017	schema	2009-01-12 14:02:23.571935	schema	1	General Maintenance
 access	2009-04-17 07:33:08.62354	schema	2009-04-17 07:33:08.62158	schema	1	Access Controls
 \.
 
