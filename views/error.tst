@@ -11,7 +11,7 @@
     <%= $exception->error %>
 </pre>
 
-<a href="<%= url( controller => 'home', action => 'basic', secure => 1 ) %>">Index</a>
+<a href="/">Index</a>
 
 </body>
 </html>
