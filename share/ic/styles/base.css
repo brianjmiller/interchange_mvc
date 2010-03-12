@@ -26,6 +26,10 @@
     text-align: center;
 }
 
+.hidden {
+    display: none;
+}
+
 .DEBUG {
     /* display: none;  /* comment out for testing */
     color: black;
