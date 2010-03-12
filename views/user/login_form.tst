@@ -1,6 +1,6 @@
 <form 
     id="user_login_form"
-    method="POST"
+    method="post"
     action="<%=
         url(
             controller => 'user',

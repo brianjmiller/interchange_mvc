@@ -2,7 +2,7 @@
 <% unless ($provided_form) { %>
     <form
         name="manage_function_form"
-        method="POST" 
+        method="post" 
         action="<%=
             url(
                 controller => 'manage',
