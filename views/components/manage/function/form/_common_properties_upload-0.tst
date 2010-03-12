@@ -20,6 +20,8 @@
                         <td>
                             <% if ($attribute->{kind} eq 'numeric') { %>
                                 <input type="text" name="_attr_<%= $attribute->{id} %>" value="<%= $attribute->{value} %>" size="7" maxlength="7" />
+                            <% } elsif ($attribute->{kind} eq 'string') { %>
+                                <input type="text" name="_attr_<%= $attribute->{id} %>" value="<%= $attribute->{value} %>" size="50" />
                             <% } %>
                         </td>
                     </tr>

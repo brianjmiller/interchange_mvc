@@ -1255,17 +1255,9 @@ sub _common_properties_upload {
                     }
                 }
             }
-            elsif ($self->_step == 1) {
+            elsif ($self->_step == 1 or $self->_step == 2) {
                 # retrieve attribute value from CGI space
                 $ref->{value} = $params->{'_attr_' . $attr->id};
-            }
-            elsif ($self->_step == 2) {
-                #
-                # TODO: fix
-                #
-
-                # retrieve attribute value from Session
-                $ref->{value} = $self->{_controller}->{_scratch}->{_manage_upload_confirm_attrs}->{$attr->id};
             }
 
             push @$attr_refs, $ref;
@@ -1403,7 +1395,10 @@ sub _common_properties_upload {
         eval {
             $db->begin_work;
 
-            my $user_id = $self->_controller->role->id;
+            my $user_id        = $self->_controller->role->id;
+            my $temporary_file = File::Spec->catfile($temporary_path, $params->{tmp_filename});
+            my $mime_type      = File::MimeInfo::Magic::magic($temporary_file);
+            my $is_image       = $mime_type =~ /\Aimage/ ? 1 : 0;
 
             my $file = $file_resource_obj->get_file_for_object( $object );
             if (defined $file) {
@@ -1429,6 +1424,9 @@ sub _common_properties_upload {
 
                 my $new_properties = [];
                 for my $attr_ref (@$attr_refs) {
+                    if (($attr_ref->{code} eq 'width' or $attr_ref->{code} eq 'height') and $is_image) {
+                        next if $attr_ref->{value} eq '';
+                    }
                     push @$new_properties, {
                         file_resource_attr_id => $attr_ref->{id},
                         value                 => $attr_ref->{value} || '',
@@ -1440,7 +1438,6 @@ sub _common_properties_upload {
                 $file->save;
             }
 
-            my $temporary_file = File::Spec->catfile($temporary_path, $params->{tmp_filename});
             $file->store( $temporary_file, extension => $tmp_filename_extension );
         };
         if ($@) {
@@ -1838,27 +1835,56 @@ sub _common_detail_view {
                 id      => $file_resource_obj->id,
                 display => $file_resource_obj->lookup_value,
             };
+            my @property_codes = map { $_->code } @{ $file_resource_obj->attrs };
 
             my $file = $file_resource_obj->get_file_for_object( $object );
             my $properties;
             if (defined $file) {
                 $properties = $file->properties;
+
+                if ($file->is_image) {
+                    unless (grep { $_ eq 'width' } @property_codes) {
+                        push @property_codes, 'width';
+                    }
+                    unless (grep { $_ eq 'height' } @property_codes) {
+                        push @property_codes, 'height';
+                    }
+                }
+            }
+
+            my %property_values;
+            if (defined $properties) {
+                %property_values = $file->property_values( \@property_codes, as_hash => 1 );
             }
 
             my $attr_refs;
             for my $attr (@{ $file_resource_obj->attrs }) {
                 my $attr_ref = {
+                    code          => $attr->code,
                     display_label => $attr->display_label,
                 };
-                if (defined $properties) {
-                    for my $property (@$properties) {
-                        if ($property->file_resource_attr_id == $attr->id) {
-                            $attr_ref->{value} = $property->value;
-                        }
-                    }
+                if (exists $property_values{$attr->code}) {
+                    $attr_ref->{value} = $property_values{$attr->code};
                 }
 
                 push @$attr_refs, $attr_ref;
+            }
+            if (defined $file and $file->is_image) {
+                $attr_refs ||= [];
+                unless (grep { $_->{code} eq 'width' } @$attr_refs) {
+                    push @$attr_refs, {
+                        code          => 'width',
+                        display_label => 'Auto: Width',
+                        value         => $property_values{width},
+                    };
+                }
+                unless (grep { $_->{code} eq 'height' } @$attr_refs) {
+                    push @$attr_refs, {
+                        code          => 'height',
+                        display_label => 'Auto: Height',
+                        value         => $property_values{height},
+                    };
+                }
             }
             if (defined $attr_refs) {
                 $file_resource_ref->{attrs} = $attr_refs;
@@ -1867,8 +1893,17 @@ sub _common_detail_view {
             my $link_text;
             if (defined $file) {
                 my $url_path = $file->url_path;
-                if ($file->get_mimetype =~ /\Aimage/) {
-                    $file_resource_ref->{url} = qq{<img src="$url_path" />};
+                if ($file->is_image) {
+                    #
+                    # images are just special
+                    #
+                    my ($use_width, $use_height, $use_alt) = $file->property_values( [ qw( width height alt ) ] );
+
+                    $file_resource_ref->{url} = qq{<img src="$url_path" width="$use_width" height="$use_height"};
+                    if (defined $use_alt) {
+                        $file_resource_ref->{url} .= qq{ alt="$use_alt"};
+                    }
+                    $file_resource_ref->{url} .= ' />';
                 }
                 else {
                     $file_resource_ref->{url} = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};

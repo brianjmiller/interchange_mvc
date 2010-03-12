@@ -110,8 +110,8 @@
                                         </tr>
                                         <% for my $attr (@{ $file_res->{attrs} }) { %>
                                             <tr>
-                                                <td><%= $attr->display_label %>:&nbsp;</td>
-                                                <td><%= $attr->value %></td>
+                                                <td><%= $attr->{display_label} %>:&nbsp;</td>
+                                                <td><%= $attr->{value} %></td>
                                             </tr>
                                         <% } %>
                                     </table>

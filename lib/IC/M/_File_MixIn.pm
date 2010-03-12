@@ -17,8 +17,9 @@ __PACKAGE__->export_tag(
     all => [
         qw(
             get_file
-            get_url
+            get_file_url
             get_file_resource_objs
+            get_file_property_values
             store_file_for_resource
         ),
     ],
@@ -78,11 +79,35 @@ sub get_file {
 }
 
 #
+# Returns a IC::M::File object representing either the direct
+# file, or an alternate file object that is considered a replacement
+#
+sub get_file_property_values {
+    my $self = shift;
+    my $properties = shift;
+    my $args = { @_ };
+
+    unless (defined $properties and ref $properties eq 'ARRAY' and @$properties) {
+        IC::Exception->throw( q{Can't get file property values: properties not specified (correctly)} );
+    }
+
+    my $file = $self->get_file( %$args );
+    unless (defined $file) {
+        if (defined $args->{as_hash} and $args->{as_hash}) {
+            return wantarray ? () : {};
+        }
+        return wantarray ? () : [];
+    }
+
+    return $file->property_values( $properties, %$args );
+}
+
+#
 # syntactic sugar
 #
 # TODO: add flag for getting full URL, for use in e-mails for instance
 #
-sub get_url {
+sub get_file_url {
     my $self = shift;
     my $args = { @_ };
 

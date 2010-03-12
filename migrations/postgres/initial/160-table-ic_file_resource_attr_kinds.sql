@@ -38,6 +38,7 @@ CREATE TRIGGER ic_file_resource_attr_kinds_last_modified
 
 
 COPY ic_file_resource_attr_kinds (code, date_created, created_by, last_modified, modified_by, display_label, description) FROM stdin;
+string	2009-03-06 16:47:47.728471	schema	2009-03-06 16:47:47.363356	schema	String	String value
 numeric	2009-03-06 16:47:47.728471	schema	2009-03-06 16:47:47.363356	schema	Numeric	Numeric value
 \.
 

@@ -12,6 +12,7 @@ use File::Copy qw();
 use File::MimeInfo::Magic qw();
 use File::Path qw( );
 use File::Spec qw( );
+use Image::Size;
 
 use IC::Config;
 #use IC::M::File::Property;
@@ -57,7 +58,9 @@ sub manage_description {
     return ($self->id || 'Unknown File');
 }
 
-=begin Storage Rationale:
+=begin rationale
+
+    Storage Rationale:
 
     Decided on /uncontrolled/<table>/<pk>/<resource without table> because it seemed to be
     the best balance between human accessibility via the filesystem itself and facilitation
@@ -77,7 +80,7 @@ sub manage_description {
     it would be very easy to remove a single file, but would require looping to remove all files
     associated with a particular reference object.
 
-=end
+=end rationale
 
 =cut
 
@@ -131,6 +134,43 @@ sub get_mimetype {
     return unless defined $path;
 
     return File::MimeInfo::Magic::magic($self->local_path);
+}
+
+sub is_image {
+    my $self = shift;
+
+    return ($self->get_mimetype =~ /\Aimage/ ? 1 : 0);
+}
+
+sub property_values {
+    my $self = shift;
+    my $properties = shift;
+    my $args = { @_ };
+
+    my $as_hash = $args->{as_hash} || 0;
+
+    my %check_properties = map { $_->file_resource_attr->code => $_->value } @{ $self->properties };
+    
+    if ($self->is_image and grep { $_ eq 'width' or $_ eq 'height' } @$properties) {
+        unless (defined $check_properties{width} and defined $check_properties{height}) {
+            my %auto;
+            @auto{ qw( width height ) } = imgsize($self->local_path);
+
+            for my $key (keys %auto) {
+                $check_properties{$key} = $auto{$key} unless defined $check_properties{$key};
+            }
+        }
+    }
+    
+    unless ($as_hash) {
+        return wantarray ? @check_properties{ @$properties } : [ @check_properties{ @$properties } ];
+    }
+    
+    my %return;
+    @return{ @$properties } = @check_properties{ @$properties };
+    
+    return wantarray ? %return : \%return;
+
 }
 
 sub store {

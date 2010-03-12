@@ -16,6 +16,7 @@
             <br />
             <table>
                 <% for my $attribute (@{ $opts->{attributes} }) { %>
+                    <input type="hidden" name="_attr_<%= $attribute->{id} %>" value="<%= $attribute->{value} %>" />
                     <tr>
                         <td><%= $attribute->{display_label} %>: </td>
                         <td><%= $attribute->{value} %></td>
