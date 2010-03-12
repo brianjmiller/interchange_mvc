@@ -928,21 +928,27 @@ my $initialize_view = sub {
 my $render_internal = sub {
 	my $self = shift;
 	my %params = @_;
+
 	my $context = delete($params{context}) || {};
 	# This ought to be an exception object...
 	confess 'render_internal() context must be a hashref!'
 		unless ref $context eq 'HASH'
 	;
+
 	my $view = $self->$validate_view_parameter( delete $params{view} );
 	# This also deserves an exception object...
 	confess 'render_internal() requires a view!'
 		unless defined $view
 	;
+
 	my $layout = $self->$validate_view_parameter( delete $params{layout} );
 
 	$self->$initialize_view();
+
 	my $content = $self->view->render( $view, $context );
+
 	return \$content unless defined $layout;
+
 	return $self->$render_layout( $layout, \$content );
 };
 

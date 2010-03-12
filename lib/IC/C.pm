@@ -156,10 +156,24 @@ sub handle_exception {
         return $self->response;
     }
 
+    my $context = {
+        (UNIVERSAL::isa($exception, 'IC::Exception')
+            ? ( type => $exception->description, trace => $exception->trace )
+            : ( type => 'Unknown', trace => '' )
+        ),
+        exception => $exception
+    };
+
     my $response = IC::Controller::Response->new;
     $response->headers->status('500 Internal Server Error');
     $response->headers->content_type('text/html');
-    $response->buffer( $self->render_local( view => 'error.tst', context => { exception => $exception } ) );
+    $response->buffer(
+        $self->render_local(
+            layout  => $self->layout,
+            view    => 'error.tst',
+            context => $context,
+        ),
+    );
 
     return $response;
 }
