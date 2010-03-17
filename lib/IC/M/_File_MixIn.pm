@@ -139,7 +139,7 @@ sub get_file_resource_objs {
 #  in the indicated resource path.
 #
 sub store_file_for_resource {
-    my ($self, $file, $resource) = @_;
+    my ($self, $file, $resource, %args) = @_;
     my $res = ref $resource ? $resource->[0] : $resource;
 
     IC::Exception->throw("No such file '$file'")
@@ -155,7 +155,9 @@ sub store_file_for_resource {
     my $attr_refs = [];
 
     if (@$attr) {
-        die "Don't know how to handle attributes yet!\n";
+        if (defined $args{attrs}) {
+            warn "Attributes provided: Don't know how to handle attributes yet!";
+        }
     }
 
     my $db = $self->db;
