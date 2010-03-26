@@ -14,10 +14,13 @@ use Time::HiRes qw();
 sub round {
     my $self = shift;
     my $amount = shift;
+    my $num_digits = shift;
 
     return 0 unless defined $amount;
 
-    my $return = Vend::Util::round_to_frac_digits($amount, 2);
+    $num_digits = 2 unless defined $num_digits;
+
+    my $return = Vend::Util::round_to_frac_digits($amount, $num_digits);
     return $return;
 }
 
