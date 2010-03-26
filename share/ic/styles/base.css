@@ -36,3 +36,6 @@
     background-color: #ffaa33;
 }
 
+a.no_underline {
+    text-decoration: none;
+}
