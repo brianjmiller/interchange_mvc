@@ -16,6 +16,10 @@ use IC::Component::HTMLFooter;
 use Moose;
 extends 'IC::Controller';
 
+has layout => (
+    is      => 'rw',
+    default => 'layouts/_common',
+);
 has 'context' => (
     is         => 'rw',
     isa        => 'HashRef',
