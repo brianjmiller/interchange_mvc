@@ -250,6 +250,23 @@ sub prepare_parameters {
     return $self->SUPER::prepare_parameters($param);
 }
 
+sub render {
+    my $self = shift;
+    my %args = @_;
+
+    #
+    # this allows us to provide a common layout for all controllers
+    # without symlinking them
+    #
+    unless (defined $args{layout}) {
+        if ($self->layout ne '') {
+            $args{layout} = $self->layout;
+        }
+    }
+
+    return $self->SUPER::render(%args);
+}
+
 sub forbid {
     my $self = shift;
 

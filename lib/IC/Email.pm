@@ -68,10 +68,10 @@ sub BUILD {
     #
     $self->intercept( IC::Config->smart_variable('MV_EMAIL_INTERCEPT') );
 
-    if (Bikes::Config->is_live) {
+    if (IC::Config->is_live) {
     }
     else {
-        my $camp = Bikes::Config->camp_number;
+        my $camp = IC::Config->camp_number;
 
         $self->subject_prefix("[camp$camp] " . ($self->subject_prefix || ''));
 

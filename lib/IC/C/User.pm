@@ -36,6 +36,7 @@ my $current_preferred_hash_kind = 'sha1';
 sub menu {
     my $self = shift;
 
+    $self->content_title('Account Menu');
     $self->render;
 
     return;
