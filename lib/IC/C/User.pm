@@ -105,6 +105,7 @@ sub account_maintenance_form {
         $f->{$field} = $value;
     }
 
+    $self->content_title('Account Maintenance');
     $self->render(
         context => {
             f => $f,
