@@ -144,6 +144,10 @@ sub set_response {
                 context    => $args->{context},
             );
 
+            $self->_controller->add_stylesheet(
+                kind => 'ic',
+                path => 'manage/function.css',
+            );
             $self->_controller->render(
                 context => {
                     _function => $self->_function,

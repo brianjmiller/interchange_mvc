@@ -1,0 +1,174 @@
+
+#manage_header_table {
+    text-align: right;
+    border-bottom: 1px solid #666666;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+#manage_table {
+    width: 100%;
+}
+
+#manage_table_title_cell {
+    padding: 4px;
+    font-weight: bold;
+    font-size: 12pt;
+    background-color: #EEEEEE;
+}
+
+#manage_table_subtitle_cell {
+    text-align: right;
+    padding: 4px;
+    background-color: #EEEEEE;
+}
+
+#manage_table_mesg_cell {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    color: red;
+}
+
+#manage_table_content_cell {
+    padding-top: 10px;
+}
+
+#list_table {
+}
+
+td.list_table_title_cell {
+    vertical-align: top;
+    font-weight: bold;
+    padding: 2px;
+}
+
+td.list_table_title_cell_centered {
+    vertical-align: top;
+    text-align: center;
+    font-weight: bold;
+    padding: 2px;
+}
+
+td.list_table_options_cell_even {
+    text-align: center;
+    font-size: 8pt;
+}
+
+td.list_table_options_cell_odd {
+    text-align: center;
+    font-size: 8pt;
+    background-color: #EEEEEE;
+}
+
+td.list_table_datum_cell_even {
+}   
+ 
+td.list_table_datum_cell_odd {
+    background-color: #EEEEEE;
+}   
+
+td.list_table_datum_cell_even_centered {
+    text-align: center;
+}
+
+td.list_table_datum_cell_odd_centered {
+    text-align: center;
+    background-color: #EEEEEE;
+}
+
+td.detail_table_left_cell {
+    vertical-align: top;
+    width: 50%;
+    padding-right: 10px;
+}
+
+td.detail_table_right_cell {
+    vertical-align: top;
+    width: 50%;
+    padding-left: 10px;   
+}
+
+td.detail_table_title_cell {
+    vertical-align: top;
+    font-weight: bold;
+}
+
+td.detail_table_title_cell_centered {
+    vertical-align: top;
+    text-align: center;
+    font-weight: bold;
+}   
+
+td.detail_table_title_cell_right {
+    vertical-align: top;
+    text-align: right;
+    font-weight: bold;
+}
+
+td.detail_table_datum_cell {
+    vertical-align: top;
+}
+
+td.detail_table_datum_cell_centered {
+    vertical-align: top;
+    text-align: center;
+}
+
+td.detail_table_datum_cell_right {
+    vertical-align: top;
+    text-align: right;
+}
+
+td.manage_form_table_button_cell {
+}
+
+td.manage_form_table_button_cell_centered {
+    text-align: center;
+}
+
+td.manage_form_table_title_cell {
+    font-weight: bold;
+}
+
+td.manage_form_table_title_cell_centered {
+    text-align: center;
+    font-weight: bold;
+}
+
+td.manage_form_table_label_cell {
+    vertical-align: top;
+}
+    
+td.manage_form_table_label_cell_centered {
+    text-align: center;
+    vertical-align: top;
+}
+
+td.manage_form_table_input_cell {
+    vertical-align: top;
+}   
+
+td.manage_form_table_input_cell_centered {
+    text-align: center;
+    vertical-align: top;
+}
+
+td.manage_form_table_datum_cell {
+    vertical-align: top;
+}
+
+td.manage_form_table_datum_cell_centered {
+    text-align: center;
+    vertical-align: top;
+}
+
+input.manage_form_input_text_cell {
+    width: 40em;
+}
+
+textarea.manage_form_input_text_area {
+    border: 2px solid blue;
+    width: 60em;
+    height: 40em;
+}
+

@@ -1,0 +1,28 @@
+#standard_layout_wrapper_div {
+}
+
+#primary_header_div {
+}
+
+#content_title_div {
+    font-weight: bold;
+    font-size: 120%;
+    text-align: left;
+}
+
+#content_subtitle_div {
+    text-align: right;
+    font-size: 90%;
+}
+
+#primary_content_div {
+}
+
+#error_messages {
+}
+
+#status_messages {
+}
+
+#primary_footer_div {
+}

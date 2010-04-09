@@ -12,7 +12,12 @@ use warnings;
 use IC::M::ManageFunction;
 use IC::M::Right;
 
-use base qw( IC::C );
+use Moose;
+extends qw( IC::C );
+
+has +layout => ( default => 'layouts/standard' );
+
+no Moose;
 
 # the application subclass should register itself as the provider of the 'manage' controller
 #__PACKAGE__->registered_name('manage');
@@ -24,6 +29,11 @@ sub menu {
 
     $self->content_title('Site Management Menu');
     $self->content_subtitle('');
+
+    $self->add_stylesheet(
+        kind => 'ic',
+        path => 'manage/menu.css',
+    );
 
     my $role = $self->role;
 

@@ -223,6 +223,13 @@ sub BUILD {
 
     push @{ $self->view->base_paths }, File::Spec->catfile( IC::Config->adhoc_base_path, 'mvc', 'views' );
 
+    if ($self->layout ne '') {
+        $self->add_stylesheet(
+            kind => 'ic',
+            path => $self->layout . '.css',
+        );
+    }
+
     if (! defined $self->html_header_component) {
         $self->html_header_component( IC::Component::HTMLHeader->new( controller => $self ) );
     }

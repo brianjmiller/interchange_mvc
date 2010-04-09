@@ -74,7 +74,6 @@ sub _search_by_form {
         push @html, "<input type=\"text\" name=\"$args->{field}\" size=\"20\" maxlength=\"50\" />\n";
         push @html, "<input type=\"submit\" value=\"Search\" />";
         push @html, "</form>\n";
-        push @html, "<br />\n";
         push @html, "</td>\n";
         push @html, "</tr>\n";
     }

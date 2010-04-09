@@ -8,6 +8,18 @@ use Exception::Class (
         description => 'Controller: Login Required',
         isa         => 'IC::Exception::UserError',
     },
+    'IC::Exception::AccountMaintenanceMissingValue' => {
+        description => 'Account Maintenance: Missing Value',
+        isa         => 'IC::Exception::UserError',
+    },
+    'IC::Exception::AccountMaintenancePasswordMismatch' => {
+        description => 'Account Maintenance: Password Mismatch',
+        isa         => 'IC::Exception::UserError',
+    },
+    'IC::Exception::AccountMaintenancePasswordInvalid' => {
+        description => 'Account Maintenance: Invalid Password',
+        isa         => 'IC::Exception::UserError',
+    },
 );
 
 1;
