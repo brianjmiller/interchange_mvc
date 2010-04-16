@@ -580,7 +580,7 @@ This enforces a default-deny security policy for accessing any aspect of the app
 
 =item I<can_switch_to()>
 
-Returns an arrayref containing the B<IC::M::Role> roles to which the current role is allowed to
+Returns an arrayref containing the B<IC::M::User> users to which the current role is allowed to
 switch (via the "switch_user" right).
 
 =item I<check_login()>
