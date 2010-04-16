@@ -156,6 +156,14 @@ sub rights_class { 'IC::M::RightTarget::User' }
     }
 }
 
+sub public_name {
+    my $self = shift;
+
+    my $name = $self->username;
+
+    return $name;
+}
+
 1;
 
 __END__
