@@ -12,7 +12,7 @@ CREATE TABLE ic_periods (
     modified_by     VARCHAR(32) NOT NULL,
 
     display_label   VARCHAR(100) NOT NULL
-                        CONSTRAINT right_type_target_kinds_display_label_valid
+                        CONSTRAINT ic_periods_display_label_valid
                         CHECK (length(display_label) > 0 AND display_label = trim(display_label)),
 
     UNIQUE (display_label)
