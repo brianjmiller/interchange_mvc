@@ -33,6 +33,7 @@ CREATE TRIGGER ic_versions_last_modified
 
 COPY ic_versions (created_by, modified_by, id) FROM STDIN;
 schema	schema	1
+schema	schema	2
 \.
 
 --ROLLBACK;
