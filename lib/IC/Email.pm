@@ -5,7 +5,7 @@ use warnings;
 
 use MIME::Lite;
 
-use IC::Config;
+use IC::M::Config;
 
 use Moose;
 
@@ -22,12 +22,20 @@ has 'override_intercept' => (
 has 'from' => (
     is      => 'rw',
     isa     => 'Str',
-    default => '',
+    default => sub {
+        my ($from_name) = IC::M::Config->get('ic_mailing_default_name', global => 1 );
+        my ($from_addr) = IC::M::Config->get('ic_mailing_default_email', global => 1 );
+
+        return "$from_name <$from_addr>";
+    },
 );
 has 'subject_prefix' => (
     is      => 'rw',
     isa     => 'Str',
-    default => '',
+    default => sub {
+        my ($value) = IC::M::Config->get('ic_mailing_default_subject_prefix', global => 1);
+        return ($value ne '' ? $value : '');
+    },
 );
 has 'subject' => (
     is      => 'rw',
