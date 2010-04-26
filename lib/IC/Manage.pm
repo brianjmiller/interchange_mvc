@@ -287,7 +287,7 @@ sub manage_function_link {
     $args->{link_id}    = '' if not defined $args->{link_id};
 
     unless (defined $args->{click_text} and $args->{click_text} ne '') {
-        Vend::Exception::ArgumentMissing->throw( error => 'click_text' );
+        IC::Exception::ArgumentMissing->throw( error => 'click_text' );
     }
     my $click_text = delete $args->{click_text};
     my $url = $invocant->manage_function_uri( %$args );
