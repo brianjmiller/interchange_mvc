@@ -5,7 +5,7 @@
 #
 #       returns a name that can be used to identify the model being acted on
 #
-#     _get_change_status_struct:
+#     _get_change_kind_struct:
 #
 #       returns a structure that is a hash of hash refs where the keys of the 
 #       outer hash represent statuses that an object is changing from, with 
@@ -13,7 +13,7 @@
 #       to whose value is callback subroutine to run when the transition occurs
 #
 #############################################################################
-package IC::M::_AdvancedStatus_MixIn;
+package IC::M::_AdvancedKind_MixIn;
 
 use strict;
 use warnings;
@@ -25,22 +25,22 @@ use IC::M::_Dispatch_Trigger_MixIn qw( _change_value_with_trigger );
 __PACKAGE__->export_tag(
     all => [
         qw(
-            change_status
+            change_kind
             _change_value_with_trigger
         ),
     ],
 );
 
-sub change_status {
+sub change_kind {
     my $self = shift;
-    my $new_status = shift;
+    my $new_kind_code = shift;
     my %args = @_;
 
     return $self->_change_value_with_trigger(
-        $new_status,
-        _field                        => (defined $args{_field} ? delete $args{_field} : 'status_code'),
-        _get_trigger_structure_method => '_get_change_status_struct',
-        _action_code                  => 'status_change',
+        $new_kind_code,
+        _field                        => (defined $args{_field} ? delete $args{_field} : 'kind_code'),
+        _get_trigger_structure_method => '_get_change_kind_struct',
+        _action_code                  => 'kind_change',
         %args,
     );
 }
