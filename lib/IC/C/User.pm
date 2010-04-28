@@ -188,14 +188,6 @@ sub account_maintenance_save {
         #
 
         eval {
-            #
-            # TODO: pull these from config, either in the DB or the config files
-            #
-            my $external_email_settings = {
-                from    => 'IC Site',
-                subject => 'Account Maintenance Change',
-            };
-
             my @external_body;
             push @external_body, "An account maintenance request has been processed.\n\n";
             push @external_body, "If you did not make this request, please reply to this e-mail to let\n";
@@ -207,8 +199,8 @@ sub account_maintenance_save {
             push @external_body, '(Session: ' . $self->session->{id} . ', IP: ' . $self->session->{ohost} . ")\n";
 
             my $external_email = IC::Email->new(
-                %$external_email_settings,
-                body => \@external_body,
+                subject => 'Account Maintenance Change',
+                body    => \@external_body,
             );
             $external_email->send( $old_email );
         };
