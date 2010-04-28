@@ -1,32 +1,32 @@
-#
-# classes using this mixin should implement two methods:
-#
-#     _mixin_model_descriptor:
-#
-#       returns a name that can be used to identify the model being acted on
-#
-#     _get_trigger_structure_method as passed in:
-#
-#       returns a structure that is a hash of hash refs where the keys of the 
-#       outer hash represent statuses that an object is changing from, with 
-#       the keys of the inner hash being statuses that an object is changing 
-#       to whose value is callback subroutine to run when the transition occurs
-#
-#############################################################################
+=begin description
+
+This is really just a function that is generic enough to be leveraged
+to easily create MixIns that can then be included by models having a
+desire to use dispatch table based triggers.
+
+Classes using mixins leveraging this code should implement two methods:
+
+    _mixin_model_descriptor:
+
+        returns a name that can be used to identify the model being acted on
+
+    _get_trigger_structure_method as passed in:
+
+        returns a structure that is a hash of hash refs where the keys of the 
+        outer hash represent statuses that an object is changing from, with 
+        the keys of the inner hash being statuses that an object is changing 
+        to whose value is callback subroutine to run when the transition occurs
+
+See _AdvancedStatus_MixIn and _AdvancedKind_MixIn for examples.
+
+=end description
+
+=cut 
+
 package IC::M::_Dispatch_Trigger_MixIn;
 
 use strict;
 use warnings;
-
-use base qw( Rose::Object::MixIn );
-
-__PACKAGE__->export_tag(
-    all => [
-        qw(
-            _change_value_with_trigger
-        ),
-    ],
-);
 
 #
 # TODO: add modified_by handling

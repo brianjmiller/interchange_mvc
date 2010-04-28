@@ -20,13 +20,12 @@ use warnings;
 
 use base qw( Rose::Object::MixIn );
 
-use IC::M::_Dispatch_Trigger_MixIn qw( _change_value_with_trigger );
+use IC::M::_Dispatch_Triggers;
 
 __PACKAGE__->export_tag(
     all => [
         qw(
             change_status
-            _change_value_with_trigger
         ),
     ],
 );
@@ -36,7 +35,8 @@ sub change_status {
     my $new_status = shift;
     my %args = @_;
 
-    return $self->_change_value_with_trigger(
+    return IC::M::_Dispatch_Triggers::_change_value_with_trigger(
+        $self,
         $new_status,
         _field                        => (defined $args{_field} ? delete $args{_field} : 'status_code'),
         _get_trigger_structure_method => '_get_change_status_struct',
