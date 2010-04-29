@@ -74,7 +74,7 @@ sub BUILD {
     #
     # the intercept should be respected regardless of whether we are in a camp
     #
-    $self->intercept( IC::Config->smart_variable('MV_EMAIL_INTERCEPT') );
+    $self->intercept( IC::Config->smart_variable('MV_EMAIL_INTERCEPT') || '' );
 
     if (IC::Config->is_live) {
     }
