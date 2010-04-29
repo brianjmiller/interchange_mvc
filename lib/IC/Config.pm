@@ -44,15 +44,21 @@ sub _validate_adhoc_user {
 }
 
 sub is_camp {
-    eval { __PACKAGE__->camp_number };
+    my $result = eval { __PACKAGE__->camp_number };
+    if ($@) {
+        warn "Can't determine is_camp: $@\n";
+    }
 
-    return $@ ? 0 : 1;
+    return defined $result ? 1 : 0;
 }
 
 sub is_live {
-    eval { __PACKAGE__->camp_number };
+    my $result = eval { __PACKAGE__->camp_number };
+    if ($@) {
+        warn "Can't determine is_live: $@\n";
+    }
 
-    return $@ ? 1 : 0;
+    return defined $result ? 0 : 1;
 }
 
 1;
