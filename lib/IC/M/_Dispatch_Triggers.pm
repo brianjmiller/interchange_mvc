@@ -23,7 +23,7 @@ See _AdvancedStatus_MixIn and _AdvancedKind_MixIn for examples.
 
 =cut 
 
-package IC::M::_Dispatch_Trigger_MixIn;
+package IC::M::_Dispatch_Triggers;
 
 use strict;
 use warnings;
