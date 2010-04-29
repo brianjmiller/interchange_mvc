@@ -465,6 +465,9 @@ sub _properties_form_hook {
             @{ $args->{context}->{f} }{ $field.'_HH', $field.'_MM', $field.'_SS' }   = split /:/, $time;
         }
         elsif ($field->type eq 'date') {
+            if ($value =~ /T/) {
+                ($value) = split /T/, $value;
+            }
             @{ $args->{context}->{f} }{ $field.'_yyyy', $field.'_mm', $field.'_dd' } = split /-/, $value;
         }
         elsif ($field->type eq 'time') {
