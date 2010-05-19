@@ -651,7 +651,7 @@ sub _common_list {
     #
     $context->{_manage_list_1_allow_filtering} = ! $self->_list_no_filter;
 
-    if ($self->{_step} == 0) {
+    if ($self->_step == 0) {
         $title .= '&nbsp;:&nbsp;Menu';
 
         #
@@ -703,7 +703,7 @@ sub _common_list {
                         push @$content, "<tr>";
                         push @$content, "<td class=\"list_table_datum_cell\">";
                         push @$content, $self->manage_function_link(
-                            step       => $self->{_step} + 1, 
+                            step       => $self->_step + 1, 
                             click_text => $name,
                             query      => {
                                 mode        => 'list',
@@ -736,7 +736,7 @@ sub _common_list {
                         push @$content, "<tr>";
                         push @$content, "<td class=\"list_table_datum_cell\">";
                         push @$content, $self->manage_function_link(
-                            step       => $self->{_step} + 1, 
+                            step       => $self->_step + 1, 
                             click_text => $name,
                             query      => {
                                 mode        => 'list',
@@ -767,7 +767,7 @@ sub _common_list {
                         push @$content, "<tr>";
                         push @$content, "<td class=\"list_table_datum_cell\">";
                         push @$content, $self->manage_function_link(
-                            step       => $self->{_step} + 1, 
+                            step       => $self->_step + 1, 
                             click_text => $name,
                             query      => {
                                 mode        => 'list',
@@ -790,7 +790,7 @@ sub _common_list {
 
         $context->{body} = join '', @$content;
     }
-    elsif ($self->{_step} == 1) {
+    elsif ($self->_step == 1) {
         my $params = $self->_controller->parameters;
 
         unless (defined $params->{mode} and $params->{mode} ne '') {
@@ -1324,7 +1324,7 @@ sub _common_properties_upload {
             );
         }
     }
-    elsif ($self->{_step} == 1) {
+    elsif ($self->_step == 1) {
         $context->{form_referer} = $params->{redirect_referer};
 
         #
@@ -1385,7 +1385,7 @@ sub _common_properties_upload {
         # TODO: need to walk children determining which need to be generated, etc.
         #       and provide back a list to allow them to choose to have them override
     }
-    elsif ($self->{_step} == 2) {
+    elsif ($self->_step == 2) {
         unless (defined $params->{tmp_filename} and $params->{tmp_filename} ne '') {
             IC::Exception->throw('Required argument missing: tmp_filename');
         }
@@ -1462,7 +1462,7 @@ sub _common_properties_upload {
         return;
     }
     else {
-        IC::Exception->throw( "Unrecognized step: $self->{_step}" );
+        IC::Exception->throw( 'Unrecognized step: ' . $self->_step );
     }
 
     $self->set_response(
@@ -1538,7 +1538,7 @@ sub _common_properties_unlink {
             context => $context,
         );
     }
-    elsif ($self->{_step} == 1) {
+    elsif ($self->_step == 1) {
         my $db = $object->db;
         eval {
             $db->begin_work;
@@ -1604,7 +1604,7 @@ sub _common_drop {
             context => $context,
         );
     }
-    elsif ($self->{_step} == 1) {
+    elsif ($self->_step == 1) {
         if ($self->can('_drop_action_hook')) {
             $self->_drop_action_hook($object);
         }
