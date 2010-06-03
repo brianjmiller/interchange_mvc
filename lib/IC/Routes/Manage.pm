@@ -22,6 +22,18 @@ IC::Controller::Route->route(
     },
 );
 
+IC::Controller::Route->route(
+    pattern     => 'manage/index',
+    controller  => 'manage',
+    action      => 'index',
+);
+
+IC::Controller::Route->route(
+    pattern     => 'manage/widget/menu/config',
+    controller  => 'manage/widget/menu',
+    action      => 'config',
+);
+
 1;
 
 __END__

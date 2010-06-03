@@ -16,6 +16,8 @@ class_has '+_model_display_name_plural' => ( default => 'Users' );
 class_has '+_sub_prefix'                => ( default => 'user' );
 class_has '+_func_prefix'               => ( default => 'Users_user' );
 
+class_has '+_list_paging_provider'      => ( default => 'server' );
+
 no Moose;
 no MooseX::ClassAttribute;
 

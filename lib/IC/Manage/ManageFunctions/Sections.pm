@@ -17,6 +17,8 @@ class_has '+_model_display_name_plural' => ( default => 'Function Sections' );
 class_has '+_sub_prefix'                => ( default => 'section' );
 class_has '+_func_prefix'               => ( default => 'ManageFunctions__Sections_section' );
 
+class_has '+_list_paging_provider'      => ( default => 'none' );
+
 no Moose;
 no MooseX::ClassAttribute;
 

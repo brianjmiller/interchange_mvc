@@ -12,6 +12,8 @@ use warnings;
 use IC::M::ManageFunction;
 use IC::M::Right;
 
+use IC::C::Manage::Widget::Menu;
+
 use Moose;
 extends qw( IC::C );
 
@@ -164,6 +166,16 @@ sub function {
     elsif ($@) {
         IC::Exception->throw("Failed manage execution: $@");
     }
+
+    return;
+}
+
+sub index {
+    my $self = shift;
+
+    $self->render(
+        layout => '',
+    );
 
     return;
 }

@@ -17,6 +17,8 @@ class_has '+_model_display_name_plural' => ( default => 'Functions' );
 class_has '+_sub_prefix'                => ( default => 'function' );
 class_has '+_func_prefix'               => ( default => 'ManageFunctions_function' );
 
+class_has '+_list_paging_provider'      => ( default => 'server' );
+
 no Moose;
 no MooseX::ClassAttribute;
 

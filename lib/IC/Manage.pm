@@ -8,6 +8,7 @@ use File::MimeInfo::Magic ();
 use File::Path ();
 use File::Spec ();
 use IO::Scalar;
+use JSON::Syck ();
 
 use IC::Config;
 use IC::M::File;
@@ -39,22 +40,33 @@ class_has '_file_class'                => ( is => 'ro', default => 'IC::M::File'
 class_has '_file_resource_class'       => ( is => 'ro', default => 'IC::M::FileResource' );
 class_has '_file_resource_class_mgr'   => ( is => 'ro', default => 'IC::M::FileResource::Manager' );
 
+class_has '_list_paging_provider'      => ( is => 'ro', default => 'server' );
 class_has '_list_page_count'           => ( is => 'ro', default => 25 );
 class_has '_list_cols'                 => (
     is      => 'ro', 
     default => sub {
         [
             { 
-                display => 'Description',
-                method  => 'manage_description',
+                display         => 'Description',
+                method          => 'manage_description',
+                parser          => 'string',
+                sortable        => 0,
             },
             {
-                display => 'Date Created',
-                method  => 'date_created',
+                display   => 'Date Created',
+                method    => 'date_created',
+                sortable  => 1,
+                parser    => 'stringToDate',
+                formatter => 'date',
             },
             {
-                display => 'Last Modified',
-                method  => 'last_modified',
+                display                => 'Last Modified',
+                method                 => 'last_modified',
+                sortable               => 1,
+                parser                 => 'stringToDate',
+                formatter              => 'date',
+                is_default_sort        => 1,
+                default_sort_direction => 'desc',
             },
         ],
     },
@@ -967,6 +979,175 @@ sub _common_list {
         kind    => $component_kind,
         context => $context,
     );
+
+    return;
+}
+
+sub _common_list_json {
+    my $self = shift;
+
+    my $_model_class_mgr = $self->_model_class_mgr;
+
+    my $params = $self->_controller->parameters;
+
+    my $struct;
+    if ($self->_step == 0) {
+        if ($params->{_mode} eq 'config') {
+            $struct = {
+                model_name        => $self->_model_display_name,
+                model_name_plural => $self->_model_display_name_plural,
+                total_objects     => $_model_class_mgr->get_objects_count,
+                paging_provider   => $self->_list_paging_provider,
+                page_count        => $self->_list_page_count,
+                row_actions       => [],
+            };
+
+            my $_list_cols = $self->_list_cols;
+            for my $col (@$_list_cols) {
+                push @{ $struct->{data_source_fields} }, {
+                    key    => $col->{method},
+                    parser => $col->{parser},
+                };
+
+                my $def_list_key = 'data_table_column_defs';
+                if (defined $col->{is_initially_hidden} and $col->{is_initially_hidden}) {
+                    $def_list_key = 'data_table_hidden_column_defs';
+                }
+
+                push @{ $struct->{$def_list_key} }, {
+                    key       => $col->{method},
+                    label     => $col->{display},
+
+                    # assume the best
+                    sortable  => (defined $col->{sortable} ? $col->{sortable} : 1),
+                    resizable => (defined $col->{resizable} ? $col->{resizable} : 1),
+
+                    (defined $col->{formatter} ? (formatter => $col->{formatter}) : ()),
+                    #class_opt => $col->{class_opt},
+                };
+
+                if (defined $col->{is_default_sort} and $col->{is_default_sort}) {
+                    $struct->{data_table_initial_sort} = {
+                        key => $col->{method},
+                        dir => $col->{default_sort_direction} || 'asc',
+                    };
+                }
+            }
+
+            my $prefix = $self->_func_prefix;
+            my $functions = [ 
+                {
+                    code    => $prefix.'Properties',
+                    display => 'Edit',
+                },
+                {
+                    code    => $prefix.'Drop',
+                    display => 'Drop',
+                },
+                {
+                    code    => $prefix.'DetailView',
+                    display => 'Detail',
+                },
+            ];
+            for my $func (@$functions) {
+                # TODO: add privilege check, etc.
+                push @{ $struct->{row_actions} }, $func;
+            }
+        }
+        elsif ($params->{_mode} eq 'data') {
+            # for the data table + paging we need a total count of records each time, I'm not sure why
+            # if we add caching this is something that can be cached easily
+            $struct->{total_objects} = $_model_class_mgr->get_objects_count;
+
+            my $get_objects_config = {};
+
+            # this is the key into the cols, not necessarily what to sort on
+            my $found_sort_col;
+            my $add_desc = 0;
+            if (defined $params->{sort}) {
+                for my $col (@{ $self->_list_cols }) {
+                    next unless $col->{method} eq $params->{sort};
+
+                    $found_sort_col = $col;
+                    last;
+                }
+                unless (defined $found_sort_col) {
+                    warn "Attempt to sort on '$params->{sort}' but found no matching column (" . $self->_function . ")";
+                }
+                if (defined $params->{dir} and $params->{dir} eq 'desc') {
+                    $add_desc = 1;
+                }
+            }
+            else {
+                # no sort passed, check our list of columns for the default to use
+                for my $col (@{ $self->_list_cols }) {
+                    next unless defined $col->{is_default_sort};
+
+                    $found_sort_col = $col;
+                    $add_desc = 1 if (defined $col->{default_sort_direction} and $col->{default_sort_direction} eq 'desc');
+
+                    last;
+                }
+            }
+            if (defined $found_sort_col) {
+                if (defined $found_sort_col->{sort_sql_clause}) {
+                    # needs to be a scalar ref to get passed through unmolested by RDBO
+                    IC::Exception->throw('Invalid value type (sort_sql_clause): not a scalar ref') unless ref $found_sort_col->{sort_sql_clause} eq 'SCALAR';
+
+                    $get_objects_config->{sort_by} = $found_sort_col->{sort_sql_clause};
+                }
+                else {
+                    $get_objects_config->{sort_by} = $found_sort_col->{method};
+                }
+                if ($add_desc) {
+                    if (ref $get_objects_config->{sort_by} eq 'SCALAR') {
+                        ${ $get_objects_config->{sort_by} } .= ' DESC'
+                    }
+                    else {
+                        $get_objects_config->{sort_by} .= ' DESC'
+                    }
+                }
+            }
+
+            if ($self->_list_paging_provider eq 'server') {
+                $get_objects_config->{offset} = $params->{startIndex} || 0;
+                $get_objects_config->{limit}  = $params->{results} || $self->_list_page_count;
+            }
+
+            for my $object (@{ $_model_class_mgr->get_objects( %$get_objects_config ) }) {
+                my $details = {};
+
+                for my $col (@{ $self->_list_cols }) {
+                    #no strict 'refs';
+                    my $method = $col->{method};
+
+                    my $value = $object->$method();
+                    $details->{ $method } = "$value";
+                }
+
+                push @{ $struct->{rows} }, $details;
+            }
+        }
+        else {
+            IC::Exception->throw("Unrecognized _mode: $params->{_mode}");
+        }
+    }
+    else {
+        IC::Exception->throw('Unrecognized step: ' . $self->_step);
+    }
+
+    if ($params->{_format} eq 'json') {
+        my $response = $self->_controller->response;
+        $response->headers->status('200 OK');
+        $response->headers->content_type('text/plain');
+        #$response->headers->content_type('application/json');
+        $response->buffer( JSON::Syck::Dump( $struct ));
+
+        $self->_response(1);
+    }
+    else {
+        IC::Exception->throw("Unrecognized _format: $params->{_format}");
+    }
 
     return;
 }
