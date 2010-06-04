@@ -47,8 +47,6 @@ YUI.add(
 
                 // Base Methods //
                 initializer: function (config) {
-                    // Y.one("#manage_window").setContent("");
-
                     var YAHOO = Y.YUI2;
 
                     var menu_unit;
@@ -59,23 +57,27 @@ YUI.add(
                             units: [
                                 {
                                     position: "top",
-                                    height: 50,
+                                    height: 30,
+                                    zIndex: 0,
                                     body: "manage_header"
                                 },
                                 {
                                     position: "left",
                                     body: "manage_subcontainer",
                                     width: 250,
+                                    zIndex: 0,
                                     resize: true,
                                     animate: true
                                 },
                                 {
                                     position: "center",
-                                    body: "manage_window"
+                                    zIndex: 1,
+                                    scroll: false
                                 },
                                 {
                                     position: "bottom",
                                     body: "manage_footer",
+                                    zIndex: 0,
                                     height: 40
                                 }
                             ]
@@ -90,11 +92,18 @@ YUI.add(
                                 center,
                                 {
                                     parent: layout,
-                                    minWidth: 400,
-                                    minHeight: 200,
                                     units: [
                                         {
+                                            position: "top",
+                                            body: "manage_menu",
+                                            height: 26,
+                                            zIndex: 2,
+                                            scroll: null
+                                        },
+                                        {
                                             position: "center",
+                                            body: "manage_window",
+                                            zIndex: 0,
                                             scroll: true
                                         }
                                     ]
@@ -102,14 +111,20 @@ YUI.add(
                             );
                             inner_layout.render();
 
-                            container_unit = inner_layout.getUnitByPosition("center").get("wrap");
+                            // need to let the nodemenu's dropdowns spill into the the next unit
+                            Y.one(inner_layout.getUnitByPosition("top").body).addClass('allow-overflow');
+
+                            // leave the unit's wrapper and body alone,
+                            //  and instead render into the body element
+                            menu_unit = inner_layout.getUnitByPosition("top").body.childNodes[0];
+                            container_unit = inner_layout.getUnitByPosition("center").body.childNodes[0];
                         }
                     );
                     layout.render();
 
                     this._menu      = new Y.IC.ManageMenu(
                         {
-                            render_to: container_unit
+                            render_to: menu_unit
                         }
                     );
                     this._container = new Y.IC.ManageContainer(

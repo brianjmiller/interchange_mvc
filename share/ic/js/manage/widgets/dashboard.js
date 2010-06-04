@@ -55,9 +55,14 @@ YUI.add(
                 renderUI: function() {
                     var contentBox = this.get("contentBox");
 
+                    // fill the content area with enough to scroll
                     contentBox.setContent("");
+                    var content = '<div>The Dashboard w00t w00t</div>';
+                    for (var i = 0; i < 100; i++) {
+                        content += '<div>The Dashboard w00t w00t</div>';
+                    }
                     contentBox.appendChild(
-                        Node.create("<div>The Dashboard w00t w00t</div>")
+                        Node.create(content)
                     );
                 }
             }

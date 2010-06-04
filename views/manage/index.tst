@@ -8,36 +8,22 @@
     <style id="styleoverrides">
         .yui-skin-sam .yui-dt table {
             font-family: inherit;
-        }   
+        }
     </style>
 
     <link rel="stylesheet" type="text/css" href="/ic/styles/base.css" />
     <link rel="stylesheet" type="text/css" href="/ic/styles/manage.css" />
-
-    <style>
-        #manage_header {
-            padding: 10px;
-        }
-        #manage_footer {
-            padding: 8px;
-            font-size: 85%;
-        }
-
-        /* .yui3-t1,
-        .yui3-d0 {
-            color: #999;
-        } */
-    </style>
 </head>
 
 <body class="yui-skin-sam yui3-skin-sam">
 
-<div id="ic-manage-app-container" class="hide-while-loading"  style="text-align: left;">
+<div id="ic-manage-app-container" class="hide-while-loading">
     <div id="manage_header">
-        <span style="font-size: 138.5%; font-weight: bold;">Management Area</span>
+        <span>Management Area</span>
     </div>
-    <div id="manage_subcontainer" /></div>
+    <div id="manage_menu"></div>
     <div id="manage_window"></div>
+    <div id="manage_subcontainer"></div>
     <div id="manage_footer">
         Console: <button id="console_toggle" class="" type="button" value="0">show</button>
     </div>

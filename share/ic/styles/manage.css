@@ -1,3 +1,7 @@
+#ic-manage-app-container {
+  text-align: left;
+}
+
 .yui3-js-enabled .hide-while-loading {
   display: none;
 }
@@ -8,5 +12,19 @@
 
 .yui3-js-enabled .display-while-loading {
   display: block;
+}
+
+.allow-overflow {
+  overflow: visible !important;
+}
+
+#manage_header span {
+  font-size: 138.5%; 
+  font-weight: bold;
+}
+
+#manage_footer {
+  padding: 8px;
+  font-size: 85%;
 }
 
