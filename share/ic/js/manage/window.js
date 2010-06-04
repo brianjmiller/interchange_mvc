@@ -65,9 +65,7 @@ YUI.add(
                                     position: "left",
                                     body: "manage_subcontainer",
                                     width: 250,
-                                    zIndex: 0,
-                                    resize: true,
-                                    animate: true
+                                    zIndex: 0
                                 },
                                 {
                                     position: "center",
@@ -78,7 +76,8 @@ YUI.add(
                                     position: "bottom",
                                     body: "manage_footer",
                                     zIndex: 0,
-                                    height: 40
+                                    height: 40,
+                                    resize: true
                                 }
                             ]
                         }
