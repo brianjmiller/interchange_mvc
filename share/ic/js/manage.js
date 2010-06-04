@@ -17,6 +17,7 @@
 
 YUI(
     {
+        //filter: 'debug',
         insertBefore: 'styleoverrides',
         groups: {
             icjs: {
@@ -28,19 +29,27 @@ YUI(
                             "ic-manage-widget-dashboard-css"
                         ]
                     },
-                    "ic-manage-widget-function": {
-                        path: "manage/widgets/function.js",
+                    "ic-manage-widget-function-list": {
+                        path: "manage/widgets/functions/list.js",
                         requires: [
-                            "ic-manage-widget-function-css",
+                            "ic-manage-widget-function-list-css",
+                            "widget",
+                            "datasource",
+                            "gallery-datasource-wrapper",
                             // TODO: can we load these later?
                             "yui2-datatable",
-                            "yui2-paginator",
-                            "datasource",
-                            "overlay",
-                            "gallery-datasource-wrapper"
+                            "yui2-paginator"
                         ],
                         ignore: [
                             "yui2-datasource"
+                        ]
+                    },
+                    "ic-manage-widget-function-detail": {
+                        path: "manage/widgets/functions/detail.js",
+                        requires: [
+                            "ic-manage-widget-function-detail-css",
+                            "widget",
+                            "tabview"
                         ]
                     },
                     "ic-manage-widget-container": {
@@ -48,7 +57,8 @@ YUI(
                         requires: [
                             "ic-manage-widget-container-css",
                             "ic-manage-widget-dashboard",
-                            "ic-manage-widget-function"
+                            "ic-manage-widget-function-list",
+                            "ic-manage-widget-function-detail"
                         ]
                     },
                     "ic-manage-widget-menu": {
@@ -75,8 +85,12 @@ YUI(
                         path: "manage/widgets/dashboard.css",
                         type: "css"
                     },
-                    "ic-manage-widget-function-css": {
-                        path: "manage/widgets/function.css",
+                    "ic-manage-widget-function-list-css": {
+                        path: "manage/widgets/functions/list.css",
+                        type: "css"
+                    },
+                    "ic-manage-widget-function-detail-css": {
+                        path: "manage/widgets/functions/detail.css",
                         type: "css"
                     },
                     "ic-manage-widget-container-css": {

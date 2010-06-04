@@ -44,7 +44,11 @@ YUI.add(
                     Y.log("manage container initializer");
 
                     // the initial widget will always be the dashboard
-                    this.loadWidget("manage_menu_item-dashboard");
+                    this.loadWidget(
+                        {
+                            kind: "dashboard"
+                        }
+                    );
 
                     this.render(config.render_to);
                 },
@@ -62,11 +66,14 @@ YUI.add(
                 loadWidget: function (config) {
                     Y.log("container's loadWidget called: " + config);
                     Y.log("loadWidget this: " + this);
+                    Y.log("loadWidget kind: " + config.kind);
+                    Y.log("loadWidget sub_kind: " + config.sub_kind);
+                    Y.log("loadWidget args: " + config.args);
                     var previous_widget = this._currentWidget,
                         new_widget = null
                     ;
 
-                    if (config === "manage_menu_item-dashboard") {
+                    if (config.kind === "dashboard") {
                         if (! this._cachedWidgets["dashboard"]) {
                             Y.log("instantiating dashboard...");
                             this._cachedWidgets["dashboard"] = new Y.IC.ManageDashboard();
@@ -75,24 +82,41 @@ YUI.add(
 
                         new_widget = this._cachedWidgets["dashboard"];
                     }
-                    else {
-                        Y.log("invalid load widget config, keeping current widget");
-                        if (! this._cachedWidgets[config]) {
-                            Y.log("instantiating function: " + config + "...");
-                            var code = config.split("-")[2];
-                            this._cachedWidgets[config] = new Y.IC.ManageFunction(
-                                {
-                                    code: code,
-                                    constrain: this.get("contentBox")
-                                }
-                            );
-                            this._cachedWidgets[config].render( this.get("contentBox") );
-                            this._cachedWidgets[config].hide();
+                    else if (config.kind === "function") {
+                        if (! this._cachedWidgets[config.args]) {
+                            Y.log("instantiating function: " + config.args + "...");
+                            var splits     = config.args.split("-", 2);
+                            var code       = splits[0];
+                            Y.log("code: " + code);
+                            if (config.sub_kind === "list") {
+                                this._cachedWidgets[config.args] = new Y.IC.ManageFunctionList(
+                                    {
+                                        code: code,
+                                    }
+                                );
+                                this._cachedWidgets[config.args].render( this.get("contentBox") );
+                                this._cachedWidgets[config.args].hide();
+                            }
+                            else if (config.sub_kind === "detail") {
+                                var addtl_args = splits[1] + "";
+                                Y.log("addtl_args: " + addtl_args);
+                                this._cachedWidgets[config.args] = new Y.IC.ManageFunctionDetail(
+                                    {
+                                        code: code,
+                                        addtl_args: addtl_args
+                                    }
+                                );
+                                this._cachedWidgets[config.args].render( this.get("contentBox") );
+                                this._cachedWidgets[config.args].hide();
+                            }
+                            else {
+                            }
                         }
 
-                        new_widget = this._cachedWidgets[config];
-
-                        //return;
+                        new_widget = this._cachedWidgets[config.args];
+                    }
+                    else {
+                        Y.log("Invalid load widget call, unrecognized kind: " + config.kind, "error");
                     }
 
                     new_widget.enable();
@@ -110,8 +134,21 @@ YUI.add(
                     this._currentWidget.show();
                 },
 
-                _handleLoadWidget: function (e) {
-                    this.loadWidget(e.target.get("id"));
+                _doLoadWidget: function (e) {
+                    Y.log("function id: " + e.target.get("id"), "debug");
+                    // .split doesn't return "the rest" with a limit
+                    var matches    = e.target.get("id").match("^([^-]+)-([^-]+)(?:-([^-]+)-(.+))?$");
+                    var kind       = matches[2];
+                    var sub_kind   = matches[3];
+                    var addtl_args = matches[4];
+
+                    var load_widget_config = {
+                        kind: kind,
+                        sub_kind: sub_kind,
+                        args: addtl_args
+                    };
+
+                    this.loadWidget(load_widget_config);
                 }
             }
         );

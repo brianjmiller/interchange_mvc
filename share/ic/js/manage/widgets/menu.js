@@ -92,7 +92,7 @@ YUI.add(
                             Y.each(
                                 v["functions"],
                                 function (vv, vi, vlist) {
-                                    item_html += '<li class="yui3-menuitem"><a id="manage_menu_item-function-' + vv["code"] + '" class="yui3-menuitem-content">' + vv["display_label"] + '</a></li>';
+                                    item_html += '<li class="yui3-menuitem"><a id="manage_menu_item-function-list-' + vv["code"] + '" class="yui3-menuitem-content">' + vv["display_label"] + '</a></li>';
                                 }
                             );
                             item_html += '</ul></div></div>';

@@ -120,16 +120,23 @@ YUI.add(
 
                     Y.delegate(
                         "mousedown",
-                        Y.bind(this._container._handleLoadWidget, this._container),
+                        Y.bind(this._container._doLoadWidget, this._container),
                         this._menu.get("boundingBox"),
                         'em.yui3-menuitem-content'
                         //this._menu
                     );
                     Y.delegate(
                         "mousedown",
-                        Y.bind(this._container._handleLoadWidget, this._container),
+                        Y.bind(this._container._doLoadWidget, this._container),
                         this._menu.get("boundingBox"),
                         'a.yui3-menuitem-content'
+                        //this._menu
+                    );
+                    Y.delegate(
+                        "mousedown",
+                        Y.bind(this._container._doLoadWidget, this._container),
+                        this._container.get("boundingBox"),
+                        'a.manage_function_link'
                         //this._menu
                     );
                 },

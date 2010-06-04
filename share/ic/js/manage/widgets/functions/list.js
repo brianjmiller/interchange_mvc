@@ -16,22 +16,22 @@
 */
 
 YUI.add(
-    "ic-manage-widget-function",
+    "ic-manage-widget-function-list",
     function(Y) {
-        var ManageFunction;
+        var ManageFunctionList;
 
         var Lang = Y.Lang,
             Node = Y.Node
         ;
 
-        ManageFunction = function (config) {
-            ManageFunction.superclass.constructor.apply(this, arguments);
+        ManageFunctionList = function (config) {
+            ManageFunctionList.superclass.constructor.apply(this, arguments);
         };
 
         Y.mix(
-            ManageFunction,
+            ManageFunctionList,
             {
-                NAME: "ic_manage_function",
+                NAME: "ic_manage_function_list",
                 ATTRS: {
                     code: {
                         value: null
@@ -44,8 +44,8 @@ YUI.add(
         );
 
         Y.extend(
-            ManageFunction,
-            Y.Overlay,
+            ManageFunctionList,
+            Y.Widget,
             {
                 _meta_data: null,
                 _data_source: null,
@@ -61,6 +61,7 @@ YUI.add(
                     // for constructing the table
 
                     var url = "/manage/function/" + this.get("code") + "/0?_mode=config&_format=json";
+                    Y.log("Url: " + url, "debug");
 
                     var return_data = null;
                     Y.io(
@@ -168,7 +169,7 @@ YUI.add(
         );
 
         Y.namespace("IC");
-        Y.IC.ManageFunction = ManageFunction;
+        Y.IC.ManageFunctionList = ManageFunctionList;
     },
     "@VERSION@",
     {

@@ -983,6 +983,7 @@ sub _common_list {
     return;
 }
 
+# TODO: switch this from "_json" to "_data_obj"
 sub _common_list_json {
     my $self = shift;
 
@@ -1033,6 +1034,18 @@ sub _common_list_json {
                     };
                 }
             }
+
+            # every row gets a set of options at least until we add privilege checking
+            # or better action handling
+            push @{ $struct->{data_source_fields} }, {
+                key => '_options',
+            };
+            push @{ $struct->{data_table_column_defs} }, {
+                key       => '_options',
+                label     => 'Options',
+                sortable  => 0,
+                resizable => 0,
+            };
 
             my $prefix = $self->_func_prefix;
             my $functions = [ 
@@ -1114,6 +1127,15 @@ sub _common_list_json {
                 $get_objects_config->{limit}  = $params->{results} || $self->_list_page_count;
             }
 
+            # TODO: this could be done on the client side via a formatter
+            my $prefix = $self->_func_prefix;
+            my $functions = [ 
+                {
+                    code    => $prefix.'DetailView',
+                    display => 'Detail',
+                },
+            ];
+
             for my $object (@{ $_model_class_mgr->get_objects( %$get_objects_config ) }) {
                 my $details = {};
 
@@ -1124,6 +1146,15 @@ sub _common_list_json {
                     my $value = $object->$method();
                     $details->{ $method } = "$value";
                 }
+
+                my $_options = '';
+                for my $func (@$functions) {
+                    # TODO: add privilege check, etc.
+                    my $object_pk = join '&', map { "_pk_$_=" . $object->$_ } @{ $object->meta->primary_key_columns };
+                    my $link = qq|<a id="manage_menu_item-function-detail-$func->{code}-$object_pk" class="manage_function_link">$func->{display}</a> |;
+                    $_options .= $link;
+                }
+                $details->{_options} = $_options;
 
                 push @{ $struct->{rows} }, $details;
             }
@@ -2199,6 +2230,359 @@ sub _common_detail_view {
     );
 
     return 1;
+}
+
+sub _common_detail_data_obj {
+    my $self = shift;
+
+    my $params = $self->_controller->parameters;
+    $params->{_format} ||= 'json';
+
+    my $_model_class = $self->_model_class;
+    my @pk_fields    = @{ $_model_class->meta->primary_key_columns };
+    my @fields       = @{ $_model_class->meta->columns };
+
+    my $object  = $self->_common_implied_object;
+
+    my $struct = {
+        object_name => $self->_model_display_name,
+    };
+
+    # TODO: test to see if we still need to do stringification
+    
+    my $pk_settings = [];
+    for my $pk_field (@pk_fields) {
+        push @$pk_settings, { 
+            # the following forces stringification
+            # which was necessary to prevent an issue
+            # where viewing the detail page caused 
+            # the user to get logged out
+            field => "$pk_field", 
+            value => $object->$pk_field,
+        };
+    }
+    $struct->{pk_settings} = $pk_settings;
+     
+    my @auto_fields = qw(date_created last_modified created_by modified_by);
+    my $auto_settings = [];
+    for my $field (@auto_fields) {
+        my $value = $object->$field;
+        if ($field =~ /_by$/ and $value =~ /^\d+$/) {
+            my $value_obj = $self->_role_class->new( id => $value );
+            if ($value_obj and $value_obj->load( speculative => 1)) {
+                $value = $value_obj->display_label;
+            }
+        }
+        push @$auto_settings, { 
+            # the following forces stringification
+            # which was necessary to prevent an issue
+            # where viewing the detail page caused 
+            # the user to get logged out
+            field => "$field", 
+            value => "$value",
+        };
+    }
+    if (@$auto_settings) {
+        $struct->{auto_settings} = $auto_settings;
+    }
+
+    #
+    # keep track of fields we link to as related objects,
+    # then remove them from the "other" list
+    #
+    my @fo_fields;
+
+    my $foreign_objects = [];
+    unless ($self->_detail_suppress_foreign_objects) {
+        for my $fk (@{ $self->_model_class->meta->foreign_keys }) {
+            my $method      = $fk->name;
+            my $foreign_obj = $object->$method;
+
+            if (defined $foreign_obj) {
+                my $fo_manage_class = $foreign_obj->manage_class;
+
+                if (defined $fo_manage_class) {
+                    push @fo_fields, keys %{ $fk->key_columns };
+
+                    push @$foreign_objects, { 
+                        #
+                        # the following forces stringification
+                        # which was necessary to prevent an issue
+                        # where viewing the detail page caused 
+                        # the user to get logged out
+                        #
+                        field   => $fo_manage_class->_model_display_name,
+                        # TODO: double check we can use this, may be better to just do nested struct
+                        value   => $foreign_obj->as_hashkey,
+                        display => $foreign_obj->manage_description,
+                    };
+                }
+            }
+        }
+    }
+    if (@$foreign_objects) {
+        $struct->{foreign_objects} = $foreign_objects;
+    }
+
+    my $other_setting_value_mappings = $self->_detail_other_mappings;
+
+    my $other_settings = [];
+    for my $field (sort @fields) {
+        next if grep { $field eq $_ } @pk_fields, @auto_fields, @fo_fields;
+
+        my $value = $object->$field || '';
+        my $other_setting_ref = {
+            # the following forces stringification
+            # which was necessary to prevent an issue
+            # where viewing the detail page caused 
+            # the user to get logged out
+            field => "$field",
+        };
+        push @$other_settings, $other_setting_ref;
+
+        if (defined $other_setting_value_mappings->{$field}) {
+            if (defined $other_setting_value_mappings->{$field}->{alternate_label}) {
+                $other_setting_ref->{field} = $other_setting_value_mappings->{$field}->{alternate_label};
+            }
+
+            my $alt_object = $object;
+            if (defined $other_setting_value_mappings->{$field}->{object_accessor}) {
+                my $alt_object_method = $other_setting_value_mappings->{$field}->{object_accessor};
+                $alt_object = $object->$alt_object_method;
+            }
+
+            if (defined $other_setting_value_mappings->{$field}->{value_accessor}) {
+                my $sub_method = $other_setting_value_mappings->{$field}->{value_accessor};
+                $other_setting_ref->{value} = $alt_object->$sub_method;
+            }
+            else {
+                $other_setting_ref->{value} = $alt_object->manage_description;
+            }
+        }
+        else {
+            if ($field->type eq 'date') {
+                $other_setting_ref->{value} = $object->$field( format => '%Y-%m-%d' );
+            }
+            else {
+                $other_setting_ref->{value} = $object->$field;
+            }
+        }
+    }
+    if (@$other_settings) {
+        $struct->{other_settings} = $other_settings;
+    }
+
+    if ($self->can('_detail_generic_hook_data_obj')) {
+        my $result = $self->_detail_generic_hook_data_obj($object, $struct);
+        if ($result) {
+            IC::Exception->throw("Hook returned error: $result");
+        }
+    }
+
+    if (UNIVERSAL::can($object, 'get_file')) {
+        my $has_privs = 0;
+
+        my $function_obj = IC::M::ManageFunction->new( code => $self->_func_prefix . 'Properties' );
+        if ($function_obj->load( speculative => 1 )) {
+            if ($self->_controller->role->check_right( 'execute', $function_obj )) {
+                $has_privs = 1;
+            }
+        }
+
+        my $file_resource_refs = [];
+
+        my $file_resource_objs = $object->get_file_resource_objs;
+        for my $file_resource_obj (@$file_resource_objs) {
+            my $file_resource_ref = {
+                id      => $file_resource_obj->id,
+                display => $file_resource_obj->lookup_value,
+            };
+            my @property_codes = map { $_->code } @{ $file_resource_obj->attrs };
+
+            my $file = $file_resource_obj->get_file_for_object( $object );
+            my $properties;
+            if (defined $file) {
+                $properties = $file->properties;
+
+                if ($file->is_image) {
+                    unless (grep { $_ eq 'width' } @property_codes) {
+                        push @property_codes, 'width';
+                    }
+                    unless (grep { $_ eq 'height' } @property_codes) {
+                        push @property_codes, 'height';
+                    }
+                }
+            }
+
+            my %property_values;
+            if (defined $properties) {
+                %property_values = $file->property_values( \@property_codes, as_hash => 1 );
+            }
+
+            my $attr_refs;
+            for my $attr (@{ $file_resource_obj->attrs }) {
+                my $attr_ref = {
+                    code          => $attr->code,
+                    display_label => $attr->display_label,
+                };
+                if (exists $property_values{$attr->code}) {
+                    $attr_ref->{value} = $property_values{$attr->code};
+                }
+
+                push @$attr_refs, $attr_ref;
+            }
+            if (defined $file and $file->is_image) {
+                $attr_refs ||= [];
+                unless (grep { $_->{code} eq 'width' } @$attr_refs) {
+                    push @$attr_refs, {
+                        code          => 'width',
+                        display_label => 'Auto: Width',
+                        value         => $property_values{width},
+                    };
+                }
+                unless (grep { $_->{code} eq 'height' } @$attr_refs) {
+                    push @$attr_refs, {
+                        code          => 'height',
+                        display_label => 'Auto: Height',
+                        value         => $property_values{height},
+                    };
+                }
+            }
+            if (defined $attr_refs) {
+                $file_resource_ref->{attrs} = $attr_refs;
+            }
+
+            my $link_text;
+            if (defined $file) {
+                my $url_path = $file->url_path;
+                if ($file->is_image) {
+                    #
+                    # images are just special
+                    #
+                    my ($use_width, $use_height, $use_alt) = $file->property_values( [ qw( width height alt ) ] );
+
+                    $file_resource_ref->{url} = qq{<img src="$url_path" width="$use_width" height="$use_height"};
+                    if (defined $use_alt) {
+                        $file_resource_ref->{url} .= qq{ alt="$use_alt"};
+                    }
+                    $file_resource_ref->{url} .= ' />';
+                }
+                else {
+                    $file_resource_ref->{url} = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
+                }
+
+                $link_text = 'Replace';
+
+                if ($has_privs) {
+                    $file_resource_ref->{drop_link} = $self->_object_manage_function_link(
+                        'Properties',
+                        $object,
+                        label     => 'Drop',
+                        addtl_cgi => {
+                            _properties_mode => 'unlink',
+                            resource         => $file_resource_ref->{id},
+                        },
+                    );
+                }
+            }
+            else {
+                $link_text = 'Upload';
+            }
+
+            if ($has_privs) {
+                $file_resource_ref->{link} = $self->_object_manage_function_link(
+                    'Properties',
+                    $object,
+                    label     => $link_text,
+                    addtl_cgi => {
+                        _properties_mode => 'upload',
+                        resource         => $file_resource_ref->{id},
+                    },
+                );
+            }
+
+            push @$file_resource_refs, $file_resource_ref;
+        }
+
+        $struct->{file_resources} = $file_resource_refs;
+    }
+
+    if (UNIVERSAL::can($object, 'log_actions')) {
+        my $action_log = [];
+
+        my $configuration = $self->_detail_action_log_configuration;
+
+        for my $entry (@{ $object->action_log }) {
+            my $date_created = $entry->date_created;
+
+            my $entry_ref = {
+                label        => $entry->action->display_label,
+                by_name      => $entry->created_by_name,
+                date_created => "$date_created",
+                content      => ($entry->content || ''),
+            };
+
+            my $details = [];
+            my $seen = [];
+
+            #
+            # TODO: add mapping for from/to actions
+            #
+            if (exists $configuration->{action_code_handlers}->{$entry->action_code}) {
+                my $custom_sub = $configuration->{action_code_handlers}->{$entry->action_code};
+                my ($custom_details, $custom_seen) = $custom_sub->($entry, $self->_controller->role);
+
+                if (defined $custom_details) {
+                    push @$details, @$custom_details;
+                }
+                if (defined $custom_seen) {
+                    push @$seen, @$custom_seen;
+                }
+            }
+            elsif (grep { $entry->action_code eq $_ } qw( status_change kind_change condition_change location_change )) {
+                my ($from, $to) = ('', '');
+                for my $detail (@{ $entry->details }) {
+                    if ($detail->ref_code eq 'from') {
+                        $from = $detail->value;
+                        push @$seen, $detail->ref_code;
+                    }
+                    elsif ($detail->ref_code eq 'to') {
+                        $to = $detail->value;
+                        push @$seen, $detail->ref_code;
+                    }
+                }
+                push @$details, "from '$from' to '$to'" if (defined $from or defined $to);
+            }
+            for my $detail (@{ $entry->details }) {
+                unless (grep { $detail->ref_code eq $_ } @$seen) {
+                    push @$details, $detail->ref_code . ': ' . $detail->value;
+                }
+            }
+            $entry_ref->{details} = $details;
+
+            push @$action_log, $entry_ref;
+        }
+
+        warn ::uneval($action_log);
+        if (@$action_log) {
+            $struct->{action_log} = $action_log;
+        }
+    }
+
+    if ($params->{_format} eq 'json') {
+        my $response = $self->_controller->response;
+        $response->headers->status('200 OK');
+        $response->headers->content_type('text/plain');
+        #$response->headers->content_type('application/json');
+        $response->buffer( JSON::Syck::Dump( $struct ));
+
+        $self->_response(1);
+    }
+    else {
+        IC::Exception->throw("Unrecognized _format: $params->{_format}");
+    }
+
+    return;
 }
 
 1;
