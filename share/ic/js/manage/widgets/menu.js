@@ -39,10 +39,32 @@ YUI.add(
             {
                 sections: null,
 
+                DASHBOARD_MENUITEM_TEMPLATE: '\
+<li class="yui3-menuitem"><{menu_item_content_wrapper} \
+id="manage_menu_item-dashboard" class="yui3-menuitem-content">Dashboard\
+</{menu_item_content_wrapper}></li>',
+                SUBMENU_LABEL_TEMPLATE: '\
+<li><a class="yui3-menu-label"><{menu_item_content_wrapper}>{display_label}\
+<{menu_item_content_wrapper}></a>',
+                SUBMENU_TEMPLATE: '\
+<div id="manage_menu-{code}" class="yui3-menu"><div class="yui3-menu-content">\
+<ul>',
+                SUBMENU_ITEM_TEMPLATE: '\
+<li class="yui3-menuitem"><a id="manage_menu_item-function-list-{code}" \
+class="yui3-menuitem-content">{display_label}</a></li>',
+                SUBMENU_CLOSE_TEMPLATE: '</ul></div></div></li>',
+
+                // setup a vertical orientation as the default
+                orientation_class: '',
+                menu_item_content_wrapper: 'span',
+
                 initializer: function (config) {
                     Y.log("manage menu initializer");
-                    this.get("boundingBox").addClass("yui3-menu " + config.orientation_class);
-                    this.get("contentBox").addClass("yui3-menu-content");
+
+                    if (config.orientation === 'horizontal') {
+                        this.orientation_class =  'yui3-menu-horizontal yui3-menubuttonnav';
+                        this.menu_item_content_wrapper = 'em';
+                    }
 
                     var menu = this;
 
@@ -53,7 +75,7 @@ YUI.add(
                             // so that the menu is rendered above the container... if we could break
                             // the render cycle out, possibly into an event callback then this could
                             // become async
-                            sync: true,
+                            sync: false,
                             on: {
                                 success: function (txnId, response) {
                                     try {
@@ -78,26 +100,53 @@ YUI.add(
                 },
 
                 renderUI: function () {
-                    // Move all of this content to the sync UI?
+                    Y.log('menu renderUI...');
+                },
 
-                    // make this a constant or a Markout thing
-                    var item_html = '<li class="yui3-menuitem"><span id="manage_menu_item-dashboard" class="yui3-menuitem-content">Dashboard</span></li>';
+                syncUI: function () {
+                    Y.log('menu syncUI...');
 
+                    this.get("boundingBox").addClass("yui3-menu " + this.orientation_class);
+                    this.get("contentBox").addClass("yui3-menu-content");
+                    
+                    var item_html = Y.substitute(
+                        this.DASHBOARD_MENUITEM_TEMPLATE,
+                        {
+                            menu_item_content_wrapper: this.menu_item_content_wrapper
+                        }
+                    );
+
+                    var _this = this;
                     Y.each(
                         menu_config["sections"],
                         function (v, i, list) {
-                            item_html += '<li><a class="yui3-menu-label">' + v["display_label"] + '</a>';
+                            item_html += Y.substitute(
+                                _this.SUBMENU_LABEL_TEMPLATE, 
+                                {
+                                    menu_item_content_wrapper: _this.menu_item_content_wrapper,
+                                    display_label: v["display_label"]
+                                }
+                            );
 
-                            item_html += '<div id="manage_menu-' + v["code"] + '" class="yui3-menu"><div class="yui3-menu-content"><ul>';
+                            item_html += Y.substitute(
+                                _this.SUBMENU_TEMPLATE,
+                                {
+                                    code: v["code"]
+                                }
+                            );
                             Y.each(
                                 v["functions"],
                                 function (vv, vi, vlist) {
-                                    item_html += '<li class="yui3-menuitem"><a id="manage_menu_item-function-list-' + vv["code"] + '" class="yui3-menuitem-content">' + vv["display_label"] + '</a></li>';
+                                    item_html += Y.substitute(
+                                        _this.SUBMENU_ITEM_TEMPLATE,
+                                        {
+                                            code: vv["code"],
+                                            display_label: vv["display_label"]
+                                        }
+                                    );
                                 }
                             );
-                            item_html += '</ul></div></div>';
-
-                            item_html += '</li>';
+                            item_html += _this.SUBMENU_CLOSE_TEMPLATE;
                         }
                     );
 

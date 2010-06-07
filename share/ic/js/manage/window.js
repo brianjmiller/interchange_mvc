@@ -114,7 +114,7 @@ YUI.add(
                                 menu_unit = this.getUnitByPosition("top").body.childNodes[0];
                                 _this._menu = new Y.IC.ManageMenu(
                                     {
-                                        orientation_class: '', // yui3-menu-horizontal
+                                        orientation: 'vertical',
                                         render_to: menu_unit
                                     }
                                 );

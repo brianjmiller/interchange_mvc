@@ -63,7 +63,15 @@ YUI(
                     },
                     "ic-manage-widget-menu": {
                         path: "manage/widgets/menu.js",
-                        requires: [ "ic-manage-widget-menu-css", "node-menunav", "io", "json-parse", "event", "node" ]
+                        requires: [ 
+                            "ic-manage-widget-menu-css", 
+                            "node-menunav", 
+                            "io", 
+                            "json-parse", 
+                            "event", 
+                            "node",
+                            "substitute"
+                        ]
                     },
                     "ic-manage-window": {
                         path: "manage/window.js",
