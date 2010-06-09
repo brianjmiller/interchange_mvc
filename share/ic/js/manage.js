@@ -17,10 +17,12 @@
 
 YUI(
     {
-        //filter: 'debug',
+        filter: 'raw',
+        combine: false,
         insertBefore: 'styleoverrides',
         groups: {
             icjs: {
+                combine: false,
                 base: "/ic/js/",
                 modules: {
                     "ic-manage-widget-dashboard": {
@@ -42,6 +44,20 @@ YUI(
                         ],
                         ignore: [
                             "yui2-datasource"
+                        ]
+                    },
+                    "rowexpansion": {
+                        path: "manage/widgets/functions/rowexpansion.js",
+                        requires: [
+                            "yui2-datatable"
+                        ]
+                    },
+                    "ic-manage-widget-function-expandable-list": {
+                        path: "manage/widgets/functions/expandable_list.js",
+                        requires: [
+                            "ic-manage-widget-function-expandable-list-css",
+                            "ic-manage-widget-function-list",
+                            "rowexpansion"
                         ]
                     },
                     "ic-manage-widget-function-detail": {
@@ -98,6 +114,10 @@ YUI(
                     },
                     "ic-manage-widget-function-list-css": {
                         path: "manage/widgets/functions/list.css",
+                        type: "css"
+                    },
+                    "ic-manage-widget-function-expandable-list-css": {
+                        path: "manage/widgets/functions/expandable_list.css",
                         type: "css"
                     },
                     "ic-manage-widget-function-detail-css": {
