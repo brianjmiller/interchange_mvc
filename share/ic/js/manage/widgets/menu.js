@@ -41,7 +41,7 @@ YUI.add(
 
                 initializer: function (config) {
                     Y.log("manage menu initializer");
-                    this.get("boundingBox").addClass("yui3-menu yui3-menu-horizontal yui3-menubuttonnav");
+                    this.get("boundingBox").addClass("yui3-menu " + config.orientation_class);
                     this.get("contentBox").addClass("yui3-menu-content");
 
                     var menu = this;
@@ -81,12 +81,12 @@ YUI.add(
                     // Move all of this content to the sync UI?
 
                     // make this a constant or a Markout thing
-                    var item_html = '<li class="yui3-menuitem"><em id="manage_menu_item-dashboard" class="yui3-menuitem-content">Dashboard</em></li>';
+                    var item_html = '<li class="yui3-menuitem"><span id="manage_menu_item-dashboard" class="yui3-menuitem-content">Dashboard</span></li>';
 
                     Y.each(
                         menu_config["sections"],
                         function (v, i, list) {
-                            item_html += '<li><a class="yui3-menu-label"><em>' + v["display_label"] + '</em></a>';
+                            item_html += '<li><a class="yui3-menu-label">' + v["display_label"] + '</a>';
 
                             item_html += '<div id="manage_menu-' + v["code"] + '" class="yui3-menu"><div class="yui3-menu-content"><ul>';
                             Y.each(

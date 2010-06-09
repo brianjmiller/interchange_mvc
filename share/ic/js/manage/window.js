@@ -49,6 +49,7 @@ YUI.add(
                 initializer: function (config) {
                     var YAHOO = Y.YUI2;
 
+                    var _this = this;
                     var menu_unit;
                     var container_unit;
 
@@ -64,12 +65,12 @@ YUI.add(
                                 {
                                     position: "left",
                                     body: "manage_subcontainer",
-                                    width: 250,
-                                    zIndex: 0
+                                    width: 170,
+                                    zIndex: 1
                                 },
                                 {
                                     position: "center",
-                                    zIndex: 1,
+                                    zIndex: 0,
                                     scroll: false
                                 },
                                 {
@@ -85,6 +86,50 @@ YUI.add(
                     layout.on(
                         "render",
                         function () {
+                            var left = layout.getUnitByPosition("left").get("wrap");
+                            var inner_layout = new YAHOO.widget.Layout(
+                                left,
+                                {
+                                    parent: layout,
+                                    units: [
+                                        {
+                                            position: "top",
+                                            body: "manage_menu",
+                                            header: "Main Menu",
+                                            height: 212,
+                                            zIndex: 2,
+                                            scroll: null
+                                        },
+                                        {
+                                            position: "center",
+                                            body: "manage_quick",
+                                            header: "Quick Links",
+                                            zIndex: 0
+                                        }
+
+                                    ]
+                                }
+                            );
+                            inner_layout.on('render', function() {
+                                menu_unit = this.getUnitByPosition("top").body.childNodes[0];
+                                _this._menu = new Y.IC.ManageMenu(
+                                    {
+                                        orientation_class: '', // yui3-menu-horizontal
+                                        render_to: menu_unit
+                                    }
+                                );
+                                // also, set a custom collapse link
+                            });
+                            inner_layout.render();
+                            // need to let the nodemenu's dropdowns spill into the the next unit
+                            var cbody = Y.one(inner_layout.getUnitByPosition("top").body);
+                            cbody.addClass('allow-overflow');
+                            Y.one(cbody._node.parentNode.parentNode.parentNode).addClass('allow-overflow');
+                        }
+                    ),
+                    layout.on(
+                        "render",
+                        function () {
                             var center = layout.getUnitByPosition("center").get("wrap");
 
                             var inner_layout = new YAHOO.widget.Layout(
@@ -92,13 +137,6 @@ YUI.add(
                                 {
                                     parent: layout,
                                     units: [
-                                        {
-                                            position: "top",
-                                            body: "manage_menu",
-                                            height: 26,
-                                            zIndex: 2,
-                                            scroll: null
-                                        },
                                         {
                                             position: "center",
                                             body: "manage_window",
@@ -108,38 +146,31 @@ YUI.add(
                                     ]
                                 }
                             );
+                            inner_layout.on('render', function() { 
+                                // leave the unit's wrapper and body alone,
+                                //  and instead render into the element contained by the body
+                                container_unit = inner_layout.getUnitByPosition("center").body.childNodes[0];
+                                _this._container = new Y.IC.ManageContainer(
+                                    {
+                                        render_to: container_unit
+                                    }
+                                );
+
+                            });
                             inner_layout.render();
-
-                            // need to let the nodemenu's dropdowns spill into the the next unit
-                            Y.one(inner_layout.getUnitByPosition("top").body).addClass('allow-overflow');
-
-                            // leave the unit's wrapper and body alone,
-                            //  and instead render into the body element
-                            menu_unit = inner_layout.getUnitByPosition("top").body.childNodes[0];
-                            container_unit = inner_layout.getUnitByPosition("center").body.childNodes[0];
                         }
                     );
                     layout.render();
 
-                    this._menu      = new Y.IC.ManageMenu(
-                        {
-                            render_to: menu_unit
-                        }
-                    );
-                    this._container = new Y.IC.ManageContainer(
-                        {
-                            render_to: container_unit
-                        }
-                    );
 
                     var loadWidget = Y.bind(this._container._doLoadWidget, this._container);
                     var onSubmenuMousedown = function(e) {
-                        // hide the submenu after a selection (why is this necessary?)
-                        //  maybe because the menu uses anchors instead of hrefs?  
-                        //  could try switching the menu init to build empty hrefs, and 
-                        //  then be careful to capture and stop event propagation on click...
-                        // instead, this just forces a submenu hide, but the _node.offsetParent is ugly
-                        Y.one(e.target._node.offsetParent).addClass('yui3-menu-hidden');
+                        // hide the submenu after a selection
+                        //  this seems to be necessary because there's no default action
+                        //  when clicking an empty anchor (we only listen for mousedown)
+                        menu_nav_node = _this._menu.get("boundingBox")
+                        var menuNav = menu_nav_node.menuNav;
+                        menuNav._hideAllSubmenus(menu_nav_node);
                         loadWidget(e);
                     };
 
