@@ -47,7 +47,7 @@ YUI.add(
 
                 // Base Methods //
                 initializer: function (config) {
-                    Y.one("#manage_window").setContent("");
+                    // Y.one("#manage_window").setContent("");
 
                     var YAHOO = Y.YUI2;
 
@@ -95,7 +95,7 @@ YUI.add(
                                     units: [
                                         {
                                             position: "center",
-                                            scroll: true,
+                                            scroll: true
                                         }
                                     ]
                                 }
@@ -118,23 +118,34 @@ YUI.add(
                         }
                     );
 
+                    var loadWidget = Y.bind(this._container._doLoadWidget, this._container);
+                    var onSubmenuMousedown = function(e) {
+                        // hide the submenu after a selection (why is this necessary?)
+                        //  maybe because the menu uses anchors instead of hrefs?  
+                        //  could try switching the menu init to build empty hrefs, and 
+                        //  then be careful to capture and stop event propagation on click...
+                        // instead, this just forces a submenu hide, but the _node.offsetParent is ugly
+                        Y.one(e.target._node.offsetParent).addClass('yui3-menu-hidden');
+                        loadWidget(e);
+                    };
+
                     Y.delegate(
                         "mousedown",
-                        Y.bind(this._container._doLoadWidget, this._container),
+                        onSubmenuMousedown,
                         this._menu.get("boundingBox"),
                         'em.yui3-menuitem-content'
                         //this._menu
                     );
                     Y.delegate(
                         "mousedown",
-                        Y.bind(this._container._doLoadWidget, this._container),
+                        onSubmenuMousedown,
                         this._menu.get("boundingBox"),
                         'a.yui3-menuitem-content'
                         //this._menu
                     );
                     Y.delegate(
                         "mousedown",
-                        Y.bind(this._container._doLoadWidget, this._container),
+                        loadWidget,
                         this._container.get("boundingBox"),
                         'a.manage_function_link'
                         //this._menu
@@ -163,6 +174,7 @@ YUI.add(
             "ic-manage-widget-container",
             "ic-manage-widget-menu",
             "yui2-layout",
+            "yui2-resize",
             "yui2-animation"
         ]
     }

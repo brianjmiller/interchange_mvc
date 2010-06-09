@@ -1,1 +1,12 @@
+.yui3-js-enabled .hide-while-loading {
+  display: none;
+}
+
+.please-wait {
+  display: none;
+}
+
+.yui3-js-enabled .display-while-loading {
+  display: block;
+}
 

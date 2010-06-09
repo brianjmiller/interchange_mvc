@@ -73,6 +73,7 @@ YUI(
                             "ic-manage-widget-container",
                             "ic-manage-widget-menu",
                             "yui2-layout",
+                            "yui2-resize",
                             "yui2-animation"
                         ]
                     }

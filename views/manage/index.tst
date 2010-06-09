@@ -32,18 +32,19 @@
 
 <body class="yui-skin-sam yui3-skin-sam">
 
-<div style="text-align: left;">
+<div id="ic-manage-app-container" class="hide-while-loading"  style="text-align: left;">
     <div id="manage_header">
         <span style="font-size: 138.5%; font-weight: bold;">Management Area</span>
     </div>
-    <div id="manage_window">
-        Application loading...
-    </div>
-    <div id="manage_subcontainer">
-    </div>
+    <div id="manage_subcontainer" /></div>
+    <div id="manage_window"></div>
     <div id="manage_footer">
         Console: <button id="console_toggle" class="" type="button" value="0">show</button>
     </div>
+</div>
+
+<div class="please-wait display-while-loading">
+  Application loading...
 </div>
 
 <!-- YUI Seed -->
