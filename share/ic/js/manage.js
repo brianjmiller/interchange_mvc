@@ -35,9 +35,12 @@ YUI(
                         path: "manage/widgets/functions/list.js",
                         requires: [
                             "ic-manage-widget-function-list-css",
+                            "history",
+                            "querystring",
                             "widget",
                             "datasource",
                             "gallery-datasource-wrapper",
+                            "ic-manage-widget-function-expandable-list", // this seems backwards, why is this required?
                             // TODO: can we load these later?
                             "yui2-datatable",
                             "yui2-paginator"
@@ -57,6 +60,7 @@ YUI(
                         requires: [
                             "ic-manage-widget-function-expandable-list-css",
                             "ic-manage-widget-function-list",
+                            "widget-parent",
                             "rowexpansion"
                         ]
                     },

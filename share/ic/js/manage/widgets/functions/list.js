@@ -38,6 +38,9 @@ YUI.add(
                     },
                     kind: {
                         value: null
+                    },
+                    container: {
+                        value: null
                     }
                 }
             }
@@ -49,7 +52,6 @@ YUI.add(
             {
                 _meta_data: null,
                 _data_source: null,
-                _data_source_wrapped: null,
                 _data_table: null,
 
                 initializer: function(config) {
@@ -92,18 +94,47 @@ YUI.add(
                 },
 
                 renderUI: function() {
-                    var YAHOO = Y.YUI2;
+                    Y.log('list::renderUI');
+                    // add a container for the datatable
+                    var cb = this.get('contentBox');
+                    cb.setContent("");
+                    cb.prepend('<div id="' + this.get('code') + '">Loading...</div>');
+                    this.set('container', Y.one(this.get('code')));
 
-                    var contentBox = this.get("contentBox");
+                    // build the table table from our meta_data
+                    var data_table_config = {};
+                    this._getDataSource();
+                    this._initDataTableFormaters();
+                    this._initDataTableSort(data_table_config);
+                    this._initDataTablePager(data_table_config);
+                    this._adjustDataTableConfig(data_table_config);
+                    this._initDataTable(data_table_config);
+                    this._data_table.handleDataReturnPayload = this._handleDataReturnPayload;
+                },
 
-                    // set up a YUI3 data source that we will then wrap
-                    // in a YUI2 compatibility container to pass to the
-                    // YUI2 data table, presumably when YUI3 gets its
-                    // own datatable we can remove this layer
+                bindUI: function() {
+                    Y.log('list::bindUI');
+                    this._data_table.subscribe("rowMouseoverEvent", this._data_table.onEventHighlightRow);
+                    this._data_table.subscribe("rowMouseoutEvent", this._data_table.onEventUnhighlightRow);
+                    this._data_table.subscribe("rowClickEvent", this._data_table.onEventSelectRow);
+                },
 
+                syncUI: function() {
+                    Y.log('list::syncUI');
+                },
+
+                _getDataSource: function () {
+                    /**
+                     *   set up a YUI3 data source that we will then
+                     *   wrap in a YUI2 compatibility container to
+                     *   pass to the YUI2 data table, presumably when
+                     *   YUI3 gets its own datatable we can remove
+                     *   this layer
+                     **/
                     this._data_source = new Y.DataSource.IO(
                         {
-                            source: "/manage/function/" + this.get("code") + "/0?_mode=data&_format=json&_query_mode=listall&"
+                            source: "/manage/function/" + this.get("code")
+                                + "/0?_mode=data&_format=json&_query_mode=listall&"
                         }
                     );
                     this._data_source.plug(
@@ -113,31 +144,45 @@ YUI.add(
                                 schema: {
                                     resultListLocator: 'rows',
                                     resultFields: this._meta_data.data_source_fields,
+                                    // none but 'total_objects' are actually delivered - modify the server side
                                     metaFields: {
-                                        totalRecords: 'total_objects'
+                                        totalRecords: 'total_objects',
+                                        paginationRecordOffset : "start_index", 
+                                        paginationRowsPerPage : "page_size", 
+                                        sortKey: "sort", 
+                                        sortDir: "dir" 
                                     }
                                 }
                             }
                         }
                     );
 
-                    this._data_source_wrapped = new Y.DataSourceWrapper(
+                    this._data_source = new Y.DataSourceWrapper(
                         {
                             source: this._data_source
                         }
                     );
+                },
 
-                    var data_table_config = {};
+                _initDataTableFormaters: function () {
+                },
 
+                _initDataTableSort: function (data_table_config) {
                     if (this._meta_data.data_table_initial_sort) {
                         data_table_config.sortedBy = this._meta_data.data_table_initial_sort;
                     }
+                },
 
+                _initDataTablePager: function (data_table_config) {
                     if (this._meta_data.paging_provider !== "none") {
                         Y.log("setting up pager: " + this._meta_data.paging_provider);
+                        var YAHOO = Y.YUI2;
+
+                        // Define a custom function to route pagination through the Browser History Manager 
+
                         var pager = new YAHOO.widget.Paginator(
                             {
-                                rowsPerPage: this._meta_data.page_count
+                                rowsPerPage: 3 //this._meta_data.page_count
                             }
                         );
 
@@ -147,24 +192,26 @@ YUI.add(
                             data_table_config.dynamicData = true;
                             data_table_config.initialRequest = "&startIndex=0";
                         }
-                    };
+                    }
+                },
 
-                    contentBox.setContent("");
+                _adjustDataTableConfig: function (data_table_config) {
+                },
 
+                _initDataTable: function (data_table_config) {
+                    var YAHOO = Y.YUI2;
                     this._data_table = new YAHOO.widget.DataTable(
-                        contentBox.get("id"),
+                        this.get('code'),
                         this._meta_data.data_table_column_defs,
-                        this._data_source_wrapped,
+                        this._data_source,
                         data_table_config
                     );
-                    this._data_table.handleDataReturnPayload = function(oRequest, oResponse, oPayload) {
-                        oPayload.totalRecords = oResponse.meta.totalRecords;
-                        return oPayload;
-                    }
-                    this._data_table.subscribe("rowMouseoverEvent", this._data_table.onEventHighlightRow);
-                    this._data_table.subscribe("rowMouseoutEvent", this._data_table.onEventUnhighlightRow);
-                    this._data_table.subscribe("rowClickEvent", this._data_table.onEventSelectRow);
-                }
+                },
+
+                _handleDataReturnPayload: function(oRequest, oResponse, oPayload) {
+                    oPayload.totalRecords = oResponse.meta.totalRecords;
+                    return oPayload;
+                },
             }
         );
 

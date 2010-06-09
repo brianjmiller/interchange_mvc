@@ -37,6 +37,7 @@
 *
 **/
 .yui-dt-expansion .yui-dt-liner{
+  cursor: default;
   padding:0;
   border:solid 0 #bbb;
   border-width: 0 0 2px 0;

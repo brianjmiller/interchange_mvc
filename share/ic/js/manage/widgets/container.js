@@ -29,6 +29,12 @@ YUI.add(
             {
                 NAME: "ic_manage_container",
                 ATTRS: {
+                    current: {
+                        value: null
+                    },
+                    previous: {
+                        value: null
+                    }
                 }
             }
         );
@@ -37,8 +43,7 @@ YUI.add(
             ManageContainer,
             Y.Widget,
             {
-                _currentWidget: null,
-                _cachedWidgets: {},
+                _cache: {},
 
                 initializer: function (config) {
                     Y.log("manage container initializer");
@@ -58,104 +63,33 @@ YUI.add(
                 },
 
                 destructor: function () {
-                    this._currentWidget = null;
-                    this._cachedWidgets = null;
+                    this._cache = null;
                 },
 
                 renderUI: function () {
-                    // should probably be following the attrs/render/bind/sync pattern, no?
+                    Y.log('container::renderUI');
+                    /* 
+                       currently, the container doesn't add any
+                       markup.  it will attach widgets, but that is
+                       done elsewhere.  If in the future if the
+                       container holds some sort of "widget dock" or
+                       iconification of widgets, we would set up that
+                       chrome here.
+                     */
                 },
 
-                loadWidget: function (config) {
-                    Y.log("container's loadWidget called: " + config);
-                    Y.log("loadWidget this: " + this);
-                    Y.log("loadWidget kind: " + config.kind);
-                    Y.log("loadWidget sub_kind: " + config.sub_kind);
-                    Y.log("loadWidget args: " + config.args);
-                    var previous_widget = this._currentWidget,
-                        new_widget = null
-                    ;
-
-                    if (config.kind === "dashboard") {
-                        if (! this._cachedWidgets["dashboard"]) {
-                            Y.log("instantiating dashboard...");
-                            this._cachedWidgets["dashboard"] = new Y.IC.ManageDashboard();
-                            this._cachedWidgets["dashboard"].render( this.get("contentBox") );
-                        }
-
-                        new_widget = this._cachedWidgets["dashboard"];
-                    }
-                    else if (config.kind === "function") {
-                        if (! this._cachedWidgets[config.args]) {
-                            Y.log("instantiating function: " + config.args + "...");
-                            var splits     = config.args.split("-", 2);
-                            var code       = splits[0];
-                            Y.log("code: " + code);
-                            if (config.sub_kind === "list") {
-                                this._cachedWidgets[config.args] = new Y.IC.ManageFunctionList(
-                                    {
-                                        code: code,
-                                    }
-                                );
-                                this._cachedWidgets[config.args].render( this.get("contentBox") );
-                                this._cachedWidgets[config.args].hide();
-                            }
-                            else if (config.sub_kind === "detail") {
-                                var addtl_args = splits[1] + "";
-                                Y.log("addtl_args: " + addtl_args);
-                                this._cachedWidgets[config.args] = new Y.IC.ManageFunctionDetail(
-                                    {
-                                        code: code,
-                                        addtl_args: addtl_args
-                                    }
-                                );
-                                this._cachedWidgets[config.args].render( this.get("contentBox") );
-                                this._cachedWidgets[config.args].hide();
-                            }
-                            else {
-                            }
-                        }
-
-                        new_widget = this._cachedWidgets[config.args];
-                    }
-                    else {
-                        Y.log("Invalid load widget call, unrecognized kind: " + config.kind, "error");
-                    }
-
-                    new_widget.enable();
-
-                    // only want to do these if we are reasonably confident
-                    // that our new widget will succeed
-                    Y.log("previous widget: " + previous_widget);
-                    if (previous_widget) {
-                        Y.log("hiding previous_widget: " + previous_widget);
-                        previous_widget.hide();
-                        previous_widget.disable();
-                    }
-
-                    this._currentWidget = new_widget;
-                    this._currentWidget.show();
+                bindUI: function () {
+                    Y.log('container::bindUI');
+                    this.after('currentChange', this._afterCurrentWidgetChange);
+                    this.after('previousChange', this._afterPreviousWidgetChange);
                 },
 
-                _updateFromHistory: function (state) {
-                    Y.log('history state: ' + state);
-                    if (state === "dashboard") {
-                        // the initial widget will always be the dashboard
-                        Y.log(this);
-                        this.loadWidget(
-                            {
-                                kind: "dashboard"
-                            }
-                        );
-                    }
-                    else {
-                        Y.log(this);
-                        this.loadWidget(Y.QueryString.parse(state));
-                    }
-
+                syncUI: function () {
+                    Y.log('container::syncUI');
                 },
 
-                _doLoadWidget: function (e) {
+                loadWidget: function (e) {
+                    Y.log('container::loadWidget');
                     Y.log("function id: " + e.target.get("id"), "debug");
                     // .split doesn't return "the rest" with a limit
                     var matches    = e.target.get("id").match("^([^-]+)-([^-]+)(?:-([^-]+)-(.+))?$");
@@ -175,7 +109,125 @@ YUI.add(
                         this.name, 
                         Y.QueryString.stringify(load_widget_config)
                     );
-                }                
+                },
+
+                _doLoadWidget: function (config) {
+                    Y.log("container::_doLoadWidget");
+                    Y.log("loadWidget this: " + this);
+                    Y.log("loadWidget kind: " + config.kind);
+                    Y.log("loadWidget sub_kind: " + config.sub_kind);
+                    Y.log("loadWidget args: " + config.args);
+
+                    this.set('previous', this.get('current'));
+                    var new_widget = null;
+
+                    if (config.kind === "dashboard") {
+                        if (! this._cache["dashboard"]) {
+                            Y.log("instantiating dashboard...");
+                            this._cache["dashboard"] = new Y.IC.ManageDashboard();
+                            this._cache["dashboard"].render( this.get("contentBox") );
+                        }
+
+                        new_widget = this._cache["dashboard"];
+                    }
+                    else if (config.kind === "function") {
+                        if (! this._cache[config.args]) {
+                            Y.log("instantiating function: " + config.args + "...");
+                            var splits     = config.args.split("-", 2);
+                            var code       = splits[0];
+                            Y.log("code: " + code);
+                            if (config.sub_kind === "list") {
+                                this._cache[config.args] = new Y.IC.ManageFunctionExpandableList(
+                                    {
+                                        code: code,
+                                    }
+                                );
+                                this._cache[config.args].render( this.get("contentBox") );
+                                this._cache[config.args].hide();
+                            }
+                            else if (config.sub_kind === "detail") {
+                                var addtl_args = splits[1] + "";
+                                Y.log("addtl_args: " + addtl_args);
+                                this._cache[config.args] = new Y.IC.ManageFunctionDetail(
+                                    {
+                                        code: code,
+                                        addtl_args: addtl_args
+                                    }
+                                );
+                                this._cache[config.args].render( this.get("contentBox") );
+                                this._cache[config.args].hide();
+                            }
+                            else {
+                            }
+                        }
+
+                        new_widget = this._cache[config.args];
+                    }
+                    else {
+                        Y.log("Invalid load widget call, unrecognized kind: " + config.kind, "error");
+                    }
+
+                    this.set('current', new_widget);
+                },
+
+                _updateFromHistory: function (state) {
+                    Y.log('container::_updateFromHistory');
+                    Y.log('history state: ' + state);
+                    if (state === "dashboard") {
+                        // the initial widget will always be the dashboard
+                        this._doLoadWidget(
+                            {
+                                kind: "dashboard"
+                            }
+                        );
+                    }
+                    else {
+                        this._doLoadWidget(Y.QueryString.parse(state));
+                    }
+
+                },
+
+                _showWidget: function (widget) {
+                    Y.log('container::_showWidget');
+                    try {
+                        widget.enable();
+                        widget.show();
+                    } catch (err) {
+                        Y.log(err); // widget is probably null or not a Widget subclass
+                        // NA: i think we should write an error message to the screen,
+                        //     reload the previous widget, 
+                        //     and remove this widget from the cache.
+                        //     maybe just go back one entry in the history?
+                        alert('sorry! we could not enable/show the widget');
+                    }
+                },
+
+                _hideWidget: function (widget) {
+                    Y.log('container::_hideWidget');
+                    try {
+                        Y.log("hiding widget: " + widget);
+                        widget.hide();
+                        widget.disable();
+                    } catch (err) {
+                        Y.log(err); // probably not a Widget subclass
+                        // NA: i think we should detach the widget from the dom
+                        //     and remove it from the cache...
+                        alert('sorry! we were unable to hide/disable the widget');                        
+                    }
+                },
+
+                _afterPreviousWidgetChange: function (e) {
+                    if (e.newVal) {
+                        this._hideWidget(e.newVal);
+                    }
+                },
+
+                _afterCurrentWidgetChange: function (e) {
+                    if (e.newVal) {
+                        this._showWidget(e.newVal);
+                    }
+                },
+
             }
         );
 

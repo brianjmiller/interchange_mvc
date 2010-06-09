@@ -174,7 +174,7 @@ YUI.add(
                     layout.render();
 
 
-                    var loadWidget = Y.bind(this._container._doLoadWidget, this._container);
+                    var loadWidget = Y.bind(this._container.loadWidget, this._container);
                     var onSubmenuMousedown = function(e) {
                         // hide the submenu after a selection
                         //  this seems to be necessary because there's no default action
@@ -199,6 +199,7 @@ YUI.add(
                         'a.yui3-menuitem-content'
                         //this._menu
                     );
+                    /*
                     Y.delegate(
                         "mousedown",
                         loadWidget,
@@ -206,6 +207,7 @@ YUI.add(
                         'a.manage_function_link'
                         //this._menu
                     );
+                    */
                 },
 
                 destructor: function () {

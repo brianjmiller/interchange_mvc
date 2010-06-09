@@ -1,158 +1,164 @@
-YUI.add(
-    "ic-manage-widget-function-expandable-list",
-    function(Y) {
+YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
 
-        var ManageFunctionExpandableList;
+    Y.IC.ManageFunctionExpandableList = Y.Base.create(
+        "ic_manage_function_expandable_list",           // module identifier
+        Y.IC.ManageFunctionList,                        // what to extend
+        [Y.WidgetParent],                               // classes to mix in
+        {                                               // overrides/additions
 
-        ManageFunctionExpandableList = function (config) {
-            ManageFunctionExpandableList.superclass.constructor.apply(this, arguments);
-        };
+        bindUI: function () {
+            Y.log('expandable_list::bindUI');
+            this._data_table.on('cellClickEvent', this._data_table.onEventToggleRowExpansion);
+            this._data_table.on('rowClickEvent', this._data_table.onEventSelectRow);
+            this._data_table.on('rowMouseoverEvent', this._data_table.onEventHighlightRow);
+            this._data_table.on("rowMouseoutEvent", this._data_table.onEventUnhighlightRow);
 
-        ManageFunctionExpandableList.NAME = "ic_manage_function_expandable_list";
+            /*  // required for history manager integration
+            var pager = this._data_table.configs.paginator;
+            // First we must unhook the built-in mechanism... 
+            pager.unsubscribe("changeRequest", this._data_table.onPaginatorChangeRequest); 
+            // ...then we hook up our custom function 
+            pager.subscribe("changeRequest", this._handlePagination, this, true); 
 
-        Y.extend(
-            ManageFunctionExpandableList,
-            Y.IC.ManageFunctionList,
-            {
-		        /**
-		         * This "getExtendedData" function is passed 'url' (string) and 'success' (function) 
-		         * arguments. The success function will be 
-		         * given the successful response as an argument and structure the returned data as
-		         * a table in a new row expansion. The url argument points to a JSON service
-		         **/
-		        getExtendedData: function( url, success ){
-			
-			        /**
-			         * This async request is passed a local proxy url with arguments serialized for YQL, 
-			         * including the YQL query. YQL will act as the JSON service.
-			         **/
-			        Y.io(
-				        url,
-				        {
-                            sync: false,
-					        success : success,
-					        failure : function( o ){
-						        Y.log('Failed to get row expansion data','error');
-						        
-					        }
-				        }
-			        ); 
-			
-		        },
+            // Update payload data on the fly for tight integration with latest values from server  
+            this._data_table.doBeforeLoadData = function(oRequest, oResponse, oPayload) { 
+                var meta = oResponse.meta; 
+                Y.log('oRequest...');
+                Y.log(oRequest);
+                Y.log('oResponse...');
+                Y.log(oResponse);
+                Y.log('oPayload...');
+                Y.log(oPayload);
+                oPayload.totalRecords = meta.totalRecords || oPayload.totalRecords; 
+                oPayload.pagination = { 
+                    rowsPerPage: meta.paginationRowsPerPage || 3, 
+                    recordOffset: meta.paginationRecordOffset || 0 
+                }; 
+                oPayload.sortedBy = { 
+                    key: meta.sortKey || "id", 
+                    dir: (meta.sortDir) ? "yui-dt-" + meta.sortDir : "yui-dt-asc"
+                }; 
+                return true; 
+            }; 
+            */
+        },
 
-                renderUI: function() {
-                    Y.log('list renderUI...')
-                    var YAHOO = Y.YUI2;
+        /*  // required for history manager integration
+        _handlePagination: function (state) { 
+            // The next state will reflect the new pagination values 
+            // while preserving existing sort values 
+            // Note that the sort direction needs to be converted from DataTable format to server value
+            var sorted_by = this._data_table.get("sortedBy");
+            var new_state = this._generateRequest( 
+                state.recordOffset, sorted_by.key, sorted_by.dir, state.rowsPerPage 
+            ); 
 
-                    var contentBox = this.get("contentBox");
+            // Pass the state along to the Browser History Manager 
+            //Y.History.navigate(this.name, new_state); 
+            this._updateFromHistory(new_state);
+        },
+        */
 
-                    // set up a YUI3 data source that we will then wrap
-                    // in a YUI2 compatibility container to pass to the
-                    // YUI2 data table, presumably when YUI3 gets its
-                    // own datatable we can remove this layer
+        _initDataTableFormaters: function () {
+            var expansionFormatter = function(el, oRecord, oColumn, oData) {
+                var cell_element = el.parentNode;
+                //Set trigger
+                if (oData) { //Row is closed
+                    Y.one(cell_element).addClass("yui-dt-expandablerow-trigger");
+                }
+                el.innerHTML = oData; 
+            };
+            
+            Y.each(this._meta_data.data_table_column_defs, function (v, i, ary) {
+                Y.log(v);
+                if (v.key === '_options') {
+                    v.formatter = expansionFormatter;
+                }
+            });
+        },
 
-                    this._data_source = new Y.DataSource.IO(
-                        {
-                            source: "/manage/function/" + this.get("code") + "/0?_mode=data&_format=json&_query_mode=listall&"
-                        }
-                    );
-                    this._data_source.plug(
-                        {
-                            fn: Y.Plugin.DataSourceJSONSchema,
-                            cfg: {
-                                schema: {
-                                    resultListLocator: 'rows',
-                                    resultFields: this._meta_data.data_source_fields,
-                                    metaFields: {
-                                        totalRecords: 'total_objects'
-                                    }
-                                }
-                            }
-                        }
-                    );
+        _adjustDataTableConfig: function (data_table_config) {
+            data_table_config.rowExpansionTemplate = this.expansionTemplate;
+            data_table_config.selectionMode = 'single';
+        },
 
-                    this._data_source_wrapped = new Y.DataSourceWrapper(
-                        {
-                            source: this._data_source
-                        }
-                    );
+        _initDataTable: function (data_table_config) {
+            var YAHOO = Y.YUI2;
+            this._data_table = new YAHOO.widget.RowExpansionDataTable(
+                this.get('code'),
+                this._meta_data.data_table_column_defs,
+                this._data_source,
+                data_table_config
+            );
+        },
 
-                    var data_table_config = {};
+        /*  // required for history manager integration
+        _generateRequest: function (start_index, sort_key, dir, results) { 
+            start_index = start_index || 0; 
+            sort_key = sort_key || "id"; 
+            // Converts from DataTable format "yui-dt-[dir]" to server value "[dir]" 
+            dir = (dir) ? dir.substring(7) : "asc";
+            results = results || 10; 
+            return Y.QueryString.stringify(
+                {
+                    'results': results,
+                    'start_index': start_index,
+                    'sort': sort_key,
+                    'dir': dir
+                }
+            );
+        },
 
-                    if (this._meta_data.data_table_initial_sort) {
-                        data_table_config.sortedBy = this._meta_data.data_table_initial_sort;
-                    }
+        _updateFromHistory: function (state) {
+            Y.log('list::_updateFromHistory');
+            Y.log('history state: ' + state);
+            this._data_source.sendRequest(state, {
+                success: this._data_table.onDataReturnSetRows,
+                failure: function() { Y.log('failure'); }, //this._data_table.onDataReturnSetRows,
+                scope: this._data_table,
+                argument: {} // Pass in container for population at runtime via doBeforeLoadData 
+            });
+        },
+        */
 
-                    if (this._meta_data.paging_provider !== "none") {
-                        Y.log("setting up pager: " + this._meta_data.paging_provider);
-                        var pager = new YAHOO.widget.Paginator(
-                            {
-                                rowsPerPage: this._meta_data.page_count
-                            }
-                        );
 
-                        data_table_config.paginator = pager;
-
-                        if (this._meta_data.paging_provider === "server") {
-                            data_table_config.dynamicData = true;
-                            data_table_config.initialRequest = "&startIndex=0";
-                        }
-                    };
-
-                    contentBox.setContent("");
-
-                    var expansionFormatter  = function(el, oRecord, oColumn, oData) {
-                        var cell_element    = el.parentNode;
-                        
-                        //Set trigger
-                        if( oData ){ //Row is closed
-                            YAHOO.util.Dom.addClass( cell_element,
-                                                     "yui-dt-expandablerow-trigger" );
-                        }
-                        el.innerHTML = "Expand"; 
-
-                    };
-
-                    Y.log(this._meta_data.data_table_column_defs);
-                    this._meta_data.data_table_column_defs[this._meta_data.data_table_column_defs.length - 1].formatter = expansionFormatter;
-                    data_table_config.rowExpansionTemplate = 'hello world';
-
-                    this._data_table = new YAHOO.widget.RowExpansionDataTable(
-                        contentBox.get("id"),
-                        this._meta_data.data_table_column_defs,
-                        this._data_source_wrapped,
-                        data_table_config
-                    );
-                    this._data_table.handleDataReturnPayload = function(oRequest, oResponse, oPayload) {
-                        oPayload.totalRecords = oResponse.meta.totalRecords;
-                        return oPayload;
-                    }
-                },
-
-                bindUI: function () {
-                    this._data_table.on('cellClickEvent', this._data_table.onEventToggleRowExpansion);
-                    this._data_table.on('rowMouseoverEvent', this._data_table.onEventHighlightRow);
-                    this._data_table.on("rowMouseoutEvent", this._data_table.onEventUnhighlightRow);
-                },
-		        /**
-		         * This "expansionTemplate" function will be passed to the "rowExpansionTemplate" property
-		         * of the YUI DataTable to enable the row expansion feature. It is passed an arguments object
-		         * which contains context for the record that has been expanded as well as the newly created 
-		         * row.
-		         **/
-		        expansionTemplate: "hello world"
-
-            }
-        );
-
-        Y.namespace("IC");
-        Y.IC.ManageFunctionExpandableList = ManageFunctionExpandableList;
-    },
-    "@VERSION@",
+		/**
+		 * This "expansionTemplate" function will be passed to the "rowExpansionTemplate" property
+		 * of the YUI DataTable to enable the row expansion feature. It is passed an arguments object
+		 * which contains context for the record that has been expanded as well as the newly created 
+		 * row.
+		 **/
+		expansionTemplate: function(o) {
+            var _options = Y.Node.create(o.data.getData('_options'));
+            // everything below is repeated from container.js - not at all dry...
+            var matches    = _options.get("id").match("^([^-]+)-([^-]+)(?:-([^-]+)-(.+))?$");
+            var kind       = matches[2] || '';
+            var sub_kind   = matches[3] || '';
+            var addtl_args = matches[4] || '';
+            var config = {
+                kind: kind,
+                sub_kind: sub_kind,
+                args: addtl_args
+            };
+            var splits = config.args.split("-", 2);
+            var code = splits[0];
+            var addtl_args = splits[1] + "";
+            var widget = new Y.IC.ManageFunctionDetail(
+                {
+                    code: code,
+                    addtl_args: addtl_args
+                }
+            );
+            widget.render(o.liner_element);
+         }
+    }, 
     {
-        requires: [
-            "ic-manage-widget-function-list"
-        ]
-    }
-);
+        NAME: 'ic_manage_widget_function_expandable_list',
+        ATTRS : {            
+            expansion: {
+                value: "bar"
+            }
+        }
+    });
+}, '3.1.0' ,{requires:['ic-manage-widget-function-list', 'widget-parent']}); 
 
