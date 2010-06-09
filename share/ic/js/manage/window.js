@@ -158,6 +158,17 @@ YUI.add(
 
                             });
                             inner_layout.render();
+
+                            // add an iframe for IE compatabilty with the history manager.
+                            //  the iframe needs to be the body element's first child, 
+                            //  so it is added after the layout manager is rendered
+                            var body = Y.one(document.body);
+                            body.prepend(
+                                '<input id="yui-history-field" type="hidden" />'
+                            );
+                            body.prepend(
+                                '<iframe id="yui-history-iframe" src="/ic/history.html"></iframe>'
+                            );
                         }
                     );
                     layout.render();

@@ -43,12 +43,16 @@ YUI.add(
                 initializer: function (config) {
                     Y.log("manage container initializer");
 
-                    // the initial widget will always be the dashboard
-                    this.loadWidget(
-                        {
-                            kind: "dashboard"
-                        }
+                    var bookmarked_state = Y.History.getBookmarkedState(
+                        this.name
                     );
+                    var initial_state = bookmarked_state || "dashboard";
+
+                    Y.History.register(
+                        this.name, 
+                        initial_state
+                    ).on("history:moduleStateChange", 
+                         Y.bind(this._updateFromHistory, this));
 
                     this.render(config.render_to);
                 },
@@ -59,8 +63,7 @@ YUI.add(
                 },
 
                 renderUI: function () {
-                    Y.log("showing currentWidget: " + this._currentWidget);
-                    this._currentWidget.show();
+                    // should probably be following the attrs/render/bind/sync pattern, no?
                 },
 
                 loadWidget: function (config) {
@@ -134,13 +137,31 @@ YUI.add(
                     this._currentWidget.show();
                 },
 
+                _updateFromHistory: function (state) {
+                    Y.log('history state: ' + state);
+                    if (state === "dashboard") {
+                        // the initial widget will always be the dashboard
+                        Y.log(this);
+                        this.loadWidget(
+                            {
+                                kind: "dashboard"
+                            }
+                        );
+                    }
+                    else {
+                        Y.log(this);
+                        this.loadWidget(Y.QueryString.parse(state));
+                    }
+
+                },
+
                 _doLoadWidget: function (e) {
                     Y.log("function id: " + e.target.get("id"), "debug");
                     // .split doesn't return "the rest" with a limit
                     var matches    = e.target.get("id").match("^([^-]+)-([^-]+)(?:-([^-]+)-(.+))?$");
-                    var kind       = matches[2];
-                    var sub_kind   = matches[3];
-                    var addtl_args = matches[4];
+                    var kind       = matches[2] || '';
+                    var sub_kind   = matches[3] || '';
+                    var addtl_args = matches[4] || '';
 
                     var load_widget_config = {
                         kind: kind,
@@ -148,8 +169,13 @@ YUI.add(
                         args: addtl_args
                     };
 
-                    this.loadWidget(load_widget_config);
-                }
+                    // log this action with the history manager, 
+                    //  and let it load the widget
+                    Y.History.navigate(
+                        this.name, 
+                        Y.QueryString.stringify(load_widget_config)
+                    );
+                }                
             }
         );
 
