@@ -188,7 +188,6 @@ YUI.add(
                         'a.yui3-menuitem-content'
                         //this._menu
                     );
-                    /*
                     Y.delegate(
                         "mousedown",
                         loadWidget,
@@ -196,7 +195,6 @@ YUI.add(
                         'a.manage_function_link'
                         //this._menu
                     );
-                    */
                 },
 
                 destructor: function () {

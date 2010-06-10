@@ -189,6 +189,7 @@ YUI.add(
                                 this._cache[config.args] = new Y.IC.ManageFunctionExpandableList(
                                     {
                                         code: code,
+                                        expandable: false
                                     }
                                 );
                                 this._cache[config.args].render( this.get("contentBox") );

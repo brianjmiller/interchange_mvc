@@ -10,7 +10,9 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
             Y.log('expandable_list::bindUI');
             
             Y.IC.ManageFunctionExpandableList.superclass._bindDataTableEvents.call(this);
-            this._data_table.on('cellClickEvent', this._data_table.onEventToggleRowExpansion);
+            if (this.get('expandable')) {
+                this._data_table.on('cellClickEvent', this._data_table.onEventToggleRowExpansion);
+            }
 
             /*  // required for history manager integration
             var pager = this._data_table.configs.paginator;
@@ -68,12 +70,14 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                 el.innerHTML = oData; 
             };
             
-            Y.each(this._meta_data.data_table_column_defs, function (v, i, ary) {
-                Y.log(v);
-                if (v.key === '_options') {
-                    v.formatter = expansionFormatter;
-                }
-            });
+            if (this.get('expandable')) {
+                Y.each(this._meta_data.data_table_column_defs, function (v, i, ary) {
+                    // Y.log(v);
+                    if (v.key === '_options') {
+                        v.formatter = expansionFormatter;
+                    }
+                });
+            }
         },
 
         _adjustDataTableConfig: function (data_table_config) {
@@ -154,8 +158,8 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
     {
         NAME: 'ic_manage_widget_function_expandable_list',
         ATTRS : {            
-            expansion: {
-                value: "bar"
+            expandable: {
+                value: true
             }
         }
     });
