@@ -18,79 +18,26 @@
 YUI.add(
     "ic-manage-widget-function-detail",
     function(Y) {
-        var ManageFunction;
-
-        var Lang = Y.Lang,
-            Node = Y.Node
-        ;
+        var ManageFunctionDetail;
 
         ManageFunctionDetail = function (config) {
             ManageFunctionDetail.superclass.constructor.apply(this, arguments);
         };
 
-        Y.mix(
-            ManageFunctionDetail,
-            {
-                NAME: "ic_manage_function_detail",
-                ATTRS: {
-                    code: {
-                        value: null
-                    },
-                    kind: {
-                        value: null
-                    }
-                }
-            }
-        );
+        ManageFunctionDetail.NAME = "ic_manage_function_detail";
 
         Y.extend(
             ManageFunctionDetail,
-            Y.Widget,
+            Y.IC.ManageFunction,
             {
-                _meta_data: null,
-
-                initializer: function(config) {
-                    Y.log("detail initializer: " + this.get("code") + " - " + config.addtl_args, "debug");
-
-                    var url = "/manage/function/" + this.get("code") + "/0?_mode=config&_format=json";
-                    url = url + "&" + config.addtl_args;
-                    Y.log("Url: " + url, "debug");
-
-                    var return_data = null;
-                    Y.io(
-                        url,
-                        {
-                            sync: true,
-                            on: {
-                                success: function (txnId, response) {
-                                    try {
-                                        return_data = Y.JSON.parse(response.responseText);
-                                    }
-                                    catch (e) {
-                                        Y.log("Can't parse JSON: " + e, "error");
-                                        return;
-                                    }
-
-                                    return;
-                                },
-
-                                failure: function (txnId, response) {
-                                    Y.log("Failed to get function meta data", "error");
-                                }
-                            }
-                        }
-                    );
-
-                    this._meta_data = return_data;
-                },
-
-                renderUI: function() {
+                _buildUI: function () {
+                    Y.log('detail::_buildUI');
                     var row = null,
                         action_log_tab_index = null,
                         action_log_tab_content = ""
                     ;
-                    var contentBox = this.get("contentBox");
 
+                    var contentBox = this._content_node;
                     var data = this._meta_data;
 
                     contentBox.setContent('<div style="text-align: left; font-size: 110%;">' + data.object_name + '</div>');
@@ -149,6 +96,7 @@ YUI.add(
                     );
                     tabs.render(contentBox);
                 }
+
             }
         );
 
@@ -158,7 +106,7 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
-            "widget",
+            "ic-manage-widget-function",
             "tabview"
         ]
     }

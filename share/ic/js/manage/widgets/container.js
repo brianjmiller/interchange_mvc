@@ -34,6 +34,18 @@ YUI.add(
                     },
                     previous: {
                         value: null
+                    },
+                    state: {
+                        value: null,
+                        setter: function(new_state) {
+                            var old_state = Y.HistoryLite.get();
+                            // at the container level, 
+                            // we wipe out all the history properties to start fresh
+                            Y.each(old_state, function (v, k, obj) {
+                                obj[k] = null;
+                            });
+                            var merged_state = Y.merge(old_state, new_state);
+                        }
                     }
                 }
             }
@@ -47,18 +59,6 @@ YUI.add(
 
                 initializer: function (config) {
                     Y.log("manage container initializer");
-
-                    var bookmarked_state = Y.History.getBookmarkedState(
-                        this.name
-                    );
-                    var initial_state = bookmarked_state || "dashboard";
-
-                    Y.History.register(
-                        this.name, 
-                        initial_state
-                    ).on("history:moduleStateChange", 
-                         Y.bind(this._updateFromHistory, this));
-
                     this.render(config.render_to);
                 },
 
@@ -82,10 +82,61 @@ YUI.add(
                     Y.log('container::bindUI');
                     this.after('currentChange', this._afterCurrentWidgetChange);
                     this.after('previousChange', this._afterPreviousWidgetChange);
+                    this.after('stateChange', this._updateFromHistory);
+                    Y.on('history-lite:change', Y.bind(this._onHistoryChange, this));
                 },
 
                 syncUI: function () {
                     Y.log('container::syncUI');
+
+                    // update the state from the history
+                    // this assumes that this is the only one container on the page
+                    // and that it's always on the page
+                    var bookmarked_state = Y.HistoryLite.get();
+                    if (this.isEmpty(bookmarked_state)) bookmarked_state.kind = 'dashboard';
+                    this.set('state', bookmarked_state);
+                    Y.HistoryLite.add(bookmarked_state);
+                },
+
+                isEmpty: function (obj) {
+                    for(var i in obj) { 
+                        return false; 
+                    } 
+                    return true;
+                },
+
+                areEqualObjects: function(a, b) {
+                    if (typeof(a) != typeof(b)) {
+                        return false;
+                    }
+
+                    var allkeys = {};
+                    for (var i in a) {
+                        allkeys[i] = 1;
+                    }
+                    for (var i in b) {
+                        allkeys[i] = 1;
+                    }
+
+                    for (var i in allkeys) {
+                        if (a.hasOwnProperty(i) != b.hasOwnProperty(i)) {
+                            return false;
+                        }
+                        if (typeof(a[i]) != typeof(b[i])) {
+                            return false;
+                        }
+                        if (typeof(a[i]) == 'object') {
+                            if (!this.areEqualObjects(a[i], b[i])) {
+                                return false;
+                            }
+                        } else {
+                            if (a[i] !== b[i]) {
+                                return false;
+                            }
+                        }
+                    }
+
+                    return true;
                 },
 
                 loadWidget: function (e) {
@@ -105,10 +156,8 @@ YUI.add(
 
                     // log this action with the history manager, 
                     //  and let it load the widget
-                    Y.History.navigate(
-                        this.name, 
-                        Y.QueryString.stringify(load_widget_config)
-                    );
+                    this.set('state', load_widget_config);
+                    Y.HistoryLite.add(this.get('state'));
                 },
 
                 _doLoadWidget: function (config) {
@@ -170,21 +219,20 @@ YUI.add(
                     this.set('current', new_widget);
                 },
 
-                _updateFromHistory: function (state) {
+                _updateFromHistory: function (e) {
                     Y.log('container::_updateFromHistory');
-                    Y.log('history state: ' + state);
-                    if (state === "dashboard") {
-                        // the initial widget will always be the dashboard
-                        this._doLoadWidget(
-                            {
-                                kind: "dashboard"
-                            }
-                        );
-                    }
-                    else {
-                        this._doLoadWidget(Y.QueryString.parse(state));
-                    }
+                    Y.log('history state: ' + this.get('state'));
+                    var state = this.get('state');
+                    this._doLoadWidget(state);
+                },
 
+                _onHistoryChange: function (e) {
+                    Y.log('container::_onHistoryChange');
+                    var state = this.get('state');
+                    var history = Y.HistoryLite.get();
+                    if ( ! this.areEqualObjects(history, state) ) {
+                        this.set('state', history);
+                    }
                 },
 
                 _showWidget: function (widget) {
@@ -226,8 +274,7 @@ YUI.add(
                     if (e.newVal) {
                         this._showWidget(e.newVal);
                     }
-                },
-
+                }
             }
         );
 

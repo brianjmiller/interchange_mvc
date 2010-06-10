@@ -6,12 +6,11 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
         [Y.WidgetParent],                               // classes to mix in
         {                                               // overrides/additions
 
-        bindUI: function () {
+        _bindDataTableEvents: function () {
             Y.log('expandable_list::bindUI');
+            
+            Y.IC.ManageFunctionExpandableList.superclass._bindDataTableEvents.call(this);
             this._data_table.on('cellClickEvent', this._data_table.onEventToggleRowExpansion);
-            this._data_table.on('rowClickEvent', this._data_table.onEventSelectRow);
-            this._data_table.on('rowMouseoverEvent', this._data_table.onEventHighlightRow);
-            this._data_table.on("rowMouseoutEvent", this._data_table.onEventUnhighlightRow);
 
             /*  // required for history manager integration
             var pager = this._data_table.configs.paginator;

@@ -31,13 +31,18 @@ YUI(
                             "ic-manage-widget-dashboard-css"
                         ]
                     },
+                    "ic-manage-widget-function": {
+                        path: "manage/widgets/functions/function.js",
+                        requires: [
+                            "widget"
+                        ]
+                    },
                     "ic-manage-widget-function-list": {
                         path: "manage/widgets/functions/list.js",
                         requires: [
                             "ic-manage-widget-function-list-css",
-                            "history",
                             "querystring",
-                            "widget",
+                            "ic-manage-widget-function",
                             "datasource",
                             "gallery-datasource-wrapper",
                             // TODO: can we load these later?
@@ -67,14 +72,14 @@ YUI(
                         path: "manage/widgets/functions/detail.js",
                         requires: [
                             "ic-manage-widget-function-detail-css",
-                            "widget",
+                            "ic-manage-widget-function",
                             "tabview"
                         ]
                     },
                     "ic-manage-widget-container": {
                         path: "manage/widgets/container.js",
                         requires: [
-                            "history",
+                            "gallery-history-lite",
                             "querystring",
                             "ic-manage-widget-container-css",
                             "ic-manage-widget-dashboard",
@@ -190,18 +195,6 @@ YUI(
 
                 Y.log("setting up manage window");
                 var mw = new Y.IC.ManageWindow();
-
-                Y.History.on("history:ready", function () {
-                    var current_state = Y.History.getCurrentState(
-                        mw._container.name
-                    );
-                    Y.log('history ready! current state: ' + current_state);
-                    mw._container._updateFromHistory(current_state);
-                });
-                Y.log('initializing the history object...');
-                Y.History.initialize('#yui-history-field', 
-                                     '#yui-history-iframe');
-
             }
         );
     }

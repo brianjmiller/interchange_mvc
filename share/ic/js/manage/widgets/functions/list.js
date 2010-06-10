@@ -20,87 +20,20 @@ YUI.add(
     function(Y) {
         var ManageFunctionList;
 
-        var Lang = Y.Lang,
-            Node = Y.Node
-        ;
-
         ManageFunctionList = function (config) {
             ManageFunctionList.superclass.constructor.apply(this, arguments);
         };
 
-        Y.mix(
-            ManageFunctionList,
-            {
-                NAME: "ic_manage_function_list",
-                ATTRS: {
-                    code: {
-                        value: null
-                    },
-                    kind: {
-                        value: null
-                    },
-                    container: {
-                        value: null
-                    }
-                }
-            }
-        );
+        ManageFunctionList.NAME = "ic_manage_function_list";
 
         Y.extend(
             ManageFunctionList,
-            Y.Widget,
+            Y.IC.ManageFunction,
             {
-                _meta_data: null,
                 _data_source: null,
                 _data_table: null,
 
-                initializer: function(config) {
-                    Y.log("function initializer: " + this.get("code"));
-
-                    // we can't really use the full capabilities of DataSource.IO and the JSON schema
-                    // because we need too much information from the actual request itself to build
-                    // our data table dynamically, so fetch our object then just use a local data source
-                    // for constructing the table
-
-                    var url = "/manage/function/" + this.get("code") + "/0?_mode=config&_format=json";
-                    Y.log("Url: " + url, "debug");
-
-                    var return_data = null;
-                    Y.io(
-                        url,
-                        {
-                            sync: true,
-                            on: {
-                                success: function (txnId, response) {
-                                    try {
-                                        return_data = Y.JSON.parse(response.responseText);
-                                    }
-                                    catch (e) {
-                                        Y.log("Can't parse JSON: " + e, "error");
-                                        return;
-                                    }
-
-                                    return;
-                                },
-
-                                failure: function (txnId, response) {
-                                    Y.log("Failed to get function meta data", "error");
-                                }
-                            }
-                        }
-                    );
-
-                    this._meta_data = return_data;
-                },
-
-                renderUI: function() {
-                    Y.log('list::renderUI');
-                    // add a container for the datatable
-                    var cb = this.get('contentBox');
-                    cb.setContent("");
-                    cb.prepend('<div id="' + this.get('code') + '">Loading...</div>');
-                    this.set('container', Y.one(this.get('code')));
-
+                _buildUI: function() {
                     // build the table table from our meta_data
                     var data_table_config = {};
                     this._getDataSource();
@@ -110,17 +43,13 @@ YUI.add(
                     this._adjustDataTableConfig(data_table_config);
                     this._initDataTable(data_table_config);
                     this._data_table.handleDataReturnPayload = this._handleDataReturnPayload;
+                    this._bindDataTableEvents()
                 },
 
-                bindUI: function() {
-                    Y.log('list::bindUI');
+                _bindDataTableEvents: function() {
                     this._data_table.subscribe("rowMouseoverEvent", this._data_table.onEventHighlightRow);
                     this._data_table.subscribe("rowMouseoutEvent", this._data_table.onEventUnhighlightRow);
                     this._data_table.subscribe("rowClickEvent", this._data_table.onEventSelectRow);
-                },
-
-                syncUI: function() {
-                    Y.log('list::syncUI');
                 },
 
                 _getDataSource: function () {
@@ -201,7 +130,7 @@ YUI.add(
                 _initDataTable: function (data_table_config) {
                     var YAHOO = Y.YUI2;
                     this._data_table = new YAHOO.widget.DataTable(
-                        this.get('code'),
+                        this.get('code'), // renders us into this._content_node
                         this._meta_data.data_table_column_defs,
                         this._data_source,
                         data_table_config
@@ -221,7 +150,7 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
-            "widget",
+            "ic-manage-widget-function",
             "yui2-datatable"
         ]
     }

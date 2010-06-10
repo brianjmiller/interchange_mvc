@@ -40,18 +40,28 @@ YUI.add(
                 sections: null,
 
                 DASHBOARD_MENUITEM_TEMPLATE: '\
-<li class="yui3-menuitem"><{menu_item_content_wrapper} \
-id="manage_menu_item-dashboard" class="yui3-menuitem-content">Dashboard\
-</{menu_item_content_wrapper}></li>',
+<li class="yui3-menuitem">\
+  <em id="manage_menu_item-dashboard"\
+    class="yui3-menuitem-content">Dashboard</em>\
+</li>',
                 SUBMENU_LABEL_TEMPLATE: '\
-<li><a class="yui3-menu-label"><{menu_item_content_wrapper}>{display_label}\
-<{menu_item_content_wrapper}></a>',
+<li>\
+  <a class="yui3-menu-label">\
+    <{menu_item_content_wrapper}>{display_label}<{menu_item_content_wrapper}>\
+  </a>',
                 SUBMENU_TEMPLATE: '\
-<div id="manage_menu-{code}" class="yui3-menu"><div class="yui3-menu-content">\
-<ul>',
+<div id="manage_menu-{code}"\
+     class="yui3-menu">\
+  <div class="yui3-menu-content">\
+    <ul>',
                 SUBMENU_ITEM_TEMPLATE: '\
-<li class="yui3-menuitem"><a id="manage_menu_item-function-list-{code}" \
-class="yui3-menuitem-content">{display_label}</a></li>',
+<li class="yui3-menuitem">\
+  <a id="manage_menu_item-function-list-{code}"\
+     class="yui3-menuitem-content">{display_label}</a>\
+</li>',
+// it would be preferred to use custom properties. ex:
+// <a kind="function" sub_kind="list" args="arg1=foo&arg2=bar&arg3=baz">Item Label</a>
+
                 SUBMENU_CLOSE_TEMPLATE: '</ul></div></div></li>',
 
                 // setup a vertical orientation as the default
