@@ -40,7 +40,6 @@ YUI(
                             "widget",
                             "datasource",
                             "gallery-datasource-wrapper",
-                            "ic-manage-widget-function-expandable-list", // this seems backwards, why is this required?
                             // TODO: can we load these later?
                             "yui2-datatable",
                             "yui2-paginator"
@@ -80,6 +79,7 @@ YUI(
                             "ic-manage-widget-container-css",
                             "ic-manage-widget-dashboard",
                             "ic-manage-widget-function-list",
+                            "ic-manage-widget-function-expandable-list",
                             "ic-manage-widget-function-detail"
                         ]
                     },
