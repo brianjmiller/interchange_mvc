@@ -18,41 +18,55 @@
 YUI.add(
     "ic-manage-widget-container",
     function(Y) {
-        var ManageContainer;
+        var Module;
 
-        ManageContainer = function (config) {
-            ManageContainer.superclass.constructor.apply(this, arguments);
+        Module = function (config) {
+            Module.superclass.constructor.apply(this, arguments);
         };
 
-        Y.mix(
-            ManageContainer,
-            {
-                NAME: "ic_manage_container",
-                ATTRS: {
-                    current: {
-                        value: null
-                    },
-                    previous: {
-                        value: null
-                    },
-                    state: {
-                        value: null,
-                        setter: function(new_state) {
-                            var old_state = Y.HistoryLite.get();
-                            // at the container level, 
-                            // we wipe out all the history properties to start fresh
-                            Y.each(old_state, function (v, k, obj) {
-                                obj[k] = null;
-                            });
-                            var merged_state = Y.merge(old_state, new_state);
+        Module.NAME = "ic_manage_container";
+        Module.STATE_PROPERTIES = {
+            'kind': 1,
+            'sub_kind': 1,
+            'args': 1
+        };
+        Module.ATTRS = {
+            layout: {        // the layout manager i'm a child of
+                value: null
+            },
+            current: {       // my current widget
+                value: null
+            },
+            previous: {      // my previous widget
+                value: null
+            },
+            prefix: {        // a prefix for history state variables 
+                value: null  //  to distinguish this object from its siblings
+            },
+            state: {         // my state, used by history to drive my content
+                value: null,
+                setter: function(new_state) {
+                    var old_state = Y.HistoryLite.get();
+                    var sp = Module.STATE_PROPERTIES;
+                    // we wipe out all the prior state properties to start fresh
+                    Y.each(old_state, function (v, k, obj) {
+                        if (sp[k]) {
+                            obj[k] = null;
                         }
-                    }
+                    });
+                    // we only allow our STATE_PROPERTIES, no others
+                    Y.each(new_state, function (v, k, obj) {
+                        if (!sp[k]) {
+                            delete obj[k];
+                        }
+                    });
+                    return Y.merge(old_state, new_state);
                 }
             }
-        );
+        };
 
         Y.extend(
-            ManageContainer,
+            Module,
             Y.Widget,
             {
                 _cache: {},
@@ -82,7 +96,7 @@ YUI.add(
                     Y.log('container::bindUI');
                     this.after('currentChange', this._afterCurrentWidgetChange);
                     this.after('previousChange', this._afterPreviousWidgetChange);
-                    this.after('stateChange', this._updateFromHistory);
+                    this.after('stateChange', this._afterStateChange);
                     Y.on('history-lite:change', Y.bind(this._onHistoryChange, this));
                 },
 
@@ -90,12 +104,7 @@ YUI.add(
                     Y.log('container::syncUI');
 
                     // update the state from the history
-                    // this assumes that this is the only one container on the page
-                    // and that it's always on the page
-                    var bookmarked_state = Y.HistoryLite.get();
-                    if (this.isEmpty(bookmarked_state)) bookmarked_state.kind = 'dashboard';
-                    this.set('state', bookmarked_state);
-                    Y.HistoryLite.add(bookmarked_state);
+                    this.set('state', this.getRelaventHistory());
                 },
 
                 isEmpty: function (obj) {
@@ -105,11 +114,11 @@ YUI.add(
                     return true;
                 },
 
+
                 areEqualObjects: function(a, b) {
                     if (typeof(a) != typeof(b)) {
                         return false;
                     }
-
                     var allkeys = {};
                     for (var i in a) {
                         allkeys[i] = 1;
@@ -117,10 +126,14 @@ YUI.add(
                     for (var i in b) {
                         allkeys[i] = 1;
                     }
-
                     for (var i in allkeys) {
                         if (a.hasOwnProperty(i) != b.hasOwnProperty(i)) {
-                            return false;
+                            if ((a.hasOwnProperty(i) && typeof(b[i]) == 'function') ||
+                                (a.hasOwnProperty(i) && typeof(b[i]) == 'function')) {
+                                continue;
+                            } else {
+                                return false;
+                            }
                         }
                         if (typeof(a[i]) != typeof(b[i])) {
                             return false;
@@ -135,8 +148,30 @@ YUI.add(
                             }
                         }
                     }
-
                     return true;
+                },
+
+                getRelaventHistory: function() {
+                    var sp = Module.STATE_PROPERTIES;
+                    var prefix = this.get('prefix');
+                    var history = Y.HistoryLite.get();
+                    var rh = {}; // relavent history
+                    Y.each(sp, function (v, k, obj) {
+                        if (typeof history[prefix + k] !== undefined) {
+                            rh[k] = history[prefix + k];
+                        }
+                    });
+                    return rh;
+                },
+
+                stateMatchesHistory: function() {
+                    var state = this.get('state');
+                    // first check to ensure state has been initialized
+                    if (typeof(state) != 'object') {
+                        return false;
+                    }
+                    var rh = this.getRelaventHistory();
+                    return this.areEqualObjects(state, rh);
                 },
 
                 loadWidget: function (e) {
@@ -157,7 +192,12 @@ YUI.add(
                     // log this action with the history manager, 
                     //  and let it load the widget
                     this.set('state', load_widget_config);
-                    Y.HistoryLite.add(this.get('state'));
+                    Y.HistoryLite.add(this._addMyHistoryPrefix(this.get('state')));
+                },
+
+                unloadWidget: function () {
+                    var empty = Y.Node.create('<div id="manage_menu_item-empty"></div>');
+                    this.loadWidget({target: empty});
                 },
 
                 _doLoadWidget: function (config) {
@@ -213,26 +253,64 @@ YUI.add(
 
                         new_widget = this._cache[config.args];
                     }
+                    else if (config.kind === "empty") {
+                        Y.log('container::_doLoadWidget - Unloading -- EMPTY');
+                        this._cache["empty"] = null;
+                        new_widget = null;
+                    }
                     else {
-                        Y.log("Invalid load widget call, unrecognized kind: " + config.kind, "error");
+                        Y.log("Load widget called with undefined/unrecognized kind.  Doing nothing.  kind: " + config.kind);
+                        return;
                     }
 
                     this.set('current', new_widget);
                 },
 
-                _updateFromHistory: function (e) {
-                    Y.log('container::_updateFromHistory');
-                    Y.log('history state: ' + this.get('state'));
+                _addMyHistoryPrefix: function (o) {
+                    var copy = Y.merge(o);
+                    var prefix = this.get('prefix');
+                    var hp = Module.STATE_PROPERTIES;
+                    Y.each(copy, function (v, k, obj) {
+                        // verify that it isn't already prefixed
+                        if (k.indexOf(prefix) !== 0) {
+                            // only modify my history properties
+                            if (hp[k]) {
+                                delete obj[k];
+                                obj[prefix + k] = v;
+                            }
+                        }
+                    });
+                    return copy;
+                },
+
+                _stripMyHistoryPrefix: function (o) {
+                    var copy = Y.merge(o);
+                    var prefix = this.get('prefix');
+                    var hp = Module.STATE_PROPERTIES;
+                    Y.each(copy, function (v, k, obj) {
+                        // continue if not prefixed
+                        if (k.indexOf(prefix) === 0) {
+                            // only modify my history properties
+                            if (hp[k]) {
+                                delete obj[k];
+                                obj[k.substring(prefix.length)] = v;
+                            }
+                        }
+                    });
+                    return copy;
+                },
+
+                _afterStateChange: function (e) {
+                    Y.log('container::_afterStateChange');
+                    Y.log('state: ' + Y.QueryString.stringify(this.get('state')));
                     var state = this.get('state');
                     this._doLoadWidget(state);
                 },
 
                 _onHistoryChange: function (e) {
                     Y.log('container::_onHistoryChange');
-                    var state = this.get('state');
-                    var history = Y.HistoryLite.get();
-                    if ( ! this.areEqualObjects(history, state) ) {
-                        this.set('state', history);
+                    if ( ! this.stateMatchesHistory() ) {
+                        this.set('state', this.getRelaventHistory());
                     }
                 },
 
@@ -247,7 +325,6 @@ YUI.add(
                         //     reload the previous widget, 
                         //     and remove this widget from the cache.
                         //     maybe just go back one entry in the history?
-                        alert('sorry! we could not enable/show the widget');
                     }
                 },
 
@@ -261,7 +338,6 @@ YUI.add(
                         Y.log(err); // probably not a Widget subclass
                         // NA: i think we should detach the widget from the dom
                         //     and remove it from the cache...
-                        alert('sorry! we were unable to hide/disable the widget');                        
                     }
                 },
 
@@ -280,7 +356,7 @@ YUI.add(
         );
 
         Y.namespace("IC");
-        Y.IC.ManageContainer = ManageContainer;
+        Y.IC.ManageContainer = Module;
     },
     "@VERSION@",
     {

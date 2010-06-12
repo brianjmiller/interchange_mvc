@@ -30,7 +30,8 @@
       </ul>
     </div>
     <div id="manage_menu"></div>
-    <div id="manage_window"></div>
+    <div id="manage_datatable"></div>
+    <div id="manage_detail"></div>
     <div id="manage_subcontainer"></div>
     <div id="manage_footer">
         Console: <button id="console_toggle" class="" type="button" value="0">show</button>
