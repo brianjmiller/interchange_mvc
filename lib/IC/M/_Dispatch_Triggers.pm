@@ -52,6 +52,12 @@ sub _change_value_with_trigger {
 
     $args->{no_logging} ||= 0;
 
+    #
+    # this needs to be atomic so start a transaction if we aren't already in one,
+    # Rose::DB returns -1 when already in a transaction
+    #
+    my $already_in_txn = $self->db->begin_work;
+
     my $content = '';
     if (UNIVERSAL::can($self, 'log_actions') and ! $args->{no_logging}) {
         if (defined $args->{content} and $args->{content} ne '') {
@@ -132,6 +138,10 @@ sub _change_value_with_trigger {
         else {
             IC::Exception->throw("Can't change $descriptor $field: unrecognized old $field '$orig_value' ($content)");
         }
+    }
+
+    unless ($already_in_txn == -1) {
+        $self->db->commit;
     }
     
     return $return;
