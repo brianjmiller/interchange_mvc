@@ -1183,9 +1183,10 @@ sub _common_list_json {
     return;
 }
 
-*_common_list_display_all = \&IC::Manage::_common_list_json;
-*_common_detail_view      = \&IC::Manage::_common_detail_data_obj;
-*_common_list = \&IC::Manage::_common_list_json;
+# DO NOT COMMIT
+#*_common_list_display_all = \&IC::Manage::_common_list_json;
+#*_common_detail_view      = \&IC::Manage::_common_detail_data_obj;
+#*_common_list = \&IC::Manage::_common_list_json;
 
 sub _common_add {
     my $self = shift;
