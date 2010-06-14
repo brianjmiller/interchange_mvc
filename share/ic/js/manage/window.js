@@ -28,9 +28,11 @@ YUI.add(
                 _menu:          null,
                 _dt_container:  null,
                 _dv_container:  null,
-                _outer_layout:  null,
-                _left_layout:   null,
-                _center_layout: null,
+                _layouts:       {
+                    'outer':  null,
+                    'left':   null,
+                    'center': null
+                },
 
                 STATE_PROPERTIES: {
                     'lc': 1  /*
@@ -50,14 +52,33 @@ then add the dashboard layout as a no state/history default
  */
                 // Base Methods //
                 initializer: function (config) {
+                    Y.log('window::initializer');
+                    // build the main layout
+                    this.buildOuterLayout('outer');
+                    this._layouts['outer'].on('render', Y.bind(this.onOuterLayoutRender, this));
+                    this._layouts['outer'].render();
+
+                    // listen for widget loaded events 
+                    //  and decorate our layout to match the contents
+                    Y.on("manageContainer:widgetloaded", function (e) {
+                        var container = e.target;
+                        var widget = container.get('current');
+                        var layout_unit = container.get('layout_unit');
+                        if (widget && widget.getHeaderText) {
+                            layout_unit.set('header', widget.getHeaderText());
+                        }
+                    });
+                },
+
+                buildOuterLayout: function (key) {
+                    Y.log('window::buildOuterLayout');
                     var YAHOO = Y.YUI2;
-                    var _this = this;
-                    this._outer_layout = new YAHOO.widget.Layout(
+                    this._layouts[key] = new YAHOO.widget.Layout(
                         {
                             units: [
                                 {
                                     position: "top",
-                                    height: 30,
+                                    height: 26,
                                     zIndex: 0,
                                     body: "manage_header"
                                 },
@@ -82,215 +103,250 @@ then add the dashboard layout as a no state/history default
                             ]
                         }
                     );
-                    this._outer_layout.on(
-                        "render",
-                        function () {
-                            var left = _this._outer_layout.getUnitByPosition("left").get("wrap");
-                            _this._left_layout = new YAHOO.widget.Layout(
-                                left,
+                },
+
+                buildLeftLayout: function (layout, unit, key) {
+                    Y.log('window::buildLeftLayout');
+                    Y.log('layout -> unit -> key');
+                    Y.log(layout);
+                    Y.log(unit);
+                    Y.log(key);
+                    var YAHOO = Y.YUI2;
+                    var left = layout.getUnitByPosition(unit).get("wrap");
+                    this._layouts[key] = new YAHOO.widget.Layout(
+                        left,
+                        {
+                            parent: layout,
+                            units: [
                                 {
-                                    parent: _this._outer_layout,
-                                    units: [
-                                        {
-                                            position: "top",
-                                            body: "manage_menu",
-                                            header: "Main Menu",
-                                            height: 212,
-                                            zIndex: 2,
-                                            scroll: null
-                                        },
-                                        {
-                                            position: "center",
-                                            body: "manage_quick",
-                                            header: "Quick Links",
-                                            zIndex: 0
-                                        }
-
-                                    ]
-                                }
-                            );
-                            _this._left_layout.on('render', function() {
-                                var menu_unit = this.getUnitByPosition("top").body.childNodes[0];
-                                _this._menu = new Y.IC.ManageMenu(
-                                    {
-                                        orientation: 'vertical',
-                                        render_to: menu_unit
-                                    }
-                                );
-                            });
-                            _this._left_layout.render();
-                            // need to let the nodemenu's dropdowns spill into the the next unit
-                            var cbody = Y.one(_this._left_layout.getUnitByPosition("top").body);
-                            cbody.addClass('allow-overflow');
-                            Y.one(cbody._node.parentNode.parentNode.parentNode).addClass('allow-overflow');
-                        }
-                    ),
-                    this._outer_layout.on(
-                        "render",
-                        function () {
-                            var center = _this._outer_layout.getUnitByPosition("center").get("wrap");
-                            var layout_region = Y.DOM.region(center);  // used to initially render the top
-                                                                       // unit to the max available hide
-                                                                       // effectively hiding the detail view
-                            _this._center_layout = new YAHOO.widget.Layout(
-                                center,
+                                    position: "top",
+                                    body: "manage_menu",
+                                    header: "Main Menu",
+                                    height: 212,
+                                    zIndex: 2,
+                                    scroll: null
+                                },
                                 {
-                                    parent: _this._outer_layout,
-                                    units: [
-                                        {
-                                            position: "top",
-                                            body: "manage_datatable",
-                                            header: "Records",
-                                            height: layout_region.height,
-                                            zIndex: 0,
-                                            collapse: true,
-                                            animate: false,
-                                            scroll: false
-                                        },
-                                        {
-                                            position: "center",
-                                            body: "manage_detail",
-                                            header: "Details",
-                                            zIndex: 0,
-                                            scroll: true
-                                        }
-
-                                    ]
+                                    position: "center",
+                                    body: "manage_quick",
+                                    header: "Quick Links",
+                                    zIndex: 0
                                 }
-                            );
-                            _this._center_layout.render();
+                            ]
                         }
-                    );
-                    this._outer_layout.render();
-
-/*
-                            _this._center_layout.on('render', function() { 
-                                // leave the unit's wrapper and body alone,
-                                //  and instead render into the element contained by the body
-                                var dt_container_unit = this.getUnitByPosition("top").body.childNodes[0];
-                                _this._dt_container = new Y.IC.ManageContainer(
-                                    {
-                                        render_to: dt_container_unit,
-                                        layout: _this._center_layout
-                                    }
-                                );
-                                var dv_container_unit = this.getUnitByPosition("center").body.childNodes[0];
-                                _this._dv_container = new Y.IC.ManageContainer(
-                                    {
-                                        render_to: dv_container_unit,
-                                        layout: _this._center_layout
-                                    }
-                                );
-                            });
-*/
-
-                    var loadWidgetIntoDataTable, loadWidgetIntoDetailView;
-                    var onSubmenuMousedown = function(e) {
-                        // hide the submenu after a selection
-                        //  this seems to be necessary because there's no default action
-                        //  when clicking an empty anchor (we only listen for mousedown)
-                        menu_nav_node = _this._menu.get("boundingBox")
-                        var menuNav = menu_nav_node.menuNav;
-                        menuNav._hideAllSubmenus(menu_nav_node);
-                        var center = _this._outer_layout.getUnitByPosition("center").get("wrap");
-                        var layout_region = Y.DOM.region(center);  // used to initially render the top
-                        var top = _this._center_layout.getUnitByPosition("top");                        
-                        if (_this._dv_container) {
-                            _this._dv_container.unloadWidget();
-                        }
-                        top.set('height', layout_region.height);
-                        top.set('header', e.target.get('text'));
-                        if (!_this._dt_container) {
-                            var dt_container_unit = _this._center_layout.getUnitByPosition("top").body.childNodes[0];
-                            _this._dt_container = new Y.IC.ManageContainer(
-                                {
-                                    render_to: dt_container_unit,
-                                    prefix: '_dt',
-                                    layout: _this._center_layout,
-                                    layout_unit: top
-                                }
-                            );
-                        }
-                        loadWidgetIntoDataTable = Y.bind(_this._dt_container.loadWidget, _this._dt_container);
-                        loadWidgetIntoDataTable(e);
-                    };
-                    var onDetailClick = function(e) {
-                        var top = _this._center_layout.getUnitByPosition("top");
-                        var center = _this._center_layout.getUnitByPosition("center");
-                        top.set('height', 152);
-                        if (!_this._dv_container) {
-                            var dv_container_unit = center.body.childNodes[0];
-                            _this._dv_container = new Y.IC.ManageContainer(
-                                {
-                                    render_to: dv_container_unit,
-                                    prefix: '_dv',
-                                    layout: _this._center_layout,
-                                    layout_unit: center
-                                }
-                            );
-                        }
-                        loadWidgetIntoDetailView = Y.bind(_this._dv_container.loadWidget, _this._dv_container);
-                        loadWidgetIntoDetailView(e);
-                    };
-                    var onTabPanelClick = function(e) {
-                        // ?
-                    };
-
-                    Y.on("manageContainer:widgetloaded", function (e) {
-                        Y.log(e);
-                        var container = e.target;
-                        Y.log(container);
-                        var widget = container.get('current');
-                        var layout_unit = container.get('layout_unit');
-                        if (widget && widget.getHeaderText) {
-                            layout_unit.set('header', widget.getHeaderText());
-                        }
-                    });
-
-                    Y.delegate(
-                        "mousedown",
-                        onSubmenuMousedown,
-                        this._menu.get("boundingBox"),
-                        'em.yui3-menuitem-content'
-                        //this._menu
-                    );
-                    Y.delegate(
-                        "mousedown",
-                        onSubmenuMousedown,
-                        this._menu.get("boundingBox"),
-                        'a.yui3-menuitem-content'
-                        //this._menu
-                    );
-                    Y.delegate(
-                        "click",
-                        onDetailClick,
-                        this._outer_layout.getUnitByPosition("center").get("wrap"),
-                        'a.manage_function_link'
-                        //this._menu
-                    );
-                    Y.delegate(
-                        "click",
-                        onTabPanelClick,
-                        this._outer_layout.getUnitByPosition("center").get("wrap"),
-                        'div.yui3-tab-panel'
                     );
                 },
 
+                buildCenterLayout: function (layout, unit, key) {
+                    Y.log('window::buildCenterLayout');
+                    var YAHOO = Y.YUI2;
+                    var center = layout.getUnitByPosition(unit).get("wrap");
+                    var layout_region = Y.DOM.region(center);  // used to initially render the top
+                                                               // unit to the max available hide
+                                                               // effectively hiding the detail view
+                    this._layouts[key] = new YAHOO.widget.Layout(
+                        center,
+                        {
+                            parent: layout,
+                            units: [
+                                {
+                                    position: "top",
+                                    body: "manage_datatable",
+                                    header: "Records",
+                                    height: layout_region.height,
+                                    zIndex: 0,
+                                    collapse: true,
+                                    animate: false,
+                                    scroll: false
+                                },
+                                {
+                                    position: "center",
+                                    body: "manage_detail",
+                                    header: "Details",
+                                    zIndex: 0,
+                                    scroll: true
+                                }
+
+                            ]
+                        }
+                    );
+                },
+
+                onOuterLayoutRender: function () {
+                    Y.log('window::onOuterLayoutRender');
+                    Y.bind(
+                        this.buildLeftLayout,
+                        this,                     // context
+                        this._layouts['outer'],   // parent layout
+                        'left',                   // unit
+                        'left'                    // new layout key
+                    )();
+                    Y.bind(
+                        this.buildCenterLayout, 
+                        this,                     // context
+                        this._layouts['outer'],   // parent layout
+                        'center',                 // unit
+                        'center'                  // new layout key
+                    )();
+
+                    this._layouts['left'].on('render', Y.bind(this.onLeftLayoutRender, this));
+                    this._layouts['center'].on('render', Y.bind(this.onCenterLayoutRender, this));
+
+                    this._layouts['left'].render();
+                    this._layouts['center'].render();
+                },
+
+                onLeftLayoutRender: function () {
+                    Y.log('window::onLeftLayoutRender');
+                    Y.bind(
+                        this.initMainMenu, 
+                        this,                   // context
+                        this._layouts['left'],  // layout
+                        'top',                  // unit
+                        'vertical'              // menu orientation
+                    )();
+                },
+
+                onCenterLayoutRender: function () {
+                    Y.log('window::onCenterLayoutRender');
+                    // load from history
+                },
+
+
+                initMainMenu: function(layout, unit, orientation) {
+                    Y.log('window::initMainMenu');
+                    var menu_unit = layout.getUnitByPosition(unit).body.childNodes[0];
+                    this._menu = new Y.IC.ManageMenu(
+                        {
+                            orientation: orientation,
+                            render_to: menu_unit
+                        }
+                    );
+
+                    // need to let the nodemenu's dropdowns spill into the the next unit
+                    var cbody = Y.one(layout.getUnitByPosition(unit).body);
+                    cbody.addClass('allow-overflow');
+                    Y.one(cbody._node.parentNode.parentNode.parentNode).addClass('allow-overflow');
+
+                    // capture the menu events
+                    Y.delegate(
+                        "mousedown",
+                        this.onSubmenuMousedown,
+                        this._menu.get("boundingBox"),
+                        'em.yui3-menuitem-content',
+                        this
+                    );
+                    Y.delegate(
+                        "mousedown",
+                        this.onSubmenuMousedown,
+                        this._menu.get("boundingBox"),
+                        'a.yui3-menuitem-content',
+                        this
+                    );
+                },
+
+                onSubmenuMousedown: function (e) {
+                    Y.log('window::onSubmenuMousedown');
+                    // hide the submenu after a selection
+                    menu_nav_node = this._menu.get("boundingBox")
+                    var menuNav = menu_nav_node.menuNav;
+                    menuNav._hideAllSubmenus(menu_nav_node);
+
+                    // maximize the top unit (the datatable)
+                    var center = this._layouts['outer'].getUnitByPosition("center").get("wrap");
+                    var layout_region = Y.DOM.region(center);
+                    var top = this._layouts['center'].getUnitByPosition("top");                        
+                    if (this._dv_container) {
+                        this._dv_container.unloadWidget();
+                    }
+                    top.set('height', layout_region.height);
+
+                    // set the header to the content of the menu item that was clicked
+                    top.set('header', e.target.get('text'));
+
+                    // if there's no datatable container, create one
+                    if (!this._dt_container) {
+                        var dt_container_unit = top.body.childNodes[0];
+                        this._dt_container = new Y.IC.ManageContainer(
+                            {
+                                render_to: dt_container_unit,
+                                prefix: '_dt',
+                                layout: this._layouts['center'],
+                                layout_unit: top
+                            }
+                        );
+                    }
+
+                    // load the Widget into the Data Table container
+                    Y.bind(this._dt_container.loadWidget, this._dt_container)(e);
+
+                    // capture clicks on the "detail" link of the option column
+                    Y.delegate(
+                        "click",
+                        this.onDetailClick,
+                        center,
+                        'a.manage_function_link',
+                        this
+                    );
+                },
+
+                onDetailClick: function (e) {
+                    Y.log('window::onDetailClick');
+                    var top = this._layouts['center'].getUnitByPosition("top");
+                    var center = this._layouts['center'].getUnitByPosition("center");
+
+                    // shrink the top unit and show only 3 rows in the datatable, 
+                    //  making room for the detail view without closing the datatable
+                    top.set('height', 152);
+                    if (this._dt_container) {
+                        var dt = this._dt_container.get('current');
+                        if (dt instanceof Y.YUI2.widget.DataTable) {
+                            Y.log('shrink the datatable to 3 rows')
+                        }
+                    }
+
+                    // if there's no detail view container, create one
+                    if (!this._dv_container) {
+                        var dv_container_unit = center.body.childNodes[0];
+                        this._dv_container = new Y.IC.ManageContainer(
+                            {
+                                render_to: dv_container_unit,
+                                prefix: '_dv',
+                                layout: this._layouts['center'],
+                                layout_unit: center
+                            }
+                        );
+                    }
+
+                    // load the Widget into the Detail View container
+                    Y.bind(this._dv_container.loadWidget, this._dv_container)(e);
+
+                    // capture clicks on the tabs of the detail view
+                    /*
+                    Y.delegate(
+                        "click",
+                        onTabPanelClick,
+                        center,
+                        'div.yui3-tab-panel'
+                    );
+                    */
+                },
+
                 destructor: function () {
+                    Y.log('window::destructor');
                     this._menu.destroy();
                     this._menu = null;
                     this._dt_container.destroy();
                     this._dt_container = null;
                     this._dt_container.destroy();
                     this._dv_container = null;
-                    this._outer_layout = null;
-                    this._left_layout = null;
-                    this._center_layout = null;
+                    this._layouts['left'].destroy();
+                    this._layouts['center'].destroy();
+                    this._layouts['outer'].destroy();
+                    this._layouts['left'] = null;
+                    this._layouts['center'] = null;
+                    this._layouts['outer'] = null;
                 }
-
-                // Public Methods //
-
-                // Private Methods //
             }
         );
 
