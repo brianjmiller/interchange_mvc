@@ -18,51 +18,12 @@
 YUI.add(
     "ic-manage-window",
     function (Y) {
-        var Module;
 
-        // Constructor //
-        Module = function (config) {
-            Module.superclass.constructor.apply(this, arguments);
-        };
-
-        // Static //
-        Y.mix(
-            Module,
-            {
-                NAME: "ic_manage_window",
-                HISTORY_PROPERTIES: {
-                    'lc': 1  /*
-                              * layout-center, possible values:
-                              *  lc: 'maxdv' // max center unit
-                              *  lc: 'maxdt' // max top unit
-                              *  lc: 'dtdv'  // top at 152
-                              */
-                },
-                ATTRS: {
-                    state: {
-                        value: null,
-                        setter: function(new_state) {
-                            var old_state = Y.HistoryLite.get();
-                            // wipe out all my history properties to start fresh
-                            var my_hist_props = Module.HISTORY_PROPERTIES;
-                            Y.each(old_state, function (v, k, obj) {
-                                if (my_hist_props[k]) {
-                                    obj[k] = null;
-                                }
-                            });
-                            var merged_state = Y.merge(old_state, new_state);
-                        }
-                    }
-
-                }
-            }
-        );
-
-        // Prototype //
-        Y.extend(
-            Module,
-            Y.Base,
-            {
+        var ManageWindow = Y.Base.create (
+            "ic_manage_window",     // module identifier  
+            Y.Base,                 // what to extend     
+            [Y.IC.HistoryManager],  // classes to mix in  
+            {                       // overrides/additions
                 // Instance Members //
                 _menu:          null,
                 _dt_container:  null,
@@ -71,19 +32,22 @@ YUI.add(
                 _left_layout:   null,
                 _center_layout: null,
 
-                /* 
-                 * Need to add history-lite.
-                 * if there is no history, load a default
-                 *  - which is the max center unit, loading a dashboard
-                 * if there is history, look for layout params
-                 *  - layout_center: 'maxdv' // max center unit
-                 *    layout_center: 'maxdt' // max top unit
-                 *    layout_center: 'dtdv'  // top at 152
-                 *
-                 * so add resize methods to be controlled by state
-                 * and if this works, abstract the history out into a generic module all IC widgets can extend
-                 */
+                STATE_PROPERTIES: {
+                    'lc': 1  /*
+                              * layout-center, possible values:
+                              *  lc: 'maxdv' // max center unit
+                              *  lc: 'maxdt' // max top unit
+                              *  lc: 'dtdv'  // top at 152
+                              */
+                },
 
+
+/*
+NAM!!!
+break the initializer up into manageable checks, and add member variables for the units.
+then add state/history management, and draw an appropriate layout for the state
+then add the dashboard layout as a no state/history default
+ */
                 // Base Methods //
                 initializer: function (config) {
                     var YAHOO = Y.YUI2;
@@ -230,18 +194,20 @@ YUI.add(
                         menuNav._hideAllSubmenus(menu_nav_node);
                         var center = _this._outer_layout.getUnitByPosition("center").get("wrap");
                         var layout_region = Y.DOM.region(center);  // used to initially render the top
-                        var top = _this._center_layout.getUnitByPosition("top");
+                        var top = _this._center_layout.getUnitByPosition("top");                        
                         if (_this._dv_container) {
                             _this._dv_container.unloadWidget();
                         }
                         top.set('height', layout_region.height);
+                        top.set('header', e.target.get('text'));
                         if (!_this._dt_container) {
                             var dt_container_unit = _this._center_layout.getUnitByPosition("top").body.childNodes[0];
                             _this._dt_container = new Y.IC.ManageContainer(
                                 {
                                     render_to: dt_container_unit,
                                     prefix: '_dt',
-                                    layout: _this._center_layout
+                                    layout: _this._center_layout,
+                                    layout_unit: top
                                 }
                             );
                         }
@@ -250,14 +216,16 @@ YUI.add(
                     };
                     var onDetailClick = function(e) {
                         var top = _this._center_layout.getUnitByPosition("top");
+                        var center = _this._center_layout.getUnitByPosition("center");
                         top.set('height', 152);
                         if (!_this._dv_container) {
-                            var dv_container_unit = _this._center_layout.getUnitByPosition("center").body.childNodes[0];
+                            var dv_container_unit = center.body.childNodes[0];
                             _this._dv_container = new Y.IC.ManageContainer(
                                 {
                                     render_to: dv_container_unit,
                                     prefix: '_dv',
-                                    layout: _this._center_layout
+                                    layout: _this._center_layout,
+                                    layout_unit: center
                                 }
                             );
                         }
@@ -267,6 +235,17 @@ YUI.add(
                     var onTabPanelClick = function(e) {
                         // ?
                     };
+
+                    Y.on("manageContainer:widgetloaded", function (e) {
+                        Y.log(e);
+                        var container = e.target;
+                        Y.log(container);
+                        var widget = container.get('current');
+                        var layout_unit = container.get('layout_unit');
+                        if (widget && widget.getHeaderText) {
+                            layout_unit.set('header', widget.getHeaderText());
+                        }
+                    });
 
                     Y.delegate(
                         "mousedown",
@@ -316,7 +295,7 @@ YUI.add(
         );
 
         Y.namespace("IC");
-        Y.IC.ManageWindow = Module;
+        Y.IC.ManageWindow = ManageWindow;
     },
     "@VERSION@",
     {
@@ -324,6 +303,7 @@ YUI.add(
             "base-base",
             "ic-manage-widget-container",
             "ic-manage-widget-menu",
+            "ic-history-manager",
             "yui2-layout",
             "yui2-resize",
             "yui2-animation"

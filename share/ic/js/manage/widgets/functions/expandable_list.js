@@ -1,13 +1,13 @@
 YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
 
     Y.IC.ManageFunctionExpandableList = Y.Base.create(
-        "ic_manage_function_expandable_list",           // module identifier
-        Y.IC.ManageFunctionList,                        // what to extend
-        [Y.WidgetParent],                               // classes to mix in
+        "ic_manage_function_expandable_list",           // module identifier  
+        Y.IC.ManageFunctionList,                        // what to extend     
+        [],                                             // classes to mix in  
         {                                               // overrides/additions
 
         _bindDataTableEvents: function () {
-            Y.log('expandable_list::bindUI');
+            // Y.log('expandable_list::bindUI');
             
             Y.IC.ManageFunctionExpandableList.superclass._bindDataTableEvents.call(this);
             if (this.get('expandable')) {
@@ -163,5 +163,15 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
             }
         }
     });
-}, '3.1.0' ,{requires:['ic-manage-widget-function-list', 'widget-parent']}); 
+},
+    "@VERSION@",
+    {
+        requires: [
+            "ic-manage-widget-function-list",
+            "ic-manage-widget-function-detail",
+            "base-base",
+            "rowexpansion"
+        ]
+    }
+);
 

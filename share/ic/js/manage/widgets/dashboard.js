@@ -46,7 +46,7 @@ YUI.add(
 
         Y.extend(
             ManageDashboard,
-            Y.Widget,
+            Y.IC.ManageWidget,
             {
                 initializer: function(config) {
                     Y.log("dashboard initializer");

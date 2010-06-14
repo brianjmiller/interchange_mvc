@@ -44,6 +44,7 @@ YUI.add(
                     this._initDataTable(data_table_config);
                     this._data_table.handleDataReturnPayload = this._handleDataReturnPayload;
                     this._bindDataTableEvents()
+                    this.fire('manageFunction:loaded');
                 },
 
                 _bindDataTableEvents: function() {
@@ -104,7 +105,7 @@ YUI.add(
 
                 _initDataTablePager: function (data_table_config) {
                     if (this._meta_data.paging_provider !== "none") {
-                        Y.log("setting up pager: " + this._meta_data.paging_provider);
+                        // Y.log("setting up pager: " + this._meta_data.paging_provider);
                         var YAHOO = Y.YUI2;
 
                         // Define a custom function to route pagination through the Browser History Manager 

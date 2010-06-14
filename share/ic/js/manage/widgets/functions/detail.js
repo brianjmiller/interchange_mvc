@@ -31,7 +31,7 @@ YUI.add(
             Y.IC.ManageFunction,
             {
                 _buildUI: function () {
-                    Y.log('detail::_buildUI');
+                    // Y.log('detail::_buildUI');
                     var row = null,
                         action_log_tab_index = null,
                         action_log_tab_content = ""
@@ -95,6 +95,15 @@ YUI.add(
                         }
                     );
                     tabs.render(contentBox);
+
+                    this.fire('manageFunction:loaded');
+                },
+
+                getHeaderText: function () {
+                    // Y.log(this._meta_data.pk_settings);
+                    var pks = this._meta_data.pk_settings[0];
+                    var value = pks.value;
+                    return (this._meta_data.object_name + ' Detail ' + value);
                 }
 
             }

@@ -28,13 +28,28 @@ YUI(
                     "ic-manage-widget-dashboard": {
                         path: "manage/widgets/dashboard.js",
                         requires: [
-                            "ic-manage-widget-dashboard-css"
+                            "ic-manage-widget-dashboard-css",
+                            "ic-manage-widget"
+                        ]
+                    },
+                    "ic-history-manager": {
+                        path: "manage/history_manager.js",
+                        requires: [
+                            "gallery-history-lite"
+                        ]
+                    },
+                    "ic-manage-widget": {
+                        path: "manage/widget.js",
+                        requires: [
+                            "ic-history-manager",
+                            "base-base",
+                            "widget"
                         ]
                     },
                     "ic-manage-widget-function": {
                         path: "manage/widgets/functions/function.js",
                         requires: [
-                            "widget"
+                            "ic-manage-widget"
                         ]
                     },
                     "ic-manage-widget-function-list": {
@@ -79,13 +94,13 @@ YUI(
                     "ic-manage-widget-container": {
                         path: "manage/widgets/container.js",
                         requires: [
-                            "gallery-history-lite",
                             "querystring",
                             "ic-manage-widget-container-css",
                             "ic-manage-widget-dashboard",
                             "ic-manage-widget-function-list",
                             "ic-manage-widget-function-expandable-list",
-                            "ic-manage-widget-function-detail"
+                            "ic-manage-widget-function-detail",
+                            "ic-manage-widget"
                         ]
                     },
                     "ic-manage-widget-menu": {
@@ -107,6 +122,7 @@ YUI(
                             "base-base",
                             "ic-manage-widget-container",
                             "ic-manage-widget-menu",
+                            "ic-history-manager",
                             "yui2-layout",
                             "yui2-resize",
                             "yui2-animation"
@@ -194,7 +210,7 @@ YUI(
                 );
 
                 Y.log("setting up manage window");
-                var mw = new Y.IC.ManageWindow();
+                var mw = new Y.IC.ManageWindow({prefix: '_mw'});
             }
         );
     }

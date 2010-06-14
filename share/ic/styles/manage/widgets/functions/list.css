@@ -2,6 +2,6 @@
     display: none;
 }
 
-#yui-dt0-paginator0 {
-    display:none;
+div.yui-dt div.yui-dt-paginator:first-child {
+    display: none;
 }

@@ -26,6 +26,10 @@ YUI.add(
 
         ManageFunction = function (config) {
             ManageFunction.superclass.constructor.apply(this, arguments);
+            this.publish('manageFunction:loaded', {
+                broadcast:  2,   // global notification
+                emitFacade: true // emit a facade so we get the event target
+            });
         };
 
         Y.mix(
@@ -45,20 +49,20 @@ YUI.add(
 
         Y.extend(
             ManageFunction,
-            Y.Widget,
+            Y.IC.ManageWidget,
             {
                 _meta_data: null,
                 _content_node: null,
 
                 initializer: function(config) {
-                    Y.log("function initializer: " + this.get("code"));
+                    // Y.log("function initializer: " + this.get("code"));
 
                     var url = "/manage/function/" + this.get("code") + "/0?_mode=config&_format=json";
                     "/manage/function/" + this.get("code") + "/0?_mode=config&_format=json";
                     if (config.addtl_args) {
                         url = url + "&" + config.addtl_args;
                     }
-                    Y.log("Url: " + url, "debug");
+                    // Y.log("Url: " + url, "debug");
                     Y.io(
                         url,
                         {
@@ -74,7 +78,7 @@ YUI.add(
                 },
 
                 renderUI: function() {
-                    Y.log('function::renderUI');
+                    // Y.log('function::renderUI');
 
                     // add a container
                     this._content_node = Y.Node.create('<div id="' + this.get('code') + '">Loading...</div>');
@@ -86,13 +90,14 @@ YUI.add(
                 _parseMetaData: function(txnId, response) {
                     try {
                         this._meta_data = Y.JSON.parse(response.responseText);
-                        this._buildUI();
                     }
                     catch (e) {
                         Y.log("Can't parse JSON: " + e, "error");
                         return;
                     }
-
+                    if (this._meta_data) {
+                        this._buildUI();
+                    }
                 },
 
                 _buildUI: function() {
@@ -107,7 +112,8 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
-            "widget"
+            "widget",
+            "event-custom"
         ]
     }
 );

@@ -18,20 +18,22 @@
 YUI.add(
     "ic-manage-widget-container",
     function(Y) {
-        var Module;
+        var ManageContainer;
 
-        Module = function (config) {
-            Module.superclass.constructor.apply(this, arguments);
+        ManageContainer = function (config) {
+            ManageContainer.superclass.constructor.apply(this, arguments);
+            this.publish('manageContainer:widgetloaded', {
+                broadcast:  2,   // global notification
+                emitFacade: true // emit a facade so we get the event target
+            });
         };
 
-        Module.NAME = "ic_manage_container";
-        Module.STATE_PROPERTIES = {
-            'kind': 1,
-            'sub_kind': 1,
-            'args': 1
-        };
-        Module.ATTRS = {
+        ManageContainer.NAME = "ic_manage_container";
+        ManageContainer.ATTRS = {
             layout: {        // the layout manager i'm a child of
+                value: null
+            },
+            layout_unit: {   // the layout_unit i'm inside
                 value: null
             },
             current: {       // my current widget
@@ -39,40 +41,23 @@ YUI.add(
             },
             previous: {      // my previous widget
                 value: null
-            },
-            prefix: {        // a prefix for history state variables 
-                value: null  //  to distinguish this object from its siblings
-            },
-            state: {         // my state, used by history to drive my content
-                value: null,
-                setter: function(new_state) {
-                    var old_state = Y.HistoryLite.get();
-                    var sp = Module.STATE_PROPERTIES;
-                    // we wipe out all the prior state properties to start fresh
-                    Y.each(old_state, function (v, k, obj) {
-                        if (sp[k]) {
-                            obj[k] = null;
-                        }
-                    });
-                    // we only allow our STATE_PROPERTIES, no others
-                    Y.each(new_state, function (v, k, obj) {
-                        if (!sp[k]) {
-                            delete obj[k];
-                        }
-                    });
-                    return Y.merge(old_state, new_state);
-                }
             }
         };
 
         Y.extend(
-            Module,
-            Y.Widget,
+            ManageContainer,
+            Y.IC.ManageWidget,
             {
                 _cache: {},
 
+                STATE_PROPERTIES: {
+                    'kind': 1,
+                    'sub_kind': 1,
+                    'args': 1
+                },
+
                 initializer: function (config) {
-                    Y.log("manage container initializer");
+                    // Y.log("manage container initializer");
                     this.render(config.render_to);
                 },
 
@@ -81,7 +66,7 @@ YUI.add(
                 },
 
                 renderUI: function () {
-                    Y.log('container::renderUI');
+                    // Y.log('container::renderUI');
                     /* 
                        currently, the container doesn't add any
                        markup.  it will attach widgets, but that is
@@ -93,90 +78,24 @@ YUI.add(
                 },
 
                 bindUI: function () {
-                    Y.log('container::bindUI');
+                    // Y.log('container::bindUI');
                     this.after('currentChange', this._afterCurrentWidgetChange);
                     this.after('previousChange', this._afterPreviousWidgetChange);
                     this.after('stateChange', this._afterStateChange);
                     Y.on('history-lite:change', Y.bind(this._onHistoryChange, this));
+                    Y.on('manageFunction:loaded', Y.bind(function (e) {
+                        this.fire('manageContainer:widgetloaded');
+                    }, this));
                 },
 
                 syncUI: function () {
-                    Y.log('container::syncUI');
-
-                    // update the state from the history
+                    // Y.log('container::syncUI');
                     this.set('state', this.getRelaventHistory());
                 },
 
-                isEmpty: function (obj) {
-                    for(var i in obj) { 
-                        return false; 
-                    } 
-                    return true;
-                },
-
-
-                areEqualObjects: function(a, b) {
-                    if (typeof(a) != typeof(b)) {
-                        return false;
-                    }
-                    var allkeys = {};
-                    for (var i in a) {
-                        allkeys[i] = 1;
-                    }
-                    for (var i in b) {
-                        allkeys[i] = 1;
-                    }
-                    for (var i in allkeys) {
-                        if (a.hasOwnProperty(i) != b.hasOwnProperty(i)) {
-                            if ((a.hasOwnProperty(i) && typeof(b[i]) == 'function') ||
-                                (a.hasOwnProperty(i) && typeof(b[i]) == 'function')) {
-                                continue;
-                            } else {
-                                return false;
-                            }
-                        }
-                        if (typeof(a[i]) != typeof(b[i])) {
-                            return false;
-                        }
-                        if (typeof(a[i]) == 'object') {
-                            if (!this.areEqualObjects(a[i], b[i])) {
-                                return false;
-                            }
-                        } else {
-                            if (a[i] !== b[i]) {
-                                return false;
-                            }
-                        }
-                    }
-                    return true;
-                },
-
-                getRelaventHistory: function() {
-                    var sp = Module.STATE_PROPERTIES;
-                    var prefix = this.get('prefix');
-                    var history = Y.HistoryLite.get();
-                    var rh = {}; // relavent history
-                    Y.each(sp, function (v, k, obj) {
-                        if (typeof history[prefix + k] !== undefined) {
-                            rh[k] = history[prefix + k];
-                        }
-                    });
-                    return rh;
-                },
-
-                stateMatchesHistory: function() {
-                    var state = this.get('state');
-                    // first check to ensure state has been initialized
-                    if (typeof(state) != 'object') {
-                        return false;
-                    }
-                    var rh = this.getRelaventHistory();
-                    return this.areEqualObjects(state, rh);
-                },
-
                 loadWidget: function (e) {
-                    Y.log('container::loadWidget');
-                    Y.log("function id: " + e.target.get("id"), "debug");
+                    // Y.log('container::loadWidget');
+                    // Y.log("function id: " + e.target.get("id"), "debug");
                     // .split doesn't return "the rest" with a limit
                     var matches    = e.target.get("id").match("^([^-]+)-([^-]+)(?:-([^-]+)-(.+))?$");
                     var kind       = matches[2] || '';
@@ -200,12 +119,19 @@ YUI.add(
                     this.loadWidget({target: empty});
                 },
 
+                _afterStateChange: function (e) {
+                    // Y.log('container::_afterStateChange');
+                    // Y.log('state: ' + Y.QueryString.stringify(this.get('state')));
+                    var state = this.get('state');
+                    this._doLoadWidget(state);
+                },
+
                 _doLoadWidget: function (config) {
-                    Y.log("container::_doLoadWidget");
-                    Y.log("loadWidget this: " + this);
-                    Y.log("loadWidget kind: " + config.kind);
-                    Y.log("loadWidget sub_kind: " + config.sub_kind);
-                    Y.log("loadWidget args: " + config.args);
+                    // Y.log("container::_doLoadWidget");
+                    // Y.log("loadWidget this: " + this);
+                    // Y.log("loadWidget kind: " + config.kind);
+                    // Y.log("loadWidget sub_kind: " + config.sub_kind);
+                    // Y.log("loadWidget args: " + config.args);
 
                     this.set('previous', this.get('current'));
                     var new_widget = null;
@@ -224,7 +150,7 @@ YUI.add(
                             Y.log("instantiating function: " + config.args + "...");
                             var splits     = config.args.split("-", 2);
                             var code       = splits[0];
-                            Y.log("code: " + code);
+                            // Y.log("code: " + code);
                             if (config.sub_kind === "list") {
                                 this._cache[config.args] = new Y.IC.ManageFunctionExpandableList(
                                     {
@@ -237,7 +163,7 @@ YUI.add(
                             }
                             else if (config.sub_kind === "detail") {
                                 var addtl_args = splits[1] + "";
-                                Y.log("addtl_args: " + addtl_args);
+                                // Y.log("addtl_args: " + addtl_args);
                                 this._cache[config.args] = new Y.IC.ManageFunctionDetail(
                                     {
                                         code: code,
@@ -266,56 +192,8 @@ YUI.add(
                     this.set('current', new_widget);
                 },
 
-                _addMyHistoryPrefix: function (o) {
-                    var copy = Y.merge(o);
-                    var prefix = this.get('prefix');
-                    var hp = Module.STATE_PROPERTIES;
-                    Y.each(copy, function (v, k, obj) {
-                        // verify that it isn't already prefixed
-                        if (k.indexOf(prefix) !== 0) {
-                            // only modify my history properties
-                            if (hp[k]) {
-                                delete obj[k];
-                                obj[prefix + k] = v;
-                            }
-                        }
-                    });
-                    return copy;
-                },
-
-                _stripMyHistoryPrefix: function (o) {
-                    var copy = Y.merge(o);
-                    var prefix = this.get('prefix');
-                    var hp = Module.STATE_PROPERTIES;
-                    Y.each(copy, function (v, k, obj) {
-                        // continue if not prefixed
-                        if (k.indexOf(prefix) === 0) {
-                            // only modify my history properties
-                            if (hp[k]) {
-                                delete obj[k];
-                                obj[k.substring(prefix.length)] = v;
-                            }
-                        }
-                    });
-                    return copy;
-                },
-
-                _afterStateChange: function (e) {
-                    Y.log('container::_afterStateChange');
-                    Y.log('state: ' + Y.QueryString.stringify(this.get('state')));
-                    var state = this.get('state');
-                    this._doLoadWidget(state);
-                },
-
-                _onHistoryChange: function (e) {
-                    Y.log('container::_onHistoryChange');
-                    if ( ! this.stateMatchesHistory() ) {
-                        this.set('state', this.getRelaventHistory());
-                    }
-                },
-
                 _showWidget: function (widget) {
-                    Y.log('container::_showWidget');
+                    // Y.log('container::_showWidget');
                     try {
                         widget.enable();
                         widget.show();
@@ -329,7 +207,7 @@ YUI.add(
                 },
 
                 _hideWidget: function (widget) {
-                    Y.log('container::_hideWidget');
+                    // Y.log('container::_hideWidget');
                     try {
                         Y.log("hiding widget: " + widget);
                         widget.hide();
@@ -356,13 +234,15 @@ YUI.add(
         );
 
         Y.namespace("IC");
-        Y.IC.ManageContainer = Module;
+        Y.IC.ManageContainer = ManageContainer;
     },
     "@VERSION@",
     {
         requires: [
             "ic-manage-widget-dashboard",
             "ic-manage-widget-function",
+            "ic-manage-widget",
+            "event-custom",
             "widget"
         ]
     }

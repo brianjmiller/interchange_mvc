@@ -69,7 +69,7 @@ YUI.add(
                 menu_item_content_wrapper: 'span',
 
                 initializer: function (config) {
-                    Y.log("manage menu initializer");
+                    // Y.log("manage menu initializer");
 
                     if (config.orientation === 'horizontal') {
                         this.orientation_class =  'yui3-menu-horizontal yui3-menubuttonnav';
@@ -110,11 +110,11 @@ YUI.add(
                 },
 
                 renderUI: function () {
-                    Y.log('menu renderUI...');
+                    // Y.log('menu renderUI...');
                 },
 
                 syncUI: function () {
-                    Y.log('menu syncUI...');
+                    // Y.log('menu syncUI...');
 
                     this.get("boundingBox").addClass("yui3-menu " + this.orientation_class);
                     this.get("contentBox").addClass("yui3-menu-content");
