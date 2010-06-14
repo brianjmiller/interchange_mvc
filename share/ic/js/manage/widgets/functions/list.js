@@ -182,7 +182,7 @@ YUI.add(
 
                         var pager = new YAHOO.widget.Paginator(
                             {
-                                rowsPerPage: 3 //this._meta_data.page_count
+                                rowsPerPage: this._meta_data.page_count
                             }
                         );
 
