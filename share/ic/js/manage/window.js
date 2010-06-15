@@ -73,24 +73,58 @@ YUI.add(
                     //  and decorate our layout to match the contents
                     Y.on("manageContainer:widgetshown", this.updateHeaderText);
                     Y.on("manageContainer:widgetmetadata", this.updateHeaderText);
-                    Y.on("manageFunctionList:tablerendered", Y.bind(this.fitDatatableToUnit, this));
+                    Y.on("manageFunctionList:tablerendered", Y.bind(this._fitDatatableToUnit, this));
+                },
+
+                destructor: function () {
+                    // Y.log('window::destructor');
+                    this._menu.destroy();
+                    this._menu = null;
+                    this._dash.destroy();
+                    this._dash = null;
+                    this._dt_container.destroy();
+                    this._dt_container = null;
+                    this._dt_container.destroy();
+                    this._dv_container = null;
+                    this._div_cache = null;
+                    this._layouts['left'].destroy();
+                    this._layouts['center'].destroy();
+                    this._layouts['outer'].destroy();
+                    this._layouts['left'] = null;
+                    this._layouts['center'] = null;
+                    this._layouts['outer'] = null;
+                },
+
+                /*
+                 * Some layout units have headers.  When they do, we
+                 * want to get the header text from the widgets
+                 * contained in the unit.
+                 */
+                updateHeaderText: function (e) {
+                    // Y.log('window::updateHeaderText');
+                    var container = e.target;
+                    var widget = container.get('current');
+                    var layout_unit = container.get('layout_unit');
+                    if (widget && widget.getHeaderText && (widget.getHeaderText() !== null)) {
+                        layout_unit.set('header', widget.getHeaderText());
+                    }
                 },
 
                 // called by _afterStateChange
-                initOuterLayout: function (lc) {
-                    // Y.log('window::initOuterLayout');
+                _initOuterLayout: function (lc) {
+                    // Y.log('window::_initOuterLayout');
                     // build the main layout
-                    this.buildOuterLayout('outer');
+                    this._buildOuterLayout('outer');
                     this._layouts['outer'].on(
                         'render', 
-                        Y.bind(this.onOuterLayoutRender, this, lc)
+                        Y.bind(this._onOuterLayoutRender, this, lc)
                     );
                     this._layouts['outer'].render();
                 },
 
                 // the main layout
-                buildOuterLayout: function (key) {
-                    // Y.log('window::buildOuterLayout');
+                _buildOuterLayout: function (key) {
+                    // Y.log('window::_buildOuterLayout');
                     var YAHOO = Y.YUI2;
                     this._layouts[key] = new YAHOO.widget.Layout(
                         {
@@ -125,8 +159,8 @@ YUI.add(
                 },
 
                 // an inner layout - contains the main menu and quick links
-                buildLeftLayout: function (layout, unit, key) {
-                    // Y.log('window::buildLeftLayout');
+                _buildLeftLayout: function (layout, unit, key) {
+                    // Y.log('window::_buildLeftLayout');
                     var YAHOO = Y.YUI2;
                     var left = layout.getUnitByPosition(unit).get("wrap");
                     this._layouts[key] = new YAHOO.widget.Layout(
@@ -159,8 +193,8 @@ YUI.add(
                  *  version param.  The param should be a valid state
                  *  property ('dtmax', 'dvmax', dtdv').
                  */
-                buildDTDVLayout: function (layout, unit, key, version) {
-                    // Y.log('window::buildDTDVLayout - version: ' + version);
+                _buildDTDVLayout: function (layout, unit, key, version) {
+                    // Y.log('window::_buildDTDVLayout - version: ' + version);
 
                     var YAHOO = Y.YUI2;
                     var center = layout.getUnitByPosition(unit).get("wrap");
@@ -180,7 +214,7 @@ YUI.add(
                         break;
                     }
 
-                    this.saveMyContainers();
+                    this._saveMyContainers();
 
                     // then build the layout
                     var new_layout = new YAHOO.widget.Layout(
@@ -209,7 +243,7 @@ YUI.add(
                             ]
                         }
                     );
-                    this.destroyExtraLayoutElements(key);
+                    this._destroyExtraLayoutElements(key);
                     this._layouts[key] = new_layout;
                     Y.HistoryLite.add(this._addMyHistoryPrefix({lc: version}));
                 },
@@ -220,12 +254,12 @@ YUI.add(
                  *  more complex, so it's nice for it to have it's own
                  *  layout possibilities.
                  */
-                buildDashLayout: function (layout, unit, key) {
-                    // Y.log('window::buildDashLayout');
+                _buildDashLayout: function (layout, unit, key) {
+                    // Y.log('window::_buildDashLayout');
                     var YAHOO = Y.YUI2;
                     var center = layout.getUnitByPosition(unit).get("wrap");
 
-                    this.saveMyContainers();
+                    this._saveMyContainers();
 
                     // then build the layout
                     var new_layout = new YAHOO.widget.Layout(
@@ -244,28 +278,28 @@ YUI.add(
                             ]
                         }
                     );
-                    this.destroyExtraLayoutElements(key);
+                    this._destroyExtraLayoutElements(key);
                     this._layouts[key] = new_layout;
                     Y.HistoryLite.add(this._addMyHistoryPrefix({lc: 'dash'}));
                 },
 
-                onOuterLayoutRender: function (center_layout) {
-                    // Y.log('window::onOuterLayoutRender');
+                _onOuterLayoutRender: function (center_layout) {
+                    // Y.log('window::_onOuterLayoutRender');
                     this._layouts['outer'].removeListener('render');
 
                     var buildCenterLayout, onCenterLayoutRender;
 
                     if (center_layout === 'dash') {
-                        buildCenterLayout = this.buildDashLayout;
-                        onCenterLayoutRender = Y.bind(this.onDashLayoutRender, this);
+                        buildCenterLayout = this._buildDashLayout;
+                        onCenterLayoutRender = Y.bind(this._onDashLayoutRender, this);
                     }
                     else {
-                        buildCenterLayout = this.buildDTDVLayout;
-                        onCenterLayoutRender = Y.bind(this.onDTDVLayoutRender, this);
+                        buildCenterLayout = this._buildDTDVLayout;
+                        onCenterLayoutRender = Y.bind(this._onDTDVLayoutRender, this);
                     }
 
                     Y.bind(
-                        this.buildLeftLayout,
+                        this._buildLeftLayout,
                         this,                     // context
                         this._layouts['outer'],   // parent layout
                         'left',                   // unit
@@ -282,7 +316,7 @@ YUI.add(
 
                     this._layouts['left'].on(
                         'render', 
-                        Y.bind(this.onLeftLayoutRender, this)
+                        Y.bind(this._onLeftLayoutRender, this)
                     );
                     this._layouts['center'].on(
                         'render', 
@@ -293,11 +327,11 @@ YUI.add(
                     this._layouts['center'].render();
                 },
 
-                onLeftLayoutRender: function () {
-                    // Y.log('window::onLeftLayoutRender');
+                _onLeftLayoutRender: function () {
+                    // Y.log('window::_onLeftLayoutRender');
                     this._layouts['left'].removeListener('render');
                     Y.bind(
-                        this.initMainMenu, 
+                        this._initMainMenu, 
                         this,                   // context
                         this._layouts['left'],  // layout 
                         'top',                  // unit
@@ -305,7 +339,7 @@ YUI.add(
                     )();
                 },
 
-                restoreContainerFromCache: function (id, layout, unit_label) {
+                _restoreContainerFromCache: function (id, layout, unit_label) {
                     var tmp = Y.one('#' + id);
                     if (tmp) {
                         tmp.replace(this._div_cache[id]);
@@ -318,19 +352,19 @@ YUI.add(
                     this._div_cache[id] = null;
                 },
 
-                onDTDVLayoutRender: function () {
-                    // Y.log('window::onDTDVLayoutRender');
+                _onDTDVLayoutRender: function () {
+                    // Y.log('window::_onDTDVLayoutRender');
                     var layout = this._layouts['center'];
                     layout.removeListener('render');
 
                     // restore our containers
                     if (this._div_cache['manage_datatable']) {
-                        this.restoreContainerFromCache(
+                        this._restoreContainerFromCache(
                             'manage_datatable', layout, 'top'
                         );
                     }
                     if (this._div_cache['manage_detail']) {
-                        this.restoreContainerFromCache(
+                        this._restoreContainerFromCache(
                             'manage_detail', layout, 'center'
                         );
                     }
@@ -348,17 +382,17 @@ YUI.add(
                     }
 
                     // widgets are loaded from the history of the containers
-                    this.executeSubmenuCallback();
+                    this._executeSubmenuCallback();
                 },
 
-                onDashLayoutRender: function () {
-                    // Y.log('window::onDashLayoutRender');
+                _onDashLayoutRender: function () {
+                    // Y.log('window::_onDashLayoutRender');
                     var layout = this._layouts['center'];
                     layout.removeListener('render');
 
                     if (! this._dash) {
                         Y.bind(
-                            this.initDashboard, 
+                            this._initDashboard, 
                             this,                     // context
                             this._layouts['center'],  // layout 
                             'center'                  // unit   
@@ -367,17 +401,17 @@ YUI.add(
                     else {
                         // restore the container
                         if (this._div_cache['manage_dashboard']) {
-                            this.restoreContainerFromCache(
+                            this._restoreContainerFromCache(
                                 'manage_dashboard', layout, 'center'
                             );
                         }
                         this._dash.show();
                     }
-                    this.executeSubmenuCallback();
+                    this._executeSubmenuCallback();
                 },
 
-                initMainMenu: function (layout, unit, orientation) {
-                    // Y.log('window::initMainMenu');
+                _initMainMenu: function (layout, unit, orientation) {
+                    // Y.log('window::_initMainMenu');
                     var menu_unit = layout.getUnitByPosition(unit).body.childNodes[0];
                     this._menu = new Y.IC.ManageMenu(
                         {
@@ -394,14 +428,14 @@ YUI.add(
                     // capture the menu events
                     Y.delegate(
                         "mousedown",
-                        this.onSubmenuMousedown,
+                        this._onSubmenuMousedown,
                         this._menu.get("boundingBox"),
                         'em.yui3-menuitem-content',
                         this
                     );
                     Y.delegate(
                         "mousedown",
-                        this.onSubmenuMousedown,
+                        this._onSubmenuMousedown,
                         this._menu.get("boundingBox"),
                         'a.yui3-menuitem-content',
                         this
@@ -414,23 +448,23 @@ YUI.add(
                  *  for the dashboard, and may load several widgets
                  *  into it.
                  */ 
-                initDashboard: function (layout, unit) {
-                    // Y.log('window::initDashboard');
+                _initDashboard: function (layout, unit) {
+                    // Y.log('window::_initDashboard');
                     var center = layout.getUnitByPosition(unit);
-                    var dash_div = this.initContainerDiv('manage_dashboard', unit);
+                    var dash_div = this._initContainerDiv('manage_dashboard', unit);
                     this._dash = new Y.IC.ManageDashboard();
                     this._dash.render(dash_div);
                 },
 
-                executeSubmenuCallback: function () {
+                _executeSubmenuCallback: function () {
                     if (this._center_layout_onrender_callback) {
                         this._center_layout_onrender_callback();
                         this._center_layout_onrender_callback = null;
                     }
                 },
 
-                onSubmenuMousedown: function (e) {
-                    // Y.log('window::onSubmenuMousedown');
+                _onSubmenuMousedown: function (e) {
+                    // Y.log('window::_onSubmenuMousedown');
 
                     // hide the submenu after a selection -- there
                     // seems to be a selection bug in here - should
@@ -441,25 +475,25 @@ YUI.add(
 
                     if (this.get('state.lc') !== 'dtmax') {
                         // save a callback because the layout needs to be built/rendered first
-                        this._center_layout_onrender_callback = Y.bind(this.doSubmenuRequest, this, e);
+                        this._center_layout_onrender_callback = Y.bind(this._doSubmenuRequest, this, e);
                         Y.HistoryLite.add(this._addMyHistoryPrefix({lc: 'dtmax'}));
                     }
                     else {
-                        this.doSubmenuRequest(e);
+                        this._doSubmenuRequest(e);
                     }
 
                     // i need to determine if i've selected a list or an add or the dash
                     //  currently i assume every item should render a list...
                 },
 
-                doSubmenuRequest: function (e) {
-                    // Y.log('window::doSubmenuRequest');
+                _doSubmenuRequest: function (e) {
+                    // Y.log('window::_doSubmenuRequest');
                     var center = this._layouts['outer'].getUnitByPosition("center").get("wrap");
                     var top = this._layouts['center'].getUnitByPosition("top");
 
                     // if there's no datatable container, create one
                     if (!this._dt_container) {
-                        var dt_div = this.initContainerDiv('manage_datatable', top);
+                        var dt_div = this._initContainerDiv('manage_datatable', top);
                         this._dt_container = new Y.IC.ManageContainer(
                             {
                                 render_to: dt_div,
@@ -474,7 +508,7 @@ YUI.add(
                         var dt = this._dt_container.get('current');
                         if (dt instanceof Y.IC.ManageFunctionExpandableList) {
                             // expand the datatable to it's max height
-                            this.fitDatatableToUnit();
+                            this._fitDatatableToUnit();
                         }
                     }
 
@@ -484,7 +518,7 @@ YUI.add(
                     // capture clicks on the "detail" link of the option column
                     Y.delegate(
                         "click",
-                        this.onDetailClick,
+                        this._onDetailClick,
                         center,
                         'a.manage_function_link',
                         this
@@ -499,19 +533,19 @@ YUI.add(
                  * Loads a inner layout with a short datatable and
                  * large detail view.
                  */
-                onDetailClick: function (e) {
-                    // Y.log('window::onDetailClick');
+                _onDetailClick: function (e) {
+                    // Y.log('window::_onDetailClick');
                     if (this.get('state.lc') !== 'dtdv') {
                         Y.HistoryLite.add(this._addMyHistoryPrefix({lc: 'dtdv'}));
                         // save a callback, because the layout needs to be built/rendered first
-                        this._center_layout_onrender_callback = Y.bind(this.doDetailRequest, this, e);
+                        this._center_layout_onrender_callback = Y.bind(this._doDetailRequest, this, e);
                     }
                     else {
-                        this.doDetailRequest(e);
+                        this._doDetailRequest(e);
                     }
                 },
 
-                getOrCreateNodeById: function (id) {
+                _getOrCreateNodeById: function (id) {
                     var div = Y.one('#' + id);
                     if (!div) {
                         var app_container = Y.one('#ic-manage-app-container');
@@ -521,7 +555,7 @@ YUI.add(
                     return div;
                 },
 
-                fitDatatableToUnit: function () {
+                _fitDatatableToUnit: function () {
                     var unit = this._layouts['center'].getUnitByPosition("top");
                     var widget = this._dt_container.get('current');
                     if (widget._data_table) {
@@ -543,7 +577,7 @@ YUI.add(
                     }
                 },
 
-                initContainerDiv: function (id, unit) {
+                _initContainerDiv: function (id, unit) {
                     var div = Y.one('#' + id);
                     if (!div) {
                         var unit_body = Y.one(unit.body);
@@ -554,8 +588,8 @@ YUI.add(
                     return div;
                 },
 
-                doDetailRequest: function (e) {
-                    // Y.log('window::doDetailRequest');
+                _doDetailRequest: function (e) {
+                    // Y.log('window::_doDetailRequest');
                     var top = this._layouts['center'].getUnitByPosition("top");
                     var center = this._layouts['center'].getUnitByPosition("center");
 
@@ -568,13 +602,13 @@ YUI.add(
                         // top.set('header', dt.getHeaderText());
                         if (dt instanceof Y.IC.ManageFunctionExpandableList) {
                             // shrink the datatable to 3 rows, scroll the rest
-                            this.fitDatatableToUnit();
+                            this._fitDatatableToUnit();
                         }
                     }
 
                     // if there's no detail view container, create one
                     if (!this._dv_container) {
-                        var dv_div = this.initContainerDiv('manage_detail', center);
+                        var dv_div = this._initContainerDiv('manage_detail', center);
                         // no detail view container
                         this._dv_container = new Y.IC.ManageContainer(
                             {
@@ -609,8 +643,8 @@ YUI.add(
                  * lose our containers (and their cache), we save a
                  * reference to their dom nodes.
                  */
-                saveMyContainers: function () {
-                    Y.log('window::saveMyContainers');
+                _saveMyContainers: function () {
+                    Y.log('window::_saveMyContainers');
                     // save our containers, and add any that are missing
                     var app_container = Y.one('#ic-manage-app-container');
                     var createOrSaveContainer = function (id, cache) {
@@ -644,8 +678,8 @@ YUI.add(
                  * destroy any dom left over from a previous inner
                  * layout.
                  */
-                destroyExtraLayoutElements: function (key) {
-                    Y.log('window::destroyExtraLayoutElements');
+                _destroyExtraLayoutElements: function (key) {
+                    Y.log('window::_destroyExtraLayoutElements');
                     // destroy any lingering elements from an existing layout
                     if (this._layouts[key]) {
                         Y.each(this._layouts[key]._units, function (v, k, obj) {
@@ -660,21 +694,6 @@ YUI.add(
                 },
 
                 /*
-                 * Some layout units have headers.  When they do, we
-                 * want to get the header text from the widgets
-                 * contained in the unit.
-                 */
-                updateHeaderText: function (e) {
-                    // Y.log('window::updateHeaderText');
-                    var container = e.target;
-                    var widget = container.get('current');
-                    var layout_unit = container.get('layout_unit');
-                    if (widget && widget.getHeaderText && (widget.getHeaderText() !== null)) {
-                        layout_unit.set('header', widget.getHeaderText());
-                    }
-                },
-
-                /*
                  * Keeps track of our current layout state and
                  * initiates redraws when there's a change.  this
                  * allows us to draw a layout according to the browser
@@ -684,26 +703,26 @@ YUI.add(
                     // Y.log('window::_afterStateChange');
                     var state = this.get('state');
                     if (state.lc === undefined) {
-                        this.initOuterLayout('dash');
+                        this._initOuterLayout('dash');
                     }
                     else {
                         if ( ! this._layouts['outer'] ) {
-                            this.buildOuterLayout('outer');
+                            this._buildOuterLayout('outer');
                             this._layouts['outer'].on(
                                 'render', 
-                                Y.bind(this.onOuterLayoutRender, this, state.lc)
+                                Y.bind(this._onOuterLayoutRender, this, state.lc)
                             );
                             this._layouts['outer'].render();
                         }
                         else {
                             var buildCenterLayout, onCenterLayoutRender;
                             if (state.lc === 'dash') {
-                                buildCenterLayout = this.buildDashLayout;
-                                onCenterLayoutRender = this.onDashLayoutRender;
+                                buildCenterLayout = this._buildDashLayout;
+                                onCenterLayoutRender = this._onDashLayoutRender;
                             }
                             else {
-                                buildCenterLayout = this.buildDTDVLayout;
-                                onCenterLayoutRender = this.onDTDVLayoutRender;
+                                buildCenterLayout = this._buildDTDVLayout;
+                                onCenterLayoutRender = this._onDTDVLayoutRender;
                             }
                             // destroy/build the center layout,
                             Y.bind(
@@ -721,25 +740,6 @@ YUI.add(
                             this._layouts['center'].render();
                         }
                     }
-                },
-
-                destructor: function () {
-                    // Y.log('window::destructor');
-                    this._menu.destroy();
-                    this._menu = null;
-                    this._dash.destroy();
-                    this._dash = null;
-                    this._dt_container.destroy();
-                    this._dt_container = null;
-                    this._dt_container.destroy();
-                    this._dv_container = null;
-                    this._div_cache = null;
-                    this._layouts['left'].destroy();
-                    this._layouts['center'].destroy();
-                    this._layouts['outer'].destroy();
-                    this._layouts['left'] = null;
-                    this._layouts['center'] = null;
-                    this._layouts['outer'] = null;
                 }
             }
         );

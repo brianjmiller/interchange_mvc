@@ -47,7 +47,7 @@ YUI(
                         ]
                     },
                     "ic-manage-widget-function": {
-                        path: "manage/widgets/functions/function.js",
+                        path: "manage/widgets/function.js",
                         requires: [
                             "ic-manage-widget"
                         ]
