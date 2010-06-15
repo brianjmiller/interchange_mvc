@@ -22,6 +22,10 @@ YUI.add(
 
         ManageFunctionList = function (config) {
             ManageFunctionList.superclass.constructor.apply(this, arguments);
+            this.publish('manageFunctionList:tablerendered', {
+                broadcast:  2,   // global notification
+                emitFacade: true // emit a facade so we get the event target
+            });
         };
 
         ManageFunctionList.NAME = "ic_manage_function_list";
@@ -51,6 +55,12 @@ YUI.add(
                     this._data_table.subscribe("rowMouseoverEvent", this._data_table.onEventHighlightRow);
                     this._data_table.subscribe("rowMouseoutEvent", this._data_table.onEventUnhighlightRow);
                     this._data_table.subscribe("rowClickEvent", this._data_table.onEventSelectRow);
+                    this._data_table.subscribe("postRenderEvent", Y.bind(this.onPostRenderEvent, this));
+                },
+
+                onPostRenderEvent: function (e) {
+                    Y.log('list::onPostRenderEvent');
+                    this.fire('manageFunctionList:tablerendered');
                 },
 
                 _getDataSource: function () {

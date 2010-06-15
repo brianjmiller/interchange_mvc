@@ -54,7 +54,7 @@ YUI.add('rowexpansion', function(Y) {
 
         YAHOO.lang.extend( 
             YAHOO.widget.RowExpansionDataTable,
-            YAHOO.widget.DataTable, 
+            YAHOO.widget.ScrollingDataTable, 
             {
 
                 //////////////////////////////////////////////////////////////////

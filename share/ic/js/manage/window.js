@@ -73,6 +73,7 @@ YUI.add(
                     //  and decorate our layout to match the contents
                     Y.on("manageContainer:widgetshown", this.updateHeaderText);
                     Y.on("manageContainer:widgetmetadata", this.updateHeaderText);
+                    Y.on("manageFunctionList:tablerendered", Y.bind(this.fitDatatableToUnit, this));
                 },
 
                 // called by _afterStateChange
@@ -468,6 +469,14 @@ YUI.add(
                             }
                         );
                     }
+                    // otherwise, reset the width/height
+                    else {
+                        var dt = this._dt_container.get('current');
+                        if (dt instanceof Y.IC.ManageFunctionExpandableList) {
+                            // expand the datatable to it's max height
+                            this.fitDatatableToUnit();
+                        }
+                    }
 
                     // load the Widget into the Data Table container
                     Y.bind(this._dt_container.loadWidget, this._dt_container)(e);
@@ -512,6 +521,28 @@ YUI.add(
                     return div;
                 },
 
+                fitDatatableToUnit: function () {
+                    var unit = this._layouts['center'].getUnitByPosition("top");
+                    var widget = this._dt_container.get('current');
+                    if (widget._data_table) {
+                        var dt_body = Y.one(widget._data_table.getBdContainerEl());
+                        var dt_table = Y.one(widget._data_table.getBdTableEl());
+                        var region = dt_table.get('region')
+                        var width = region.width;
+                        var unit_height = Y.one(unit.get("wrap")).get('region').height;
+                        var table_height = region.height;
+                        var height = table_height;
+                        var adj_height = unit_height - 80; // magic number = header + paginator
+                        if (table_height >= adj_height) {
+                            height = adj_height;
+                            width += 16; // adjust for scrollbars
+                        }
+                        dt_body.setStyle('width', width + 'px');
+                        dt_body.setStyle('height', height + 'px');
+                        widget._data_table.scrollTo(widget._data_table.getLastSelectedRecord());
+                    }
+                },
+
                 initContainerDiv: function (id, unit) {
                     var div = Y.one('#' + id);
                     if (!div) {
@@ -534,11 +565,10 @@ YUI.add(
 
                     if (this._dt_container) {
                         var dt = this._dt_container.get('current');
-                        top.set('header', dt.getHeaderText());
-                        var YAHOO = Y.YUI2;
+                        // top.set('header', dt.getHeaderText());
                         if (dt instanceof Y.IC.ManageFunctionExpandableList) {
-                            Y.log('shrink the datatable to 3 rows')
-                            // ... need some stuffs here
+                            // shrink the datatable to 3 rows, scroll the rest
+                            this.fitDatatableToUnit();
                         }
                     }
 
