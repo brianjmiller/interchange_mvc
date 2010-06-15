@@ -31,21 +31,25 @@ YUI.add(
             state: {         // my state, used by history to drive my content
                 value: null,
                 setter: function(new_state) {
-                    var old_state = Y.HistoryLite.get();
+                    var old_state = this.get('state'); //Y.HistoryLite.get();
                     var sp = this.STATE_PROPERTIES;
+
                     // we wipe out all the prior state properties to start fresh
                     Y.each(old_state, function (v, k, obj) {
                         if (sp[k]) {
                             obj[k] = null;
                         }
                     });
+
                     // we only allow our STATE_PROPERTIES, no others
                     Y.each(new_state, function (v, k, obj) {
                         if (!sp[k]) {
                             delete obj[k];
                         }
                     });
-                    return Y.merge(old_state, new_state);
+
+                    var m = Y.merge(old_state, new_state);
+                    return m;
                 }
             }
         };
@@ -156,6 +160,9 @@ YUI.add(
             _onHistoryChange: function (e) {
                 // Y.log('_onHistoryChange');
                 if ( ! this.stateMatchesHistory() ) {
+                    // Y.log('_onHistoryChange - state does not match history ... state -> history');
+                    // Y.log(this.get('state'));
+                    // Y.log(this.getRelaventHistory());
                     this.set('state', this.getRelaventHistory());
                 }
             }

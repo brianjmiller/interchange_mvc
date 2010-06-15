@@ -142,6 +142,20 @@ YUI.add(
                     oPayload.totalRecords = oResponse.meta.totalRecords;
                     return oPayload;
                 },
+
+                getHeaderText: function () {
+                    if (this._meta_data) {
+                        Y.log(this._meta_data);
+                        var header = ' List ' + this._meta_data.model_name_plural;
+                        Y.log('list::getHeaderText - header: ' + header);
+                        return header;
+                    }
+                    else {
+                        Y.log('list::getHeaderText - header is null - no meta_data');
+                        return null;
+                    }
+                }
+
             }
         );
 

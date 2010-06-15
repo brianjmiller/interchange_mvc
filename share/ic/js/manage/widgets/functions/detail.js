@@ -100,10 +100,17 @@ YUI.add(
                 },
 
                 getHeaderText: function () {
-                    // Y.log(this._meta_data.pk_settings);
-                    var pks = this._meta_data.pk_settings[0];
-                    var value = pks.value;
-                    return (this._meta_data.object_name + ' Detail ' + value);
+                    if (this._meta_data) {
+                        var pks = this._meta_data.pk_settings[0];
+                        var value = pks.value;
+                        var header = this._meta_data.object_name + ' Detail ' + value;
+                        Y.log('detail::getHeaderText - header: ' + header);
+                        return header;
+                    }
+                    else {
+                        Y.log('detail::getHeaderText - header is null - no meta_data');
+                        return null;
+                    }
                 }
 
             }

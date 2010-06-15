@@ -30,6 +30,10 @@ YUI.add(
                 broadcast:  2,   // global notification
                 emitFacade: true // emit a facade so we get the event target
             });
+            this.publish('manageFunction:metadata', {
+                broadcast:  2,   // global notification
+                emitFacade: true // emit a facade so we get the event target
+            });
         };
 
         Y.mix(
@@ -96,6 +100,7 @@ YUI.add(
                         return;
                     }
                     if (this._meta_data) {
+                        this.fire('manageFunction:metadata');
                         this._buildUI();
                     }
                 },

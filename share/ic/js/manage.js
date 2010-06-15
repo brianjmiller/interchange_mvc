@@ -96,7 +96,6 @@ YUI(
                         requires: [
                             "querystring",
                             "ic-manage-widget-container-css",
-                            "ic-manage-widget-dashboard",
                             "ic-manage-widget-function-list",
                             "ic-manage-widget-function-expandable-list",
                             "ic-manage-widget-function-detail",
@@ -122,6 +121,7 @@ YUI(
                             "base-base",
                             "ic-manage-widget-container",
                             "ic-manage-widget-menu",
+                            "ic-manage-widget-dashboard",
                             "ic-history-manager",
                             "yui2-layout",
                             "yui2-resize",

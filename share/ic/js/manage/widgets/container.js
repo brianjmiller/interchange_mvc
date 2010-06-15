@@ -26,6 +26,18 @@ YUI.add(
                 broadcast:  2,   // global notification
                 emitFacade: true // emit a facade so we get the event target
             });
+            this.publish('manageContainer:widgetmetadata', {
+                broadcast:  2,   // global notification
+                emitFacade: true // emit a facade so we get the event target
+            });
+            this.publish('manageContainer:widgetshown', {
+                broadcast:  2,   // global notification
+                emitFacade: true // emit a facade so we get the event target
+            });
+            this.publish('manageContainer:widgethidden', {
+                broadcast:  2,   // global notification
+                emitFacade: true // emit a facade so we get the event target
+            });
         };
 
         ManageContainer.NAME = "ic_manage_container";
@@ -86,6 +98,9 @@ YUI.add(
                     Y.on('manageFunction:loaded', Y.bind(function (e) {
                         this.fire('manageContainer:widgetloaded');
                     }, this));
+                    Y.on('manageFunction:metadata', Y.bind(function (e) {
+                        this.fire('manageContainer:widgetmetadata');
+                    }, this));
                 },
 
                 syncUI: function () {
@@ -136,16 +151,7 @@ YUI.add(
                     this.set('previous', this.get('current'));
                     var new_widget = null;
 
-                    if (config.kind === "dashboard") {
-                        if (! this._cache["dashboard"]) {
-                            Y.log("instantiating dashboard...");
-                            this._cache["dashboard"] = new Y.IC.ManageDashboard();
-                            this._cache["dashboard"].render( this.get("contentBox") );
-                        }
-
-                        new_widget = this._cache["dashboard"];
-                    }
-                    else if (config.kind === "function") {
+                    if (config.kind === "function") {
                         if (! this._cache[config.args]) {
                             Y.log("instantiating function: " + config.args + "...");
                             var splits     = config.args.split("-", 2);
@@ -176,7 +182,6 @@ YUI.add(
                             else {
                             }
                         }
-
                         new_widget = this._cache[config.args];
                     }
                     else if (config.kind === "empty") {
@@ -197,6 +202,7 @@ YUI.add(
                     try {
                         widget.enable();
                         widget.show();
+                        this.fire('manageContainer:widgetshown');
                     } catch (err) {
                         Y.log(err); // widget is probably null or not a Widget subclass
                         // NA: i think we should write an error message to the screen,
@@ -209,9 +215,9 @@ YUI.add(
                 _hideWidget: function (widget) {
                     // Y.log('container::_hideWidget');
                     try {
-                        Y.log("hiding widget: " + widget);
                         widget.hide();
                         widget.disable();
+                        this.fire('manageContainer:widgethidden');
                     } catch (err) {
                         Y.log(err); // probably not a Widget subclass
                         // NA: i think we should detach the widget from the dom
@@ -239,7 +245,6 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
-            "ic-manage-widget-dashboard",
             "ic-manage-widget-function",
             "ic-manage-widget",
             "event-custom",
