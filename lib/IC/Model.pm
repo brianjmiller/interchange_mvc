@@ -124,6 +124,7 @@ sub update {
             $class = join '::', map {
                 /y$/ ? s/y$/ies/ : # pluralize -y as -ies and skip the other checks
                 /ss$/ ? s/$/es/  : # pluralize -ss as -sses and skip the other checks
+                /us$/ ? s/$/es/  : # pluralize -us as -uses and skip the other checks
                 !/s$/ && s/$/s/  ; # if we end in -s, don't pluralize, otherwise add an -s
                 $_ 
             } split '::', $class;
