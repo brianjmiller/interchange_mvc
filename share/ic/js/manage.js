@@ -46,6 +46,13 @@ YUI(
                             "widget"
                         ]
                     },
+                    "ic-manage-widget-tabview": {
+                        path: "manage/widgets/tabview.js",
+                        requires: [
+                            "tabview",
+                            "ic-history-manager"
+                        ]
+                    },
                     "ic-manage-widget-function": {
                         path: "manage/widgets/function.js",
                         requires: [
@@ -88,7 +95,8 @@ YUI(
                         requires: [
                             "ic-manage-widget-function-detail-css",
                             "ic-manage-widget-function",
-                            "tabview"
+                            "gallery-form",
+                            "ic-manage-widget-tabview"
                         ]
                     },
                     "ic-manage-widget-container": {
