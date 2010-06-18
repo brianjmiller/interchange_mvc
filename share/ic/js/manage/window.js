@@ -375,10 +375,18 @@ YUI.add(
                         this._dt_container.set('layout', layout);
                         this._dt_container.set('layout_unit', unit);
                     }
+                    else {
+                        // must be a bookmark initialization, so create the containers from history
+                        this._createDataTableContainer();
+                    }
                     if (this._dv_container) {
                         var unit = layout.getUnitByPosition('center');
                         this._dv_container.set('layout', layout);
                         this._dv_container.set('layout_unit', unit);
+                    }
+                    else {
+                        // must be a bookmark initialization, so create the containers from history
+                        this._createDetailViewContainer();
                     }
 
                     // widgets are loaded from the history of the containers
@@ -425,19 +433,14 @@ YUI.add(
                     cbody.addClass('allow-overflow');
                     Y.one(cbody._node.parentNode.parentNode.parentNode).addClass('allow-overflow');
 
-                    // capture the menu events
+                    // capture the menu events -
+                    // 'click' is prevented by the node-menunav plugin, wtf!?
+                    // so we use mouse down, but then have to do some clean up..
                     Y.delegate(
                         "mousedown",
                         this._onSubmenuMousedown,
                         this._menu.get("boundingBox"),
-                        'em.yui3-menuitem-content',
-                        this
-                    );
-                    Y.delegate(
-                        "mousedown",
-                        this._onSubmenuMousedown,
-                        this._menu.get("boundingBox"),
-                        'a.yui3-menuitem-content',
+                        'em.yui3-menuitem-content, a.yui3-menuitem-content',
                         this
                     );
                 },
@@ -452,8 +455,48 @@ YUI.add(
                     // Y.log('window::_initDashboard');
                     var center = layout.getUnitByPosition(unit);
                     var dash_div = this._initContainerDiv('manage_dashboard', unit);
-                    this._dash = new Y.IC.ManageDashboard();
+                    this._dash = new Y.IC.ManageDashboard(
+                        {
+                            prefix: '_da'
+                        }
+                    );
                     this._dash.render(dash_div);
+                },
+
+                _createDataTableContainer: function () {
+                    var top = this._layouts['center'].getUnitByPosition("top");
+                    var dt_div = this._initContainerDiv('manage_datatable', top);
+                    this._dt_container = new Y.IC.ManageContainer(
+                        {
+                            render_to: dt_div,
+                            prefix: '_dt',
+                            layout: this._layouts['center'],
+                            layout_unit: top
+                        }
+                    );
+
+                    // capture clicks on the "detail" link of the option column
+                    Y.delegate(
+                        "click",
+                        this._onDetailClick,
+                        this._dt_container.get('contentBox'),
+                        'a.manage_function_link',
+                        this
+                    );
+                },
+
+                _createDetailViewContainer: function () {
+                    var center = this._layouts['center'].getUnitByPosition("center");
+                    var dv_div = this._initContainerDiv('manage_detail', center);
+                    // no detail view container
+                    this._dv_container = new Y.IC.ManageContainer(
+                        {
+                            render_to: dv_div,
+                            prefix: '_dv',
+                            layout: this._layouts['center'],
+                            layout_unit: center
+                        }
+                    );
                 },
 
                 _executeSubmenuCallback: function () {
@@ -464,14 +507,21 @@ YUI.add(
                 },
 
                 _onSubmenuMousedown: function (e) {
-                    // Y.log('window::_onSubmenuMousedown');
+                    Y.log('window::_onSubmenuMousedown');
 
                     // hide the submenu after a selection -- there
                     // seems to be a selection bug in here - should
                     // also clear the selection...
-                    menu_nav_node = this._menu.get("boundingBox")
+                    menu_nav_node = this._menu.get("boundingBox");
+                    Y.log(menu_nav_node);
                     var menuNav = menu_nav_node.menuNav;
                     menuNav._hideAllSubmenus(menu_nav_node);
+
+                    // clear the selection
+                    Y.later(1000, this, function () {
+                        var sel = window.getSelection();
+                        sel.removeAllRanges();
+                    });
 
                     if (this.get('state.lc') !== 'dtmax') {
                         // save a callback because the layout needs to be built/rendered first
@@ -488,20 +538,9 @@ YUI.add(
 
                 _doSubmenuRequest: function (e) {
                     // Y.log('window::_doSubmenuRequest');
-                    var center = this._layouts['outer'].getUnitByPosition("center").get("wrap");
-                    var top = this._layouts['center'].getUnitByPosition("top");
-
                     // if there's no datatable container, create one
                     if (!this._dt_container) {
-                        var dt_div = this._initContainerDiv('manage_datatable', top);
-                        this._dt_container = new Y.IC.ManageContainer(
-                            {
-                                render_to: dt_div,
-                                prefix: '_dt',
-                                layout: this._layouts['center'],
-                                layout_unit: top
-                            }
-                        );
+                        this._createDataTableContainer();
                     }
                     // otherwise, reset the width/height
                     else {
@@ -514,15 +553,6 @@ YUI.add(
 
                     // load the Widget into the Data Table container
                     Y.bind(this._dt_container.loadWidget, this._dt_container)(e);
-
-                    // capture clicks on the "detail" link of the option column
-                    Y.delegate(
-                        "click",
-                        this._onDetailClick,
-                        center,
-                        'a.manage_function_link',
-                        this
-                    );
                 },
 
                 /*
@@ -555,24 +585,21 @@ YUI.add(
                     return div;
                 },
 
+                // should this be moved into the list module?
                 _fitDatatableToUnit: function () {
+                    // Y.log('window::_fitDatatableToUnit');
                     var unit = this._layouts['center'].getUnitByPosition("top");
                     var widget = this._dt_container.get('current');
                     if (widget._data_table) {
-                        var dt_body = Y.one(widget._data_table.getBdContainerEl());
-                        var dt_table = Y.one(widget._data_table.getBdTableEl());
-                        var region = dt_table.get('region')
-                        var width = region.width;
-                        var unit_height = Y.one(unit.get("wrap")).get('region').height;
-                        var table_height = region.height;
-                        var height = table_height;
-                        var adj_height = unit_height - 80; // magic number = header + paginator
-                        if (table_height >= adj_height) {
-                            height = adj_height;
-                            width += 16; // adjust for scrollbars
+                        widget._data_table.validateColumnWidths();
+                        var dt_node = widget.get('contentBox').one('div.yui-dt-scrollable');
+                        var dt_height = dt_node.get('region').height;
+                        var unit_body = Y.one(unit.get('wrap')).one('div.yui-layout-bd');
+                        var unit_height = unit_body.get('region').height;
+                        var magic = 50; // table header + paginator height?
+                        if (dt_height > unit_height) {
+                            widget._data_table.set('height', (unit_height - magic) + 'px');
                         }
-                        dt_body.setStyle('width', width + 'px');
-                        dt_body.setStyle('height', height + 'px');
                         widget._data_table.scrollTo(widget._data_table.getLastSelectedRecord());
                     }
                 },
@@ -591,7 +618,6 @@ YUI.add(
                 _doDetailRequest: function (e) {
                     // Y.log('window::_doDetailRequest');
                     var top = this._layouts['center'].getUnitByPosition("top");
-                    var center = this._layouts['center'].getUnitByPosition("center");
 
                     // shrink the top unit and show only 3 rows in the datatable, 
                     //  making room for the detail view without closing the datatable
@@ -608,33 +634,14 @@ YUI.add(
 
                     // if there's no detail view container, create one
                     if (!this._dv_container) {
-                        var dv_div = this._initContainerDiv('manage_detail', center);
-                        // no detail view container
-                        this._dv_container = new Y.IC.ManageContainer(
-                            {
-                                render_to: dv_div,
-                                prefix: '_dv',
-                                layout: this._layouts['center'],
-                                layout_unit: center
-                            }
-                        );
+                        this._createDetailViewContainer();
                     }
                     else {
-                        Y.log('detail view container already exists');
+                        // Y.log('detail view container already exists');
                     }
 
                     // load the Widget into the Detail View container
                     Y.bind(this._dv_container.loadWidget, this._dv_container)(e);
-
-                    // capture clicks on the tabs of the detail view
-                    /*
-                    Y.delegate(
-                        "click",
-                        onTabPanelClick,
-                        center,
-                        'div.yui3-tab-panel'
-                    );
-                    */
                 },
 
                 /*
@@ -644,7 +651,7 @@ YUI.add(
                  * reference to their dom nodes.
                  */
                 _saveMyContainers: function () {
-                    Y.log('window::_saveMyContainers');
+                    // Y.log('window::_saveMyContainers');
                     // save our containers, and add any that are missing
                     var app_container = Y.one('#ic-manage-app-container');
                     var createOrSaveContainer = function (id, cache) {
@@ -679,7 +686,7 @@ YUI.add(
                  * layout.
                  */
                 _destroyExtraLayoutElements: function (key) {
-                    Y.log('window::_destroyExtraLayoutElements');
+                    // Y.log('window::_destroyExtraLayoutElements');
                     // destroy any lingering elements from an existing layout
                     if (this._layouts[key]) {
                         Y.each(this._layouts[key]._units, function (v, k, obj) {
