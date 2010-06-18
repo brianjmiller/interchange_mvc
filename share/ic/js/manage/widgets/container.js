@@ -143,17 +143,16 @@ YUI.add(
 
                 _doLoadWidget: function (config) {
                     // Y.log("container::_doLoadWidget");
-                    // Y.log("loadWidget this: " + this);
-                    // Y.log("loadWidget kind: " + config.kind);
-                    // Y.log("loadWidget sub_kind: " + config.sub_kind);
-                    // Y.log("loadWidget args: " + config.args);
+                    // Y.log("kind: " + config.kind + 
+                    //       " sub_kind: " + config.sub_kind +
+                    //       " args: " + config.args);
 
                     this.set('previous', this.get('current'));
                     var new_widget = null;
 
                     if (config.kind === "function") {
                         if (! this._cache[config.args]) {
-                            Y.log("instantiating function: " + config.args + "...");
+                            // Y.log("instantiating function: " + config.args + "...");
                             var splits     = config.args.split("-", 2);
                             var code       = splits[0];
                             // Y.log("code: " + code);
@@ -161,11 +160,11 @@ YUI.add(
                                 this._cache[config.args] = new Y.IC.ManageFunctionExpandableList(
                                     {
                                         code: code,
-                                        expandable: false
+                                        expandable: false,
+                                        prefix: '_ls'
                                     }
                                 );
                                 this._cache[config.args].render( this.get("contentBox") );
-                                this._cache[config.args].hide();
                             }
                             else if (config.sub_kind === "detail") {
                                 var addtl_args = splits[1] + "";
@@ -173,11 +172,11 @@ YUI.add(
                                 this._cache[config.args] = new Y.IC.ManageFunctionDetail(
                                     {
                                         code: code,
-                                        addtl_args: addtl_args
+                                        addtl_args: addtl_args,
+                                        prefix: '_dx'
                                     }
                                 );
                                 this._cache[config.args].render( this.get("contentBox") );
-                                this._cache[config.args].hide();
                             }
                             else {
                             }
@@ -185,12 +184,12 @@ YUI.add(
                         new_widget = this._cache[config.args];
                     }
                     else if (config.kind === "empty") {
-                        Y.log('container::_doLoadWidget - Unloading -- EMPTY');
+                        // Y.log('container::_doLoadWidget - Unloading -- EMPTY');
                         this._cache["empty"] = null;
                         new_widget = null;
                     }
                     else {
-                        Y.log("Load widget called with undefined/unrecognized kind.  Doing nothing.  kind: " + config.kind);
+                        // Y.log("Load widget called with undefined/unrecognized kind.  Doing nothing.  kind: " + config.kind);
                         return;
                     }
 

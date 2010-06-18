@@ -25,6 +25,9 @@ YUI.add(
         };
 
         HistoryManager.ATTRS = {
+            visible: {
+                value: true
+            },
             prefix: {        // a prefix for history state variables 
                 value: null  //  to distinguish this object from its siblings
             },
@@ -34,14 +37,23 @@ YUI.add(
                     var old_state = this.get('state'); //Y.HistoryLite.get();
                     var sp = this.STATE_PROPERTIES;
 
-                    // we wipe out all the prior state properties to start fresh
+                    /* // useful debug for a specific object
+                    if (this.get('prefix') === '_ls') {
+                        Y.log('sp -> old_state -> new_state :: prefix = ' + this.get('prefix'));
+                        Y.log(sp);
+                        Y.log(Y.merge(old_state));
+                        Y.log(Y.merge(new_state));
+                    }
+                    */
+
+                    // wipe out all the prior state properties to start fresh
                     Y.each(old_state, function (v, k, obj) {
                         if (sp[k]) {
                             obj[k] = null;
                         }
                     });
 
-                    // we only allow our STATE_PROPERTIES, no others
+                    // only allow our STATE_PROPERTIES, no others
                     Y.each(new_state, function (v, k, obj) {
                         if (!sp[k]) {
                             delete obj[k];
@@ -55,7 +67,35 @@ YUI.add(
         };
 
         HistoryManager.prototype = {
+
             STATE_PROPERTIES: {},
+            _on_history_change: null,
+
+            hide: function () {
+                // Y.log('widget::hide - prefix: ' + this.get('prefix'));
+                var sp = this.STATE_PROPERTIES;
+                var keys = Y.Object.keys(this._addMyHistoryPrefix(sp));
+                this.clearHistoryOf(keys);
+                if (this._on_history_change) {
+                    this._on_history_change.detach();
+                    this._on_history_change = null;
+                }
+                return this.set('visible', false);
+            },
+
+            show: function () {
+                // Y.log('widget::show - prefix: ' + this.get('prefix'));
+                if (!this._on_history_change) {
+                    this._on_history_change = Y.on(
+                        'history-lite:change', 
+                        Y.bind(this._onHistoryChange, this)
+                    );
+                }
+                var state = this.get('state');
+                var new_hist = this._addMyHistoryPrefix(state);
+                Y.HistoryLite.add(new_hist);
+                return this.set('visible', true);
+            },
 
             isEmpty: function (obj) {
                 for(var i in obj) { 
@@ -100,6 +140,10 @@ YUI.add(
                 return true;
             },
 
+            /*
+             * Gets the history, and returns an object with only the
+             * STATE_PROPERTIES that are set in history data.
+             */
             getRelaventHistory: function () {
                 var sp = this.STATE_PROPERTIES;
                 var prefix = this.get('prefix');
@@ -121,6 +165,20 @@ YUI.add(
                 }
                 var rh = this.getRelaventHistory();
                 return this.areEqualObjects(state, rh);
+            },
+
+            clearHistoryOf: function (keys) {
+                // Y.log('history_manager::clearHistoryOf - prefix: ' + this.get('prefix'));
+                if (typeof keys === 'string') {
+                    keys = [keys];
+                }
+                var saved_state = Y.merge(this.get('state'));
+                var clear = {};
+                Y.each(keys, function (v, i, ary) {
+                    clear[v] = null;
+                });
+                Y.HistoryLite.add(this._addMyHistoryPrefix(clear));
+                this.set('state', saved_state);
             },
 
             _addMyHistoryPrefix: function (o) {
@@ -158,11 +216,13 @@ YUI.add(
             },
 
             _onHistoryChange: function (e) {
-                // Y.log('_onHistoryChange');
+                // Y.log('history_manager::_onHistoryChange - prefix: ' + this.get('prefix'));
                 if ( ! this.stateMatchesHistory() ) {
-                    // Y.log('_onHistoryChange - state does not match history ... state -> history');
-                    // Y.log(this.get('state'));
-                    // Y.log(this.getRelaventHistory());
+                    /*
+                    Y.log('_onHistoryChange - state does not match history ... state -> history');
+                    Y.log(this.get('state'));
+                    Y.log(this.getRelaventHistory());
+                    */
                     this.set('state', this.getRelaventHistory());
                 }
             }

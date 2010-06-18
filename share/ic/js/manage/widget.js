@@ -20,10 +20,12 @@ YUI.add(
     function(Y) {
 
         var ManageWidget = Y.Base.create (
-            "ic_manage_widget",     // module identifier  
-            Y.Widget,               // what to extend     
-            [Y.IC.HistoryManager],  // classes to mix in  
-            {}                      // overrides/additions
+            "ic_manage_widget",       // module identifier  
+            Y.Widget,                 // what to extend     
+            [                         // classes to mix in  
+                Y.IC.HistoryManager
+            ],
+            {}                        // overrides/additions
         );
 
         Y.namespace("IC");
