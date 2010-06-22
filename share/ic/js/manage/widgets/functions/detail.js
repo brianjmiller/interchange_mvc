@@ -89,11 +89,238 @@ YUI.add(
             ManageFunctionDetail,
             Y.IC.ManageFunction,
             {
+                /*
+                 * For an Order, this is the structure: (treeview only for +1 objects)
+                 *  _______   _____   _______   ________   _____
+                 * |Details| |Goods| |History| |Payments| |Notes|
+                 *  |         |       |         |          |
+                 *  v         |       |         |          |
+                 * Log        |       |         |          |
+                 *            v       |         |          |
+                 *(treeview) Line+[Inv|ntory Map|, Line, Li|e, ...
+                 *                    |         |          |
+                 *                    v         |          |
+                 *        (treeview) Revision, R|vision, Re|ision, ...
+                 *                     |        |          |
+                 *                     v        |          |
+                 *         (treeview) Line+[Elem|nt+[Parcel|ap]], Line, Line, ...
+                 *                              |          |
+                 *                              v          |
+                 *                  (treeview) Transaction+|Allocation], Transaction, Transaction, ...
+                 *                               |         |
+                 *                               v         |
+                 *                   (treeview) Line, Line,|Line...
+                 *                                         |
+                 *                                         v
+                 *                             (treeview) Note, Note, Note
+                 *
+                 */
+                _dummy_data: {
+                    object_name: "Order",
+                    pk_settings: [
+                        {
+                            "value": 6,
+                            "field": "id"
+                        }
+                    ],
+                    tabs: [
+                        {
+                            order: 0,
+                            label: 'Details',
+                            src: '/manage/function/Orders_orderDetailView/0?_mode=config&_format=json&_pk_id=6'
+                        },
+                        {
+                            order: 1,
+                            label: 'Goods',
+                            related: [
+                                {
+                                    order: 0,
+                                    label: 'Line',
+                                    src: '/manage/function/Variants_variantDetailView/0?_mode=config&_format=json&_pk_id=1',
+                                    related: [
+                                        {
+                                            order: 0,
+                                            label: 'Inventory Map',
+                                            content: {
+                                                Description: 10,
+                                                Status: 'Pending Return',
+                                                Location: '',
+                                                Condition: 'New',
+                                                'Send Revision Element #': 2,
+                                                Status: 'Shipped',
+                                                'Receive Revision Element #': 14,
+                                                Status: 'Pending Return'
+                                            },
+                                            related: [
+                                                {
+                                                    order: 0,
+                                                    label: 'Inventory Record',
+                                                    src: '/manage/function/Inventories_recordDetailView/0?_mode=config&_format=json&_pk_id=13'
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            order: 1,
+                                            label: 'Inventory Map',
+                                            content: {
+                                                Description: 22,
+                                                Status: 'Dynamic Sold',
+                                                Location: '',
+                                                Condition: 'New',
+                                                'Send Revision Element #': 15,
+                                                Status: 'Dynamic Sold'
+                                            },
+                                            related: [
+                                                {
+                                                    order: 0,
+                                                    label: 'Inventory Record',
+                                                    src: '/manage/function/Inventories_recordDetailView/0?_mode=config&_format=json&_pk_id=26'
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            order: 2,
+                            object_name: "History",
+                            label: 'History',
+                            related: [
+                                {
+                                    order: 0,
+                                    label: 'Revision',
+                                    src: '/manage/function/Orders__Revisions_revisionDetailView/0?_mode=config&_format=json&_pk_id=2',
+                                    related: [
+                                        {
+                                            order: 0,
+                                            label: 'Line',
+                                            src: '/manage/function/Orders__Revisions__Lines_lineDetailView/0?_mode=config&_format=json&_pk_id=2',
+                                            related: [
+                                                {
+                                                    order: 0,
+                                                    label: 'Element',
+                                                    content: {
+                                                        Description: 2,
+                                                        Variant: 'Test Variant 1 (TEST01-SIL)',
+                                                        Kind: 'Send',
+                                                        Status: 'Shipped',
+                                                        Price: 78.24,
+                                                        'Declared VAT': 10.21,
+                                                        Balance: 0.00,
+                                                        'Pending Balance': 0.00
+                                                    },
+                                                    related: [
+                                                        {
+                                                            order: 0,
+                                                            label: 'Parcel',
+                                                            src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=6'
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    order: 1,
+                                    label: 'Revision',
+                                    src: '/manage/function/Orders__Revisions_revisionDetailView/0?_mode=config&_format=json&_pk_id=8',
+                                    related: [
+                                        {
+                                            order: 0,
+                                            label: 'Line',
+                                            src: '/manage/function/Orders__Revisions__Lines_lineDetailView/0?_mode=config&_format=json&_pk_id=14',
+                                            related: [
+                                                {
+                                                    order: 0,
+                                                    label: 'Element',
+                                                    content: {
+                                                        Description: 14,
+                                                        Variant: 'Test Variant 1 (TEST01-SIL)',
+                                                        Kind: 'Receive',
+                                                        Status: 'Pending Return',
+                                                        Price: -78.24,
+                                                        'Declared VAT': -10.21,
+                                                        Balance: -78.24,
+                                                        'Pending Balance': -78.24,
+                                                        Options: '[ Add Adjustment ]'
+                                                    },
+                                                    related: [
+                                                        {
+                                                            order: 0,
+                                                            label: 'Parcel',
+                                                            src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=18'
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    order: 1,
+                                                    label: 'Element',
+                                                    content: {
+                                                        Description: 15,
+                                                        Variant: 'Test Variant 1 (TEST01-SIL)',
+                                                        Kind: 'Send',
+                                                        Status: 'Dynamic Sold',
+                                                        Price: 78.24,
+                                                        'Declared VAT': 11.65,
+                                                        Balance: 78.24,
+                                                        'Pending Balance': 78.24,
+                                                        Options: '[ Add Adjustment ]'
+                                                    },
+                                                    related: [
+                                                        {
+                                                            order: 1,
+                                                            label: 'Parcel',
+                                                            src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=18'
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            order: 3,
+                            label: 'Payments',
+                            related: [
+                                {
+                                    order: 0,
+                                    label: 'Transaction',
+                                    src: '/manage/function/Transactions_txnDetailView/0?_mode=config&_format=json&_pk_id=122',
+                                    content: {
+                                        Description: 5,
+                                        '# of Requests': 1
+                                    },
+                                    related: [
+                                        {
+                                            order: 0,
+                                            label: 'Line',
+                                            src: '/manage/function/TransactionAllocations__Lines_talDetailView/0?_mode=config&_format=json&_pk_id=1'
+                                        },
+                                        {
+                                            order: 1,
+                                            label: 'Line',
+                                            src: '/manage/function/TransactionAllocations__Lines_talDetailView/0?_mode=config&_format=json&_pk_id=2'
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            order: 4,
+                            label: 'Notes',
+                            content: 'No notes recorded for this order yet.'
+                        }
+                    ]
+                },
+
+
                 _tabs: null,
 
                 bindUI: function () {
-                    // why doesn't this work?
-                    // Y.on('tabView:render', Y.bind(this.onTabviewRender, this));
                     this.on('visibleChange', Y.bind(this._onVisibleChange, this));
                 },
 
@@ -106,96 +333,128 @@ YUI.add(
                  * tab is selected.
                  */
                 _buildUI: function () {
-                    // Y.log('detail::_buildUI');
-                    // first i should build th tabs, with empty panels
-                    // then on render, set the tab panel contents.
-                    // so how to i get the tab configuration?
-                    
-                    // also, set up 
-                    // Y.after.('selectionChange', Y.bind(this._afterSelectionChange, this)) 
-                    // to update state/history
+                    Y.log('detail::_buildUI');
 
-                    // and fix the tabView:render event
-
-                    var row = null,
-                        action_log_tab_index = null,
-                        action_log_tab_content = ""
-                    ;
-
-                    var contentBox = this._content_node;
-                    var data = this._meta_data;
-
-                    contentBox.setContent('<div style="text-align: left; font-size: 110%;">' + data.object_name + '</div>');
-
-                    var tab_config_children = [
-                        {
-                            label: "Details",
-                        }
-                    ];
-
-                    tab_config_children[0].content = data.pk_settings[0].field + ": " + data.pk_settings[0].value;
-
-                    if (Y.Lang.isValue(data.other_settings)) {
-                        tab_config_children[0].content += "<br /><br />";
-                        for (i = 0; i < data.other_settings.length; i += 1) {
-                            row = data.other_settings[i];
-
-                            tab_config_children[0].content += row.field + ": " + row.value + "<br />";
-                        }
-                    }
-
-                    if (Y.Lang.isValue(data.action_log)) {
-                        action_log_tab_index = tab_config_children.push(
-                            {
-                                label: "Log"
-                            }
-                        );
-
-                        action_log_tab_content += '<div style="text-align: left; font-size: 130%; font-weight: bold;">Log</div>';
-                        action_log_tab_content += '<table>';
-                        for (i = 0; i < data.action_log.length; i += 1) {
-                            row = data.action_log[i];
-
-                            action_log_tab_content += '<tr>'
-                            action_log_tab_content += '<td>' + row.label + '</td>';
-                            action_log_tab_content += '<td>';
-                            if (row.details.length > 0) {
-                                for (j = 0; j < row.details.length; j += 1) {
-                                    action_log_tab_content += row.details[j] + "<br />";
-                                }
-                            }
-                            action_log_tab_content += '</td>';
-                            action_log_tab_content += '<td>' + row.date_created + '</td>';
-                            action_log_tab_content += '<td>' + row.content + '</td>';
-                            action_log_tab_content += '</tr>'
-                        }
-                        action_log_tab_content += '<table>';
-
-                        tab_config_children[action_log_tab_index - 1].content = action_log_tab_content;
-                    }
-
-                    // do the form tab
-                    var form_tab_index = tab_config_children.push(
-                        {
-                            label: "Edit"
-                        }
-                    );
-
+                    // the meta_data is already available, so build the outer tabs from it
+                    this._meta_data = this._dummy_data; // testing...
                     var prefix = this.get('prefix') + '_ot';
                     this._tabs = new Y.IC.ManageTabView(
                         {
-                            children: tab_config_children,
-                            prefix: prefix // outer tabs
+                            prefix: prefix
                         }
                     );
-
-                    this._tabs.after('render', Y.bind(this.onTabviewRender, this));
-                    this._tabs.render(contentBox);
-
+                    Y.each(this._meta_data.tabs, Y.bind(function (v, i) {
+                        // Y.log('_meta_data.tab: ' + i);
+                        if (!Y.Lang.isValue(v.src)) v['src'] = null;
+                        if (!Y.Lang.isValue(v.related)) v['related'] = null;
+                        // var content = this._buildContent(v.content);
+                        /*
+                        Y.log('v -> src -> related -> content');
+                        Y.log(v);
+                        Y.log(v.src);
+                        Y.log(v.related);
+                        Y.log(content);
+                        */
+                        this._tabs.add({
+                            label: v.label, 
+                            content: 'Loading...',
+                            index: v.order,
+                            plugins: [{
+                                fn: Y.IC.ManageTabIO,
+                                cfg: {
+                                    uri: v.src || null,
+                                    content: v.content || null,
+                                    related: v.related || null
+                                }
+                            }] 
+                        }, v.order);
+                    }, this));
+                    this._tabs.after('render', Y.bind(this._afterOuterTabsRender, this));
+                    this._tabs.after('selectionChange', Y.bind(this._onSelectOuterTab, this));
+                    this._content_node.setContent('');
+                    this._tabs.render(this._content_node);
                     this.fire('manageFunction:loaded');
                 },
 
-                onTabviewRender: function (e) {
+                _updateOuterTabPanel: function (tab_index) {
+                    Y.log('detail::_updateOuterTabPanel');
+                    Y.log('...does nothing');
+                },
+
+                _buildContent: function (data) {
+                    Y.log('detail::_buildContent');
+                    Y.log(data);
+                    if (Y.Lang.isString(data)) {
+                        return data;
+                    }
+                    else if (Y.Lang.isObject(data)) {
+                        var content = [];
+                        if (Y.Lang.isValue(data.object_name)) {
+                            content.push('<h3>' + data.object_name + '</h3>');
+                        }
+                        if (Y.Lang.isValue(data.pk_settings)) {
+                            content.push(data.pk_settings[0].field + ": " + data.pk_settings[0].value);
+                        }
+                        if (Y.Lang.isValue(data.other_settings)) {
+                            content.push("<br /><br />");
+                            for (i = 0; i < data.other_settings.length; i += 1) {
+                                row = data.other_settings[i];
+                                content.push(row.field + ": " + row.value + "<br />");
+                            }
+                        }
+                        return content.join('');
+                    }
+                    else if (Y.Lang.isUndefined(data)) {
+                        return 'empty';
+                    }
+                },
+
+                _buildActionLog: function (data, actions) {
+                    if (Y.Lang.isValue(data.action_log)) {
+                        var content = [];
+                        content.push('<div style="text-align: left; font-size: 130%; font-weight: bold;">Log</div>');
+                        content.push('<table>');
+                        for (i = 0; i < data.action_log.length; i += 1) {
+                            row = data.action_log[i];
+                            
+                            content.push('<tr>');
+                            content.push('<td>' + row.label + '</td>');
+                            content.push('<td>');
+                            if (row.details.length > 0) {
+                                for (j = 0; j < row.details.length; j += 1) {
+                                    content.push(row.details[j] + "<br />");
+                                }
+                            }
+                            content.push('</td>');
+                            content.push('<td>' + row.date_created + '</td>');
+                            content.push('<td>' + row.content + '</td>');
+                            content.push('</tr>')
+                        }
+                        content.push('<table>');
+
+                        // add a tab to the actions panel
+                        actions.add({
+                            label: 'View Log', 
+                            content: content.join(''),
+                            index: actions.length
+                        });
+                    }
+                },
+
+                _onSelectOuterTab: function (e) {
+                    Y.log('detail::_onSelectOuterTab');
+                    Y.log('panel text: ' + e.newVal.get('panelNode').get('text'));
+                    // Y.log(e.newVal.get('index'));
+                    // this._updateOuterTabPanel(e.newVal.get('index'));
+                },
+
+                _afterOuterTabsRender: function (e) {
+                    Y.log('detail::_afterOuterTabsRender');
+                    // Y.log(e.target); // tabview
+                    e.target.selectChild(Number(e.target.get('state.st')));
+                },
+
+                renderForm: function (e) {
                     // Y.log('detail::onTabviewRender');
                     // var tab = e.target._items[this._tab_indices['edit']];
                     var panel = this._tabs.getPanel('Edit');
@@ -277,7 +536,8 @@ YUI.add(
         requires: [
             "ic-manage-widget-function",
             "gallery-form",
-            "ic-manage-widget-tabview"
+            "ic-manage-widget-tabview",
+            "ic-manage-plugin-tabio"
         ]
     }
 );

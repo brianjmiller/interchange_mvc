@@ -46,6 +46,19 @@ YUI(
                             "widget"
                         ]
                     },
+                    "ic-manage-plugin-treeview": {
+                        path: "manage/plugins/treeview.js",
+                        requires: [
+                            "ic-manage-plugin-treeview-css"
+                        ]
+                    },
+                    "ic-manage-plugin-tabio": {
+                        path: "manage/plugins/tab_io.js",
+                        requires: [
+                            "gallery-widget-io",
+                            "ic-manage-plugin-treeview"
+                        ]
+                    },
                     "ic-manage-widget-tabview": {
                         path: "manage/widgets/tabview.js",
                         requires: [
@@ -96,7 +109,8 @@ YUI(
                             "ic-manage-widget-function-detail-css",
                             "ic-manage-widget-function",
                             "gallery-form",
-                            "ic-manage-widget-tabview"
+                            "ic-manage-widget-tabview",
+                            "ic-manage-plugin-tabio"
                         ]
                     },
                     "ic-manage-widget-container": {
@@ -163,6 +177,10 @@ YUI(
                     },
                     "ic-manage-widget-menu-css": {
                         path: "manage/widgets/menu.css",
+                        type: "css"
+                    },
+                    "ic-manage-plugin-treeview-css": {
+                        path: "manage/plugins/treeview.css",
                         type: "css"
                     },
                     "ic-manage-window-css": {

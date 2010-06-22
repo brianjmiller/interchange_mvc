@@ -27,7 +27,7 @@ YUI.add(
                     'st': 1  // selected-tab, stores tab index
                 },
 
-                _tabs: {},
+                _tab_refs: {},
 
                 initializer: function (config) {
                     ManageTabView.superclass.initializer.apply(this, arguments);
@@ -53,36 +53,36 @@ YUI.add(
                 },
 
                 destructor: function () {
-                    this._tabs = null;
+                    this._tab_refs = null;
                     ManageTabView.superclass.destructor.apply(this, arguments);
                 },
 
                 getTabByLabel: function (label) {
-                    // Y.log('tabview::getTabByLabel');
+                    Y.log('tabview::getTabByLabel');
                     var tab = null;
-                    Y.each(this._tabs, function (v, k, obj) {
+                    Y.each(this._tab_refs, function (v, k, obj) {
                         if (v.label === label) tab = v.tab;
                     });
                     return tab;
                 },
 
                 getPanelByLabel: function (label) {
-                    // Y.log('tabview::getPanelByLabel');
+                    Y.log('tabview::getPanelByLabel');
                     var tab = this.getTabByLabel(label);
                     if (tab) return tab.get('panelNode');
                 },
 
                 getTabByIndex: function (index) {
-                    // Y.log('tabview::getTabByIndex');
+                    Y.log('tabview::getTabByIndex');
                     var tab = null;
-                    Y.each(this._tabs, function (v, k, obj) {
+                    Y.each(this._tab_refs, function (v, k, obj) {
                         if (v.index === index) tab = v.tab;
                     });
                     return tab;
                 },
 
                 getPanelByIndex: function (index) {
-                    // Y.log('tabview::getPanelByIndex');
+                    Y.log('tabview::getPanelByIndex');
                     var tab = this.getTabByIndex(index);
                     if (tab) {
                         return tab.get('panelNode');
@@ -90,10 +90,10 @@ YUI.add(
                 },
 
                 selectTabByLabel: function (label) {
-                    // Y.log('tabview::selectTabByLabel');
+                    Y.log('tabview::selectTabByLabel');
                     if (this.get('selection')) {
                         if (this.get('selection').get('label') !== label) {
-                            Y.each(this._tabs, function (v, k, obj) {
+                            Y.each(this._tab_refs, function (v, k, obj) {
                                 if (v.label === label) this.selectChild(v.index);
                             });
                         }
@@ -101,7 +101,7 @@ YUI.add(
                 },
 
                 selectTabByIndex: function (index) {
-                    // Y.log('tabview::selectTabByIndex - index: ' + index);
+                    Y.log('tabview::selectTabByIndex - index: ' + index);
                     if (this.get('selection')) {
                         index = Number(index);
                         if (this.get('selection').get('index') !== index) {
@@ -111,11 +111,11 @@ YUI.add(
                 },
 
                 getTab: function (key) {
-                    // Y.log('tabview::getTab');
-                    if (typeof key === 'string') {
+                    Y.log('tabview::getTab');
+                    if (Y.Lang.isString(key)) {
                         return this.getTabByLabel(key);
                     }
-                    else if (typeof ley === 'number') {
+                    else if (Y.Lang.isNumber(key)) {
                         return this.getTabByIndex(key);
                     }
                     else {
@@ -124,11 +124,11 @@ YUI.add(
                 },
 
                 getPanel: function (key) {
-                    // Y.log('tabview::getPanel');
-                    if (typeof key === 'string') {
+                    Y.log('tabview::getPanel');
+                    if (Y.Lang.isString(key)) {
                         return this.getPanelByLabel(key);
                     }
-                    else if (typeof ley === 'number') {
+                    else if (Y.Lang.isNumber(key)) {
                         return this.getPanelByIndex(key);
                     }
                     else {
@@ -137,11 +137,11 @@ YUI.add(
                 },
 
                 selectTab: function (key) {
-                    // Y.log('tabview::selectTab');
-                    if (typeof key === 'string') {
+                    Y.log('tabview::selectTab');
+                    if (Y.Lang.isString(key)) {
                         return this.selectTabByLabel(key);
                     }
-                    else if (typeof ley === 'number') {
+                    else if (Y.Lang.isNumber(key)) {
                         return this.selectTabByIndex(key);
                     }
                     else {
@@ -150,7 +150,7 @@ YUI.add(
                 },
 
                 _setDefSelection: function(contentBox) {
-                    // Y.log('tabview::_setDefSelection');
+                    Y.log('tabview::_setDefSelection');
                     var st = this.get('state.st') || 0;
 
                     //  If no tab is selected, select by state.
@@ -169,10 +169,10 @@ YUI.add(
                 },
 
                 _afterAddChild: function (e) {
-                    // Y.log('tabview::_afterAddChild');
+                    Y.log('tabview::_afterAddChild');
                     // keep an object with references to each child
                     // e.child e.index e.child.get('label')
-                    this._tabs[e.index] = {
+                    this._tab_refs[e.index] = {
                         tab: e.child,
                         label: e.child.get('label'),
                         index: e.index
@@ -180,7 +180,7 @@ YUI.add(
                 },
 
                 _afterStateChange: function (e) {
-                    // Y.log('tabview::_afterStateChange - prefix: ' + this.get('prefix'));
+                    Y.log('tabview::_afterStateChange - prefix: ' + this.get('prefix'));
                     var state = this.get('state.st');
                     // Y.log('state.st: ' + state);
                     if (state) {
@@ -189,7 +189,7 @@ YUI.add(
                 },
 
                 _myAfterSelectionChange: function (e) {
-                    // Y.log('tabview::_afterSelectionChange - st: ' + e.newVal.get('index'));
+                    Y.log('tabview::_myAfterSelectionChange - st: ' + e.newVal.get('index'));
                     // only update the history if i have state
                     var state = {st: e.newVal.get('index')};
                     Y.HistoryLite.add(this._addMyHistoryPrefix(state));
