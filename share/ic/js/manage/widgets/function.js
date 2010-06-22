@@ -62,7 +62,7 @@ YUI.add(
                     // Y.log("function initializer: " + this.get("code"));
 
                     var url = "/manage/function/" + this.get("code") + "/0?_mode=config&_format=json";
-                    "/manage/function/" + this.get("code") + "/0?_mode=config&_format=json";
+
                     if (config.addtl_args) {
                         url = url + "&" + config.addtl_args;
                     }
