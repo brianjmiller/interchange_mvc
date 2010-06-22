@@ -117,8 +117,8 @@ YUI.add(
                 }
                 for (var i in allkeys) {
                     if (a.hasOwnProperty(i) != b.hasOwnProperty(i)) {
-                        if ((a.hasOwnProperty(i) && typeof(b[i]) == 'function') ||
-                            (a.hasOwnProperty(i) && typeof(b[i]) == 'function')) {
+                        if ((a.hasOwnProperty(i) && Y.Lang.isFunction(b[i])) ||
+                            (a.hasOwnProperty(i) && Y.Lang.isFunction(b[i]))) {
                             continue;
                         } else {
                             return false;
@@ -127,7 +127,7 @@ YUI.add(
                     if (typeof(a[i]) != typeof(b[i])) {
                         return false;
                     }
-                    if (typeof(a[i]) == 'object') {
+                    if (Y.Lang.isObject(a[i])) {
                         if (!this.areEqualObjects(a[i], b[i])) {
                             return false;
                         }
@@ -150,7 +150,7 @@ YUI.add(
                 var history = Y.HistoryLite.get();
                 var rh = {}; // relavent history
                 Y.each(sp, function (v, k, obj) {
-                    if (typeof history[prefix + k] !== undefined) {
+                    if (!Y.Lang.isUndefined(history[prefix + k])) {
                         rh[k] = history[prefix + k];
                     }
                 });
@@ -160,7 +160,7 @@ YUI.add(
             stateMatchesHistory: function () {
                 var state = this.get('state');
                 // first check to ensure state has been initialized
-                if (typeof(state) != 'object') {
+                if (!Y.Lang.isObject(state)) {
                     return false;
                 }
                 var rh = this.getRelaventHistory();
@@ -169,7 +169,7 @@ YUI.add(
 
             clearHistoryOf: function (keys) {
                 // Y.log('history_manager::clearHistoryOf - prefix: ' + this.get('prefix'));
-                if (typeof keys === 'string') {
+                if (Y.Lang.isString(keys)) {
                     keys = [keys];
                 }
                 var saved_state = Y.merge(this.get('state'));
