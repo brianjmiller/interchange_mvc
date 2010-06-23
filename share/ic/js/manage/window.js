@@ -172,7 +172,7 @@ YUI.add(
                                     position: "top",
                                     body: "manage_menu",
                                     header: "Main Menu",
-                                    height: 212,
+                                    height: 214,
                                     zIndex: 2,
                                     scroll: null
                                 },

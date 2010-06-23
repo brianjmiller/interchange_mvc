@@ -134,14 +134,30 @@ YUI.add(
              * @method bindUI
              */
             bindUI : function() {
-                 
-                 // add a delegated listener to expand collapsed sub trees
-                 this._delegates.push( this.get(HOST).delegate( "click" , 
-                    this._toggleCollapse , 
-                    "li." + CSS_HAS_CHILD + " span" , 
-                    this, 
-                    true)
-                 );            
+                // Y.log('treeview::bindUI');
+                /*
+                 * Because treeview is plugged in multiple times,
+                 * I need to be careful not to bind the same event
+                 * more than once.
+                 */
+                var toggles = this.get(HOST).all('span.treeview-toggle');
+                this._delegates.push(
+                    toggles.on('click', this._toggleCollapse, this)
+                );
+                toggles.removeClass('treeview-toggle');
+
+                /* this fails - see above work-around
+                // add a delegated listener to expand collapsed sub trees
+                this._delegates.push(
+                    this.get(HOST).delegate(
+                        "click",
+                        this._toggleCollapse,
+                        'span.treeview-toggle',
+                        this,
+                        true
+                    )
+                );
+                */
             },
             
             /**

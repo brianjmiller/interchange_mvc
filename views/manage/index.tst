@@ -39,8 +39,8 @@
     </div>
 </div>
 
-<div class="please-wait display-while-loading">
-  Application loading...
+<div id="application-loading">
+  Loading Site Management...
 </div>
 
 <!-- YUI Seed -->

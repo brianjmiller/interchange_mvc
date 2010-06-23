@@ -6,12 +6,18 @@
   display: none;
 }
 
-.please-wait {
+.hide {
   display: none;
 }
 
-.yui3-js-enabled .display-while-loading {
-  display: block;
+#application-loading {
+  border: 1px dashed #d7d7d7;
+  width: 400px;
+  height: 100px;
+  line-height: 100px;
+  text-align: center;
+  vertical-align: middle;
+  margin: 4em auto;
 }
 
 .allow-overflow {

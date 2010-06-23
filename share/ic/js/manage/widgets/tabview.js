@@ -32,6 +32,7 @@ YUI.add(
                 initializer: function (config) {
                     ManageTabView.superclass.initializer.apply(this, arguments);
                     this.after('addChild', Y.bind(this._afterAddChild, this));
+                    this.after('render', Y.bind(this._afterRender, this));
                     this.after('selectionChange', Y.bind(this._myAfterSelectionChange, this));
                     this.after('stateChange', Y.bind(this._afterStateChange, this));
                     if (!this._on_history_change) {
@@ -58,7 +59,7 @@ YUI.add(
                 },
 
                 getTabByLabel: function (label) {
-                    Y.log('tabview::getTabByLabel');
+                    // Y.log('tabview::getTabByLabel');
                     var tab = null;
                     Y.each(this._tab_refs, function (v, k, obj) {
                         if (v.label === label) tab = v.tab;
@@ -67,13 +68,13 @@ YUI.add(
                 },
 
                 getPanelByLabel: function (label) {
-                    Y.log('tabview::getPanelByLabel');
+                    // Y.log('tabview::getPanelByLabel');
                     var tab = this.getTabByLabel(label);
                     if (tab) return tab.get('panelNode');
                 },
 
                 getTabByIndex: function (index) {
-                    Y.log('tabview::getTabByIndex');
+                    // Y.log('tabview::getTabByIndex');
                     var tab = null;
                     Y.each(this._tab_refs, function (v, k, obj) {
                         if (v.index === index) tab = v.tab;
@@ -82,7 +83,7 @@ YUI.add(
                 },
 
                 getPanelByIndex: function (index) {
-                    Y.log('tabview::getPanelByIndex');
+                    // Y.log('tabview::getPanelByIndex');
                     var tab = this.getTabByIndex(index);
                     if (tab) {
                         return tab.get('panelNode');
@@ -90,7 +91,7 @@ YUI.add(
                 },
 
                 selectTabByLabel: function (label) {
-                    Y.log('tabview::selectTabByLabel');
+                    // Y.log('tabview::selectTabByLabel');
                     if (this.get('selection')) {
                         if (this.get('selection').get('label') !== label) {
                             Y.each(this._tab_refs, function (v, k, obj) {
@@ -101,7 +102,7 @@ YUI.add(
                 },
 
                 selectTabByIndex: function (index) {
-                    Y.log('tabview::selectTabByIndex - index: ' + index);
+                    // Y.log('tabview::selectTabByIndex - index: ' + index);
                     if (this.get('selection')) {
                         index = Number(index);
                         if (this.get('selection').get('index') !== index) {
@@ -111,7 +112,7 @@ YUI.add(
                 },
 
                 getTab: function (key) {
-                    Y.log('tabview::getTab');
+                    // Y.log('tabview::getTab');
                     if (Y.Lang.isString(key)) {
                         return this.getTabByLabel(key);
                     }
@@ -124,7 +125,7 @@ YUI.add(
                 },
 
                 getPanel: function (key) {
-                    Y.log('tabview::getPanel');
+                    // Y.log('tabview::getPanel');
                     if (Y.Lang.isString(key)) {
                         return this.getPanelByLabel(key);
                     }
@@ -137,7 +138,7 @@ YUI.add(
                 },
 
                 selectTab: function (key) {
-                    Y.log('tabview::selectTab');
+                    // Y.log('tabview::selectTab');
                     if (Y.Lang.isString(key)) {
                         return this.selectTabByLabel(key);
                     }
@@ -150,7 +151,7 @@ YUI.add(
                 },
 
                 _setDefSelection: function(contentBox) {
-                    Y.log('tabview::_setDefSelection');
+                    // Y.log('tabview::_setDefSelection');
                     var st = this.get('state.st') || 0;
 
                     //  If no tab is selected, select by state.
@@ -168,8 +169,15 @@ YUI.add(
                     }
                 },
 
+                _afterRender: function (e) {
+                    // Y.log('tabview::_afterRender');
+                    Y.each(this._tab_refs, function (v) {
+                        v.tab.mtp.initStdMod();
+                    }, this);
+                },
+
                 _afterAddChild: function (e) {
-                    Y.log('tabview::_afterAddChild');
+                    // Y.log('tabview::_afterAddChild');
                     // keep an object with references to each child
                     // e.child e.index e.child.get('label')
                     this._tab_refs[e.index] = {
@@ -180,7 +188,7 @@ YUI.add(
                 },
 
                 _afterStateChange: function (e) {
-                    Y.log('tabview::_afterStateChange - prefix: ' + this.get('prefix'));
+                    // Y.log('tabview::_afterStateChange - prefix: ' + this.get('prefix'));
                     var state = this.get('state.st');
                     // Y.log('state.st: ' + state);
                     if (state) {
@@ -189,7 +197,7 @@ YUI.add(
                 },
 
                 _myAfterSelectionChange: function (e) {
-                    Y.log('tabview::_myAfterSelectionChange - st: ' + e.newVal.get('index'));
+                    // Y.log('tabview::_myAfterSelectionChange - st: ' + e.newVal.get('index'));
                     // only update the history if i have state
                     var state = {st: e.newVal.get('index')};
                     Y.HistoryLite.add(this._addMyHistoryPrefix(state));

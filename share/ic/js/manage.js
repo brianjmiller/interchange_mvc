@@ -52,10 +52,12 @@ YUI(
                             "ic-manage-plugin-treeview-css"
                         ]
                     },
-                    "ic-manage-plugin-tabio": {
-                        path: "manage/plugins/tab_io.js",
+                    "ic-manage-plugin-tabpanel": {
+                        path: "manage/plugins/tabpanel.js",
                         requires: [
+                            "ic-manage-plugin-tabpanel-css",
                             "gallery-widget-io",
+                            "widget-stdmod",
                             "ic-manage-plugin-treeview"
                         ]
                     },
@@ -110,7 +112,7 @@ YUI(
                             "ic-manage-widget-function",
                             "gallery-form",
                             "ic-manage-widget-tabview",
-                            "ic-manage-plugin-tabio"
+                            "ic-manage-plugin-tabpanel"
                         ]
                     },
                     "ic-manage-widget-container": {
@@ -179,6 +181,10 @@ YUI(
                         path: "manage/widgets/menu.css",
                         type: "css"
                     },
+                    "ic-manage-plugin-tabpanel-css": {
+                        path: "manage/plugins/tabpanel.css",
+                        type: "css"
+                    },
                     "ic-manage-plugin-treeview-css": {
                         path: "manage/plugins/treeview.css",
                         type: "css"
@@ -237,6 +243,11 @@ YUI(
 
                 Y.log("setting up manage window");
                 var mw = new Y.IC.ManageWindow({prefix: '_mw'});
+
+                // hide our loading screen
+                Y.on('contentready', function () {
+                    Y.one('#application-loading').addClass('hide');
+                }, '#manage_menu');
             }
         );
     }

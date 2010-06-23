@@ -126,21 +126,21 @@ YUI.add(
                     tabs: [
                         {
                             order: 0,
-                            label: 'Details',
+                            label: '0 - Details',
                             src: '/manage/function/Orders_orderDetailView/0?_mode=config&_format=json&_pk_id=6'
                         },
                         {
                             order: 1,
-                            label: 'Goods',
+                            label: '1 - Goods',
                             related: [
                                 {
                                     order: 0,
-                                    label: 'Line',
+                                    label: '2 - Line',
                                     src: '/manage/function/Variants_variantDetailView/0?_mode=config&_format=json&_pk_id=1',
                                     related: [
                                         {
                                             order: 0,
-                                            label: 'Inventory Map',
+                                            label: '3 - Inventory Map',
                                             content: {
                                                 Description: 10,
                                                 Status: 'Pending Return',
@@ -154,14 +154,14 @@ YUI.add(
                                             related: [
                                                 {
                                                     order: 0,
-                                                    label: 'Inventory Record',
+                                                    label: '4 - Inventory Record',
                                                     src: '/manage/function/Inventories_recordDetailView/0?_mode=config&_format=json&_pk_id=13'
                                                 }
                                             ]
                                         },
                                         {
                                             order: 1,
-                                            label: 'Inventory Map',
+                                            label: '4 - Inventory Map',
                                             content: {
                                                 Description: 22,
                                                 Status: 'Dynamic Sold',
@@ -173,7 +173,7 @@ YUI.add(
                                             related: [
                                                 {
                                                     order: 0,
-                                                    label: 'Inventory Record',
+                                                    label: '5 - Inventory Record',
                                                     src: '/manage/function/Inventories_recordDetailView/0?_mode=config&_format=json&_pk_id=26'
                                                 }
                                             ]
@@ -185,21 +185,21 @@ YUI.add(
                         {
                             order: 2,
                             object_name: "History",
-                            label: 'History',
+                            label: '6 - History',
                             related: [
                                 {
                                     order: 0,
-                                    label: 'Revision',
+                                    label: '7 - Revision',
                                     src: '/manage/function/Orders__Revisions_revisionDetailView/0?_mode=config&_format=json&_pk_id=2',
                                     related: [
                                         {
                                             order: 0,
-                                            label: 'Line',
+                                            label: '8 - Line',
                                             src: '/manage/function/Orders__Revisions__Lines_lineDetailView/0?_mode=config&_format=json&_pk_id=2',
                                             related: [
                                                 {
                                                     order: 0,
-                                                    label: 'Element',
+                                                    label: '9 - Element',
                                                     content: {
                                                         Description: 2,
                                                         Variant: 'Test Variant 1 (TEST01-SIL)',
@@ -213,7 +213,7 @@ YUI.add(
                                                     related: [
                                                         {
                                                             order: 0,
-                                                            label: 'Parcel',
+                                                            label: '10 - Parcel',
                                                             src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=6'
                                                         }
                                                     ]
@@ -224,17 +224,17 @@ YUI.add(
                                 },
                                 {
                                     order: 1,
-                                    label: 'Revision',
+                                    label: '11 - Revision',
                                     src: '/manage/function/Orders__Revisions_revisionDetailView/0?_mode=config&_format=json&_pk_id=8',
                                     related: [
                                         {
                                             order: 0,
-                                            label: 'Line',
+                                            label: '12 - Line',
                                             src: '/manage/function/Orders__Revisions__Lines_lineDetailView/0?_mode=config&_format=json&_pk_id=14',
                                             related: [
                                                 {
                                                     order: 0,
-                                                    label: 'Element',
+                                                    label: '13 - Element',
                                                     content: {
                                                         Description: 14,
                                                         Variant: 'Test Variant 1 (TEST01-SIL)',
@@ -249,14 +249,14 @@ YUI.add(
                                                     related: [
                                                         {
                                                             order: 0,
-                                                            label: 'Parcel',
+                                                            label: '14 - Parcel',
                                                             src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=18'
                                                         }
                                                     ]
                                                 },
                                                 {
                                                     order: 1,
-                                                    label: 'Element',
+                                                    label: '15 - Element',
                                                     content: {
                                                         Description: 15,
                                                         Variant: 'Test Variant 1 (TEST01-SIL)',
@@ -271,7 +271,7 @@ YUI.add(
                                                     related: [
                                                         {
                                                             order: 1,
-                                                            label: 'Parcel',
+                                                            label: '16 - Parcel',
                                                             src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=18'
                                                         }
                                                     ]
@@ -284,11 +284,11 @@ YUI.add(
                         },
                         {
                             order: 3,
-                            label: 'Payments',
+                            label: '17 - Payments',
                             related: [
                                 {
                                     order: 0,
-                                    label: 'Transaction',
+                                    label: '18 - Transaction',
                                     src: '/manage/function/Transactions_txnDetailView/0?_mode=config&_format=json&_pk_id=122',
                                     content: {
                                         Description: 5,
@@ -297,12 +297,12 @@ YUI.add(
                                     related: [
                                         {
                                             order: 0,
-                                            label: 'Line',
+                                            label: '19 - Line',
                                             src: '/manage/function/TransactionAllocations__Lines_talDetailView/0?_mode=config&_format=json&_pk_id=1'
                                         },
                                         {
                                             order: 1,
-                                            label: 'Line',
+                                            label: '20 - Line',
                                             src: '/manage/function/TransactionAllocations__Lines_talDetailView/0?_mode=config&_format=json&_pk_id=2'
                                         }
                                     ]
@@ -311,7 +311,7 @@ YUI.add(
                         },
                         {
                             order: 4,
-                            label: 'Notes',
+                            label: '21 - Notes',
                             content: 'No notes recorded for this order yet.'
                         }
                     ]
@@ -324,16 +324,24 @@ YUI.add(
                     this.on('visibleChange', Y.bind(this._onVisibleChange, this));
                 },
 
-                /*
-                 * This should be broken up into a bunch of addTab()
-                 * method calls.  And the forms should update the
-                 * metadata, so listen for form successes and update
-                 * the metadata, then redraw the tabs.  Also, make it
-                 * state driven with eh HistoryManger - simply which
-                 * tab is selected.
-                 */
+                getHeaderText: function () {
+                    if (this._meta_data) {
+                        var pks = this._meta_data.pk_settings[0];
+                        var value = pks.value;
+                        var header = this._meta_data.object_name + ' Detail ' + value;
+                        // Y.log('detail::getHeaderText - header: ' + header);
+                        return header;
+                    }
+                    else {
+                        // Y.log('detail::getHeaderText - header is null - no meta_data');
+                        return null;
+                    }
+                },
+
                 _buildUI: function () {
                     Y.log('detail::_buildUI');
+
+                    if (! this.get('visible') ) return;
 
                     // the meta_data is already available, so build the outer tabs from it
                     this._meta_data = this._dummy_data; // testing...
@@ -347,7 +355,6 @@ YUI.add(
                         // Y.log('_meta_data.tab: ' + i);
                         if (!Y.Lang.isValue(v.src)) v['src'] = null;
                         if (!Y.Lang.isValue(v.related)) v['related'] = null;
-                        // var content = this._buildContent(v.content);
                         /*
                         Y.log('v -> src -> related -> content');
                         Y.log(v);
@@ -360,8 +367,9 @@ YUI.add(
                             content: 'Loading...',
                             index: v.order,
                             plugins: [{
-                                fn: Y.IC.ManageTabIO,
+                                fn: Y.IC.ManageTabPanel,
                                 cfg: {
+                                    label: v.label || null,
                                     uri: v.src || null,
                                     content: v.content || null,
                                     related: v.related || null
@@ -370,45 +378,17 @@ YUI.add(
                         }, v.order);
                     }, this));
                     this._tabs.after('render', Y.bind(this._afterOuterTabsRender, this));
-                    this._tabs.after('selectionChange', Y.bind(this._onSelectOuterTab, this));
                     this._content_node.setContent('');
                     this._tabs.render(this._content_node);
                     this.fire('manageFunction:loaded');
                 },
 
                 _updateOuterTabPanel: function (tab_index) {
-                    Y.log('detail::_updateOuterTabPanel');
-                    Y.log('...does nothing');
+                    // Y.log('detail::_updateOuterTabPanel');
+                    // ...does nothing
                 },
 
-                _buildContent: function (data) {
-                    Y.log('detail::_buildContent');
-                    Y.log(data);
-                    if (Y.Lang.isString(data)) {
-                        return data;
-                    }
-                    else if (Y.Lang.isObject(data)) {
-                        var content = [];
-                        if (Y.Lang.isValue(data.object_name)) {
-                            content.push('<h3>' + data.object_name + '</h3>');
-                        }
-                        if (Y.Lang.isValue(data.pk_settings)) {
-                            content.push(data.pk_settings[0].field + ": " + data.pk_settings[0].value);
-                        }
-                        if (Y.Lang.isValue(data.other_settings)) {
-                            content.push("<br /><br />");
-                            for (i = 0; i < data.other_settings.length; i += 1) {
-                                row = data.other_settings[i];
-                                content.push(row.field + ": " + row.value + "<br />");
-                            }
-                        }
-                        return content.join('');
-                    }
-                    else if (Y.Lang.isUndefined(data)) {
-                        return 'empty';
-                    }
-                },
-
+                // belongs in the ManageTab class...
                 _buildActionLog: function (data, actions) {
                     if (Y.Lang.isValue(data.action_log)) {
                         var content = [];
@@ -441,20 +421,8 @@ YUI.add(
                     }
                 },
 
-                _onSelectOuterTab: function (e) {
-                    Y.log('detail::_onSelectOuterTab');
-                    Y.log('panel text: ' + e.newVal.get('panelNode').get('text'));
-                    // Y.log(e.newVal.get('index'));
-                    // this._updateOuterTabPanel(e.newVal.get('index'));
-                },
-
-                _afterOuterTabsRender: function (e) {
-                    Y.log('detail::_afterOuterTabsRender');
-                    // Y.log(e.target); // tabview
-                    e.target.selectChild(Number(e.target.get('state.st')));
-                },
-
-                renderForm: function (e) {
+                // belongs in the ManageTab class...
+                _buildForm: function (e) {
                     // Y.log('detail::onTabviewRender');
                     // var tab = e.target._items[this._tab_indices['edit']];
                     var panel = this._tabs.getPanel('Edit');
@@ -474,7 +442,6 @@ YUI.add(
                         fields[++i] = {type : 'reset', label : 'Reset'};
                     }
 
-
                     var f = new Y.Form({
                         action : '/manage/index', // should be a nice long load...
                         method : 'post',
@@ -491,18 +458,10 @@ YUI.add(
                     f.render(panel);
                 },
 
-                getHeaderText: function () {
-                    if (this._meta_data) {
-                        var pks = this._meta_data.pk_settings[0];
-                        var value = pks.value;
-                        var header = this._meta_data.object_name + ' Detail ' + value;
-                        // Y.log('detail::getHeaderText - header: ' + header);
-                        return header;
-                    }
-                    else {
-                        // Y.log('detail::getHeaderText - header is null - no meta_data');
-                        return null;
-                    }
+                _afterOuterTabsRender: function (e) {
+                    // Y.log('detail::_afterOuterTabsRender');
+                    var tab_index = e.target.get('state.st') || 0;
+                    e.target.selectChild(Number(tab_index));
                 },
 
                 /*
@@ -537,7 +496,7 @@ YUI.add(
             "ic-manage-widget-function",
             "gallery-form",
             "ic-manage-widget-tabview",
-            "ic-manage-plugin-tabio"
+            "ic-manage-plugin-tabpanel"
         ]
     }
 );
