@@ -47,7 +47,8 @@ ul.yui3-treeviewlite li.yui3-treeviewlite-collapsed ul {
   display: none;
 }
 
-ol.yui3-treeviewlite li span,ul.yui3-treeviewlite li span {
+ol.yui3-treeviewlite li span.treeview-label,
+ul.yui3-treeviewlite li span.treeview-label {
   margin-left: -20px;
   *margin-left: -30px;
   padding-bottom: 5px;
@@ -56,17 +57,35 @@ ol.yui3-treeviewlite li span,ul.yui3-treeviewlite li span {
   width: auto;
 }
 
-ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span,
-ul.yui3-treeviewlite li.yui3-treeviewlite-haschild>span {
+ol.yui3-treeviewlite li span.treeview-action,
+ul.yui3-treeviewlite li span.treeview-action {
+  font-size: 72%;
+  color: #0000ff;
+}
+
+ol.yui3-treeviewlite li span:hover,
+ul.yui3-treeviewlite li span:hover {
+  text-decoration: underline;
+}
+
+ol.yui3-treeviewlite li span.treeview-action.first,
+ul.yui3-treeviewlite li span.treeview-action.first {
+  padding-left: 30px
+}
+
+ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-action,
+ul.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-action,
+ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-label,
+ul.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-label {
   cursor:pointer;
 }
 
-ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span,
-ul.yui3-treeviewlite li.yui3-treeviewlite-haschild>span {
+ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-label,
+ul.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-label {
   background:transparent url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/horizontal-menu-submenu-indicator.png) no-repeat scroll right 6px;
 }
 
-ol.yui3-treeviewlite li.yui3-treeviewlite-collapsed>span,
-ul.yui3-treeviewlite li.yui3-treeviewlite-collapsed>span {
+ol.yui3-treeviewlite li.yui3-treeviewlite-collapsed>span.treeview-label,
+ul.yui3-treeviewlite li.yui3-treeviewlite-collapsed>span.treeview-label {
   background:transparent url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/vertical-menu-submenu-indicator.png) no-repeat scroll right 5px;
 }

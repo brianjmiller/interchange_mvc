@@ -339,7 +339,7 @@ YUI.add(
                 },
 
                 _buildUI: function () {
-                    Y.log('detail::_buildUI');
+                    // Y.log('detail::_buildUI');
 
                     if (! this.get('visible') ) return;
 

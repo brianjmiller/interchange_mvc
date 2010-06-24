@@ -200,11 +200,18 @@ YUI.add(
                         var items = [];
                         Y.each(related_ary, function (v, i) {
                             var li_class = 'yui3-treeviewlite-dependent';
+                            var exp_col = ''; // expand | collapse
                             if (Y.Lang.isValue(v.related)) {
                                 li_class = 'yui3-treeviewlite-collapsed';
+                                exp_col ='\
+  <span class="treeview-action first treeview-expand">Expand All</span> | \
+  <span class="treeview-action treeview-collapse">Collapse All</span>';
                             }
                             items[v.order] = Y.Node.create('\
-<li class="' + li_class + '"><span class="treeview-toggle">' + v.label + '</span></li>');
+<li class="' + li_class + '">\
+  <span class="treeview-label treeview-toggle">' + v.label + '</span>\
+' + exp_col + '\
+</li>');
                             var mtp_node = Y.Node.create('\
 <div class="yui3-tab-panel yui3-tab-panel-selected yui3-widget-stdmod">Loading...</div>');
 
@@ -240,18 +247,27 @@ YUI.add(
                     }
                 },
 
-                _onOpen: function (e) {
-                    // Y.log('tabpanel::_onOpen');
-                    var div = e.details[0].target.next();
-
-                    // build an array of things that need opened
-                    var opens = [div.mtp];
-                    var dependents = div.all('li.yui3-treeviewlite-dependent');
+                _getDependentPanels: function (container) {
+                    // build an array of dependents to return
+                    var ary = [container.mtp];
+                    var dependents = container.all(
+                        'li.yui3-treeviewlite-dependent'
+                    );
                     Y.each(dependents, function (v, k) {
                         var dep_stdmod = v.one('div.yui3-widget-stdmod');
-                        opens.push(dep_stdmod.mtp);
+                        ary.push(dep_stdmod.mtp);
                     });
-                                        
+                    return ary;
+                },
+
+                _onOpen: function (e) {
+                    // Y.log('tabpanel::_onOpen  e -> div');
+                    var div = e.details[0].target.get('parentNode')
+                        .one('div.yui3-widget-stdmod');
+
+                    // build an array of things that need opened
+                    var opens = this._getDependentPanels(div);
+
                     Y.each(opens, function (v) {
                         // add any static content
                         var content = v.get('content');
@@ -270,9 +286,17 @@ YUI.add(
 
                 _onCollapse: function (e) {
                     // Y.log('tabpanel::_onCollapse');
-                    var div = e.details[0].target.next();
-                    div.mtp.set('headerContent', '');
-                    div.mtp.set('bodyContent', '');
+                    var div = e.details[0].target.get('parentNode')
+                        .one('div.yui3-widget-stdmod');
+
+                    // build an array of things that need collapses
+                    var collapses = this._getDependentPanels(div);
+
+                    Y.each(collapses, function (v) {
+                        v.set('headerContent', '');
+                        v.set('bodyContent', '');
+                    });
+
                 },
 
                 _buildEmptyContentNode: function () {

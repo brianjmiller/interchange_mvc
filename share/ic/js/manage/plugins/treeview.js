@@ -140,26 +140,55 @@ YUI.add(
                  * I need to be careful not to bind the same event
                  * more than once.
                  */
-                var toggles = this.get(HOST).all('span.treeview-toggle');
-                this._delegates.push(
-                    toggles.on('click', this._toggleCollapse, this)
+                this._bindOnce(
+                    'treeview-toggle', 'click', this._toggleCollapse
                 );
-                toggles.removeClass('treeview-toggle');
-
-                /* this fails - see above work-around
-                // add a delegated listener to expand collapsed sub trees
-                this._delegates.push(
-                    this.get(HOST).delegate(
-                        "click",
-                        this._toggleCollapse,
-                        'span.treeview-toggle',
-                        this,
-                        true
-                    )
+                this._bindOnce(
+                    'treeview-expand', 'click', this._expandTree
                 );
-                */
+                this._bindOnce(
+                    'treeview-collapse', 'click', this._collapseTree
+                );
             },
-            
+
+            _bindOnce: function (selector, action, fn) {
+                var items = this.get(HOST).all('span.' + selector);
+                this._delegates.push(
+                    items.on(action, fn, this)
+                );
+                items.removeClass(selector);
+            },
+
+            _doAction: function (ev, action, bool, selector) {
+                var parent = ev.currentTarget.get("parentNode");
+                if (parent.hasClass(CSS_COLLAPSED) == bool) { 
+                    this.fire(action, ev);
+                    if (bool) parent.removeClass(CSS_COLLAPSED);
+                    else parent.addClass(CSS_COLLAPSED);
+                }
+                var lis = parent.all(selector);
+                if (lis.size() > 0) {
+                    Y.each(lis, function (li, i) {
+                        // ducktype the event
+                        this.fire(action, {target: li.one('span')});
+                        if (bool) li.removeClass(CSS_COLLAPSED);
+                        else li.addClass(CSS_COLLAPSED);
+                    }, this);
+                }
+            },
+
+            _collapseTree: function (ev) {
+                // Y.log('treeview::_collapseTree');
+                this._doAction(ev, 'collapse', false, 
+                               'li.yui3-treeviewlite-haschild');
+            },
+
+            _expandTree: function (ev) {
+                // Y.log('treeview::_expandTree');
+                this._doAction(ev, 'open', true, 
+                               'li.yui3-treeviewlite-collapsed');
+            },
+
             /**
              * <p>Opens or collapses a nested list.</p>
              * @method _toggleCollapse
@@ -167,26 +196,27 @@ YUI.add(
              * @protected 
              */
             _toggleCollapse : function( ev ){
-                 var parent = ev.currentTarget.get( "parentNode" );
-                 if( parent.one("ol,ul") ){
-                   if( parent.hasClass( CSS_COLLAPSED ) ) { 
-                     /**
-                      * <p>Event fired when a list is opened</p>
-                      * @event open
-                      * @param {EventFacade} ev Event object
-                      */
-                     this.fire( "open" , ev );
-                   } else {
-                     /**
-                      * <p>Event fired when a list is collapsed</p>
-                      * @event collapse
-                      * @param {EventFacade} ev Event object
-                      */
-                     this.fire( "collapse" , ev );
-                   }
-                   parent.toggleClass( CSS_COLLAPSED );
-                 }
-            }
+                // Y.log('treeview::_toggleCollapse  ev -> parent');
+                var parent = ev.currentTarget.get( "parentNode" );
+                if( parent.one("ol,ul") ){
+                    if( parent.hasClass( CSS_COLLAPSED ) ) { 
+                        /**
+                         * <p>Event fired when a list is opened</p>
+                         * @event open
+                         * @param {EventFacade} ev Event object
+                         */
+                        this.fire( "open" , ev );
+                    } else {
+                        /**
+                         * <p>Event fired when a list is collapsed</p>
+                         * @event collapse
+                         * @param {EventFacade} ev Event object
+                         */
+                        this.fire( "collapse" , ev );
+                    }
+                    parent.toggleClass( CSS_COLLAPSED );
+                }
+            }            
             
         } );
         

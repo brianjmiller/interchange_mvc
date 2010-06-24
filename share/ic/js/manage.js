@@ -206,7 +206,7 @@ YUI(
         Y.on(
             "domready",
             function () {
-                Y.log("firing dom ready event");
+                // Y.log("firing dom ready event");
                 var console = new Y.Console(
                     {
                         logSource: Y.Global,
@@ -241,7 +241,7 @@ YUI(
                     console
                 );
 
-                Y.log("setting up manage window");
+                // Y.log("setting up manage window");
                 var mw = new Y.IC.ManageWindow({prefix: '_mw'});
 
                 // hide our loading screen
