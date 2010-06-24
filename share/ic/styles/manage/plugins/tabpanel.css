@@ -1,7 +1,9 @@
 div.yui3-tab-panel dl {
-  margin: 2px 0 0 0;
+  margin: 2px 0 1em 0;
   padding-left: 2px;
   border: 1px solid #d7d7d7;
+  float: left;
+  clear: left;
 }
 
 div.yui3-tab-panel dl:after {
@@ -15,14 +17,28 @@ div.yui3-tab-panel dl:after {
 
 div.yui3-tab-panel dt {
   clear: left;
-  width: 13em;
+  width: 15em;
   float: left;
+  padding-left: 0.5em;
+  border-top: 1px dotted #d7d7d7;
 }
 
 div.yui3-tab-panel dd {
   clear: right;
+  width: 15em;
   float: left;
   margin: 0 0 0 0;
+  padding-left: 0.5em;
+  border-bottom: 1px dotted #d7d7d7;
+  border-left: 1px dotted #d7d7d7;
+}
+
+div.yui3-tab-panel dd:last-child {
+  border-bottom: 0px none;
+}
+
+div.yui3-tab-panel dt:first-child {
+  border-bottom: 0px none;
 }
 
 div.yui3-tab-panel div.yui3-widget-hd,

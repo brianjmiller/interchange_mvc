@@ -460,6 +460,18 @@ YUI.add(
 
                 _afterOuterTabsRender: function (e) {
                     // Y.log('detail::_afterOuterTabsRender');
+                    // first run through each tabpanel and add nesting classes
+                    Y.each(this._tabs._tab_refs, function (v) {
+                        var uls = v.tab.get('panelNode').all('ul');
+                        if (uls.size() > 0) {
+                            Y.each(uls, function (v1, i1) {
+                                var lis = v1.get('children');
+                                // add level0, level1, level2, level0 ...
+                                lis.addClass('level' + (i1 % 3));
+                            }, this);
+                        }
+                    }, this);
+                    // then select the correct tab from our state
                     var tab_index = e.target.get('state.st') || 0;
                     e.target.selectChild(Number(tab_index));
                 },

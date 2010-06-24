@@ -4,39 +4,56 @@ ol.yui3-treeviewlite ol,
 ul.yui3-treeviewlite ol,
 ol.yui3-treeviewlite ul,
 ul.yui3-treeviewlite ul {
-  list-style-image:none;
-  list-style-position:inside;
-  list-style-type:none;
-  padding-left:12px;
-  *padding-left:0;
-  padding-top:0;
-  line-height:20px;
+  list-style-image: none;
+  list-style-position: inside;
+  list-style-type: none;
+  padding-left: 12px;
+  *padding-left: 0;
+  padding-top: 0;
+  line-height: 20px;
   margin: 0 0 0 0;
 }
 
 ol.yui3-treeviewlite li,
 ul.yui3-treeviewlite li {
-  margin:0 0 0 -10px;
-  padding-left:30px;
-  *padding-left:20px;
-  list-style-image:none;
-  list-style-position:inside;
-  list-style-type:none;
+  margin: 0 0 1em -10px;
+  padding-left: 30px;
+  *padding-left: 20px;
+  padding-right: 1em;
+  padding-bottom: 1em;
+  padding-top: 0.5em;
+  list-style-image: none;
+  list-style-position: inside;
+  list-style-type: none;
+  border: 1px solid #d7d7d7;
+}
+
+li.level0 {
+  background-color: #ffffff;
+}
+
+li.level1 {
+  background-color: #f4f4f4;
+}
+
+li.level2 {
+  background-color: #eaeaea;
 }
 
 ol.yui3-treeviewlite li.yui3-treeviewlite-collapsed ol,
 ol.yui3-treeviewlite li.yui3-treeviewlite-collapsed ul,
 ul.yui3-treeviewlite li.yui3-treeviewlite-collapsed ol,
 ul.yui3-treeviewlite li.yui3-treeviewlite-collapsed ul {
-  display:none;
+  display: none;
 }
 
 ol.yui3-treeviewlite li span,ul.yui3-treeviewlite li span {
-  margin-left:-30px;
-  *margin-left:-40px;
-  padding-bottom:5px;
-  padding-left:22px;
-  width:auto;
+  margin-left: -20px;
+  *margin-left: -30px;
+  padding-bottom: 5px;
+  padding-right: 20px;
+  font-weight: bold;
+  width: auto;
 }
 
 ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span,
@@ -44,32 +61,12 @@ ul.yui3-treeviewlite li.yui3-treeviewlite-haschild>span {
   cursor:pointer;
 }
 
-ol.yui3-treeviewlite li,
-ul.yui3-treeviewlite li {
-  background:transparent url(/ic/images/treeview-sprite.gif) no-repeat scroll 0 -5600px;
+ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span,
+ul.yui3-treeviewlite li.yui3-treeviewlite-haschild>span {
+  background:transparent url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/horizontal-menu-submenu-indicator.png) no-repeat scroll right 6px;
 }
 
-ol.yui3-treeviewlite li.yui3-treeviewlite-haschild,
-ul.yui3-treeviewlite li.yui3-treeviewlite-haschild {
-  background:transparent url(/ic/images/treeview-sprite.gif) no-repeat scroll 0 -4000px;
-}
-
-ol.yui3-treeviewlite li.yui3-treeviewlite-collapsed,
-ul.yui3-treeviewlite li.yui3-treeviewlite-collapsed {
-  background:transparent url(/ic/images/treeview-sprite.gif) no-repeat scroll 0 -6400px;
-}
-
-ol.yui3-treeviewlite li.yui3-treeviewlite-lastchild,
-ul.yui3-treeviewlite li.yui3-treeviewlite-lastchild {
-  background:transparent url(/ic/images/treeview-sprite.gif) no-repeat scroll 0 -1600px;
-}
-
-ol.yui3-treeviewlite li.yui3-treeviewlite-lastchild.yui3-treeviewlite-haschild,
-ul.yui3-treeviewlite li.yui3-treeviewlite-lastchild.yui3-treeviewlite-haschild {
-  background:transparent url(/ic/images/treeview-sprite.gif) no-repeat scroll 0 0;
-}
-
-ol.yui3-treeviewlite li.yui3-treeviewlite-lastchild.yui3-treeviewlite-haschild.yui3-treeviewlite-collapsed,
-ul.yui3-treeviewlite li.yui3-treeviewlite-lastchild.yui3-treeviewlite-haschild.yui3-treeviewlite-collapsed {
-  background:transparent url(/ic/images/treeview-sprite.gif) no-repeat scroll 0 -2400px;
+ol.yui3-treeviewlite li.yui3-treeviewlite-collapsed>span,
+ul.yui3-treeviewlite li.yui3-treeviewlite-collapsed>span {
+  background:transparent url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/vertical-menu-submenu-indicator.png) no-repeat scroll right 5px;
 }

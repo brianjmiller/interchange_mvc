@@ -175,14 +175,14 @@ YUI.add(
                     var content = ['<dl>'];
                     Y.each(data, function (v, k) {
                         if (Y.Lang.isString(v) || Y.Lang.isNumber(v)) {
-                            content.push('<dt>' + k + ': </dt><dd>' + v + '</dd>');
+                            content.push('<dt>' + k + ': </dt><dd>' + v + '&nbsp;</dd>');
                         }
                         else if (k === 'action_log') {
                             // build the action log, but don't render it here.
                         }
                         else if (Y.Lang.isArray(v) && Y.Lang.isObject(v[0]) && Y.Lang.isValue(v[0].field)) {
                             Y.each(v, function (o) {
-                                content.push('<dt>' + o.field + '</dt><dd>' + o.value + '</dd>');
+                                content.push('<dt>' + o.field + ': </dt><dd>' + o.value + '&nbsp;</dd>');
                             });
                         }
                         else if (Y.Lang.isObject(v)) {
