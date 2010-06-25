@@ -58,7 +58,15 @@ YUI(
                             "ic-manage-plugin-tabpanel-css",
                             "gallery-widget-io",
                             "widget-stdmod",
+                            "ic-manage-renderers-revisiondetails",
                             "ic-manage-plugin-treeview"
+                        ]
+                    },
+                    "ic-manage-renderers-revisiondetails": {
+                        path: "manage/renderers/revision_details.js",
+                        requires: [
+                            "ic-manage-widget-detailactions",
+                            "gallery-form"
                         ]
                     },
                     "ic-manage-widget-tabview": {
@@ -66,6 +74,12 @@ YUI(
                         requires: [
                             "tabview",
                             "ic-history-manager"
+                        ]
+                    },
+                    "ic-manage-widget-detailactions": {
+                        path: "manage/widgets/detail_actions.js",
+                        requires: [
+                            "ic-manage-widget-tabview"
                         ]
                     },
                     "ic-manage-widget-function": {
@@ -110,7 +124,6 @@ YUI(
                         requires: [
                             "ic-manage-widget-function-detail-css",
                             "ic-manage-widget-function",
-                            "gallery-form",
                             "ic-manage-widget-tabview",
                             "ic-manage-plugin-tabpanel"
                         ]

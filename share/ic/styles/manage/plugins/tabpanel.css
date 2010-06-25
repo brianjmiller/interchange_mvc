@@ -6,6 +6,8 @@ div.yui3-tab-panel dl {
   clear: left;
 }
 
+div.yui3-tab-panel:after,
+div.yui3-stdmod-bd:after,
 div.yui3-tab-panel dl:after {
   visibility: hidden;
   display: block;
@@ -45,4 +47,21 @@ div.yui3-tab-panel div.yui3-widget-hd,
 div.yui3-tab-panel div.yui3-widget-bd,
 div.yui3-tab-panel div.yui3-widget-ft {
   clear: both;
+}
+
+/* undo treeview list styling if embedding in a tree */
+ol.yui3-treeviewlite ul.yui3-tabview-list,
+ul.yui3-treeviewlite ul.yui3-tabview-list {
+  line-height: 1.231;
+  padding-left: 0;
+}
+
+ol.yui3-treeviewlite ul.yui3-tabview-list li.yui3-tab,
+ul.yui3-treeviewlite ul.yui3-tabview-list li.yui3-tab {
+  border: 0 none;
+}
+ 
+ol.yui3-treeviewlite div.yui3-tabview-panel,
+ul.yui3-treeviewlite div.yui3-tabview-panel {
+  margin-bottom: 1em;
 }

@@ -27,6 +27,189 @@ YUI.add(
             ],
             {                        // prototype overrides/additions
 
+                _dummy_details: {
+                    "renderer": {
+                        "name": "ManageRevisionDetails",
+                        "config": {}
+                    },
+                    "pk_settings": [
+                        {
+                            "value": 6,
+                            "field": "id"
+                        }
+                    ],
+                    "auto_settings": [
+                        {
+                            "value": "2009-11-30T11:01:00",
+                            "field": "date_created"
+                        },
+                        {
+                            "value": "2009-11-30T11:01:11",
+                            "field": "last_modified"
+                        },
+                        {
+                            "value": "",
+                            "field": "created_by"
+                        },
+                        {
+                            "value": "",
+                            "field": "modified_by"
+                        }
+                    ],
+                    "foreign_objects": [
+                        {
+                            "value": "web",
+                            "display": "Web",
+                            "field": "Order Kind"
+                        }
+                    ],
+                    "object_name": "Order",
+                    "action_log": [
+                        {
+                            "by_name": "",
+                            "content": "through checkout",
+                            "date_created": "2009-11-30T11:01:00",
+                            "label": "Row Created",
+                            "details": [
+                                "kind_code: web",
+                                "status_code: new"
+                            ]
+                        },
+                        {
+                            "by_name": "",
+                            "content": "",
+                            "date_created": "2009-11-30T11:01:00",
+                            "label": "Status Change",
+                            "details": [
+                                "from 'new' to '3d_auth_request_pending'"
+                            ]
+                        },
+                        {
+                            "by_name": "",
+                            "content": "",
+                            "date_created": "2009-11-30T11:01:03",
+                            "label": "Status Change",
+                            "details": [
+                                "from '3d_auth_request_pending' to '3d_auth_requested'"
+                            ]
+                        },
+                        {
+                            "by_name": "",
+                            "content": "",
+                            "date_created": "2009-11-30T11:01:10",
+                            "label": "Status Change",
+                            "details": [
+                                "from '3d_auth_requested' to '3d_auth_returned'"
+                            ]
+                        },
+                        {
+                            "by_name": "",
+                            "content": "(from 3D auth result)",
+                            "date_created": "2009-11-30T11:01:11",
+                            "label": "Status Change",
+                            "details": [
+                                "from '3d_auth_returned' to 'revision_check_pending'"
+                            ]
+                        },
+                        {
+                            "by_name": "",
+                            "content": "",
+                            "date_created": "2009-11-30T11:01:11",
+                            "label": "Status Change",
+                            "details": [
+                                "from 'revision_check_pending' to 'revision_pending'"
+                            ]
+                        }
+                    ],
+                    "other_settings": [
+                        {
+                            "value": 8,
+                            "field": "billing_address_id"
+                        },
+                        {
+                            "value": "",
+                            "field": "comments"
+                        },
+                        {
+                            "value": 8,
+                            "field": "delivery_address_id"
+                        },
+                        {
+                            "value": null,
+                            "field": "delivery_date_authoritative"
+                        },
+                        {
+                            "value": "2009-11-30",
+                            "field": "delivery_date_preferred"
+                        },
+                        {
+                            "value": "brian@endpoint.com",
+                            "field": "email"
+                        },
+                        {
+                            "value": "automated",
+                            "field": "fraud_status_code"
+                        },
+                        {
+                            "value": "24.74.61.172",
+                            "field": "ip_address"
+                        },
+                        {
+                            "value": null,
+                            "field": "logistics_service_code"
+                        },
+                        {
+                            "value": {
+                                "local_rd_secs": 39660,
+                                "local_rd_days": 733741,
+                                "rd_nanosecs": 217529000,
+                                "locale": {
+                                    "default_time_format_length": "medium",
+                                    "native_territory": "United States",
+                                    "native_language": "English",
+                                    "native_complete_name": "English United States",
+                                    "en_language": "English",
+                                    "id": "en_US",
+                                    "default_date_format_length": "medium",
+                                    "en_complete_name": "English United States",
+                                    "en_territory": "United States"
+                                },
+                                "local_c": {
+                                    "hour": 11,
+                                    "second": 0,
+                                    "month": 11,
+                                    "quarter": 4,
+                                    "day_of_year": 334,
+                                    "day_of_quarter": 61,
+                                    "minute": 1,
+                                    "day": 30,
+                                    "day_of_week": 1,
+                                    "year": 2009},
+                                "utc_rd_secs": 39660,
+                                "formatter": null,
+                                "tz": {
+                                    "name": "floating",
+                                    "offset": 0
+                                },
+                                "utc_year": 2010,
+                                "utc_rd_days": 733741,
+                                "offset_modifier": 0
+                            },
+                            "field": "order_date"
+                        },
+                        {
+                            "value": "jWCu5YZF",
+                            "field": "session"
+                        },
+                        {
+                            "value": "revision_pending",
+                            "field": "status_code"
+                        }
+                    ]
+                },
+
+                _actions: null,
+
                 initializer: function() {
                     // Y.log('tabpanel::initializer');
 
@@ -105,6 +288,9 @@ YUI.add(
                         content_node.setContent(content);
                     }
                     else if (Y.Lang.isObject(content)) {
+                        // content (the stdmod hd) should never be too complex.
+                        // - either a simple string or table.
+                        // So it gets the default renderer
                         content_node.setContent(
                             this._buildContentString(content)
                         );
@@ -123,13 +309,25 @@ YUI.add(
                     // Y.log('tabpanel::addSrc');
                     if (response) {
                         var data = this._parseJSON(response);
-                        // Y.log(data);
-                        var content_str = this._buildContentString(data);
-                        var src_node = this._buildEmptySrcNode();
-                        src_node.setContent(content_str);
-                        if (Y.Lang.isValue(response.related)) {
-                            this.addRelated(response.related, src_node);
+                        // debug with dummy data
+                        if (this.get('label') === '0 - Details' ||
+                           this.get('label') === '8 - Line') {
+                            data = this._dummy_details;
                         }
+                        var src_node = this._buildEmptySrcNode();
+                        // check to see what renderer we should use
+                        var renderer, content;
+                        if (Y.Lang.isValue(data.renderer)) 
+                            renderer = data.renderer;
+                        if (!renderer) {
+                            content = this._buildContentString(data);
+                            src_node.setContent(content);
+                        }
+                        else {
+                            renderer = new Y.IC[renderer.name](renderer.config);
+                            src_node = renderer.getContent(data, src_node);
+                        }
+
                         this.set('bodyContent', src_node);
                     }
                 },
@@ -175,14 +373,18 @@ YUI.add(
                     var content = ['<dl>'];
                     Y.each(data, function (v, k) {
                         if (Y.Lang.isString(v) || Y.Lang.isNumber(v)) {
-                            content.push('<dt>' + k + ': </dt><dd>' + v + '&nbsp;</dd>');
+                            content.push('<dt>' + k + ': </dt>' +
+                                         '<dd>' + v + '&nbsp;</dd>');
                         }
                         else if (k === 'action_log') {
-                            // build the action log, but don't render it here.
+                            // skip these for now...
                         }
-                        else if (Y.Lang.isArray(v) && Y.Lang.isObject(v[0]) && Y.Lang.isValue(v[0].field)) {
+                        else if (Y.Lang.isArray(v) && 
+                                 Y.Lang.isObject(v[0]) && 
+                                 Y.Lang.isValue(v[0].field)) {
                             Y.each(v, function (o) {
-                                content.push('<dt>' + o.field + ': </dt><dd>' + o.value + '&nbsp;</dd>');
+                                content.push('<dt>' + o.field + ': </dt>' + 
+                                             '<dd>' + o.value + '&nbsp;</dd>');
                             });
                         }
                         else if (Y.Lang.isObject(v)) {
@@ -348,9 +550,11 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
+            "ic-manage-plugin-tabpanel-css",
+            "ic-manage-renderers-revisiondetails",
             "gallery-widget-io",
             "widget-stdmod",
-            "gallery-treeviewlite"
+            "ic-manage-plugin-treeview"
         ]
     }
 );

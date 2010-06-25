@@ -317,7 +317,6 @@ YUI.add(
                     ]
                 },
 
-
                 _tabs: null,
 
                 bindUI: function () {
@@ -388,76 +387,6 @@ YUI.add(
                     // ...does nothing
                 },
 
-                // belongs in the ManageTab class...
-                _buildActionLog: function (data, actions) {
-                    if (Y.Lang.isValue(data.action_log)) {
-                        var content = [];
-                        content.push('<div style="text-align: left; font-size: 130%; font-weight: bold;">Log</div>');
-                        content.push('<table>');
-                        for (i = 0; i < data.action_log.length; i += 1) {
-                            row = data.action_log[i];
-                            
-                            content.push('<tr>');
-                            content.push('<td>' + row.label + '</td>');
-                            content.push('<td>');
-                            if (row.details.length > 0) {
-                                for (j = 0; j < row.details.length; j += 1) {
-                                    content.push(row.details[j] + "<br />");
-                                }
-                            }
-                            content.push('</td>');
-                            content.push('<td>' + row.date_created + '</td>');
-                            content.push('<td>' + row.content + '</td>');
-                            content.push('</tr>')
-                        }
-                        content.push('<table>');
-
-                        // add a tab to the actions panel
-                        actions.add({
-                            label: 'View Log', 
-                            content: content.join(''),
-                            index: actions.length
-                        });
-                    }
-                },
-
-                // belongs in the ManageTab class...
-                _buildForm: function (e) {
-                    // Y.log('detail::onTabviewRender');
-                    // var tab = e.target._items[this._tab_indices['edit']];
-                    var panel = this._tabs.getPanel('Edit');
-
-                    var fields = [];
-                    if (Y.Lang.isValue(this._meta_data.other_settings)) {
-                        var i;
-                        for (i = 0; i < this._meta_data.other_settings.length; i += 1) {
-                            row = this._meta_data.other_settings[i];
-                            fields[i] = {
-                                name: row.field, 
-                                label: row.field, 
-                                value: row.value ? row.value.toString() : ''
-                            };
-                        }
-                        fields[i] = {type : 'submit', label : 'Submit'};
-                        fields[++i] = {type : 'reset', label : 'Reset'};
-                    }
-
-                    var f = new Y.Form({
-                        action : '/manage/index', // should be a nice long load...
-                        method : 'post',
-                        fields : fields
-                    });
- 
-                    f.subscribe('success', function (args) {
-                        Y.log('Form submission successful');
-                    });
-                    f.subscribe('failure', function (args) {
-                        Y.log('Form submission failed');
-                    });
-
-                    f.render(panel);
-                },
-
                 _afterOuterTabsRender: function (e) {
                     // Y.log('detail::_afterOuterTabsRender');
                     // first run through each tabpanel and add nesting classes
@@ -506,7 +435,6 @@ YUI.add(
     {
         requires: [
             "ic-manage-widget-function",
-            "gallery-form",
             "ic-manage-widget-tabview",
             "ic-manage-plugin-tabpanel"
         ]
