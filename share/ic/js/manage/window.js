@@ -110,6 +110,15 @@ YUI.add(
                     }
                 },
 
+                _setCollapsedHeader: function (e, o) {
+                    Y.log('window::_setCollapsedHeader');
+                    Y.log(o);
+                    var unit = o.layout.getUnitByPosition(o.unit);
+                    // var wrap = Y.one(e.layout.get('wrap'));
+                    var clip = Y.one(unit._clip); // 'div.yui-layout-clip-' + e.unit);
+                    clip.append('<span class="clip-header">Click to expand ' + o.expand_what + '.</span>');
+                },
+
                 // called by _afterStateChange
                 _initOuterLayout: function (lc) {
                     // Y.log('window::_initOuterLayout');
@@ -200,6 +209,7 @@ YUI.add(
                     var center = layout.getUnitByPosition(unit).get("wrap");
                     var body = Y.one(document.body);
                     var height = 152;
+                    var resize = false;
                     switch (version) {
                     case 'dtmax':
                         height = Y.DOM.region(center).height;  // used to initially render the top
@@ -211,6 +221,7 @@ YUI.add(
                     case 'dtdv':
                     default:
                         height = 152;
+                        resize = true;
                         break;
                     }
 
@@ -227,8 +238,10 @@ YUI.add(
                                     body: "manage_datatable",
                                     header: "Records",
                                     height: height,
+                                    minHeight: 108,
                                     zIndex: 0,
                                     collapse: true,
+                                    resize: resize,
                                     animate: false,
                                     scroll: false
                                 },
@@ -356,6 +369,17 @@ YUI.add(
                     // Y.log('window::_onDTDVLayoutRender');
                     var layout = this._layouts['center'];
                     layout.removeListener('render');
+
+                    // attach some event handlers
+                    var top = layout.getUnitByPosition('top')
+                    top.subscribe('endResize', this._fitDatatableToUnit, 
+                                  null, this);
+                    top.subscribe('collapse', this._setCollapsedHeader, {
+                        layout: layout, 
+                        unit: 'top', 
+                        expand_what: 'record set'
+                    }, this);
+                    
 
                     // restore our containers
                     if (this._div_cache['manage_datatable']) {
@@ -507,13 +531,12 @@ YUI.add(
                 },
 
                 _onSubmenuMousedown: function (e) {
-                    Y.log('window::_onSubmenuMousedown');
+                    // Y.log('window::_onSubmenuMousedown');
 
                     // hide the submenu after a selection -- there
                     // seems to be a selection bug in here - should
                     // also clear the selection...
                     menu_nav_node = this._menu.get("boundingBox");
-                    Y.log(menu_nav_node);
                     var menuNav = menu_nav_node.menuNav;
                     menuNav._hideAllSubmenus(menu_nav_node);
 
@@ -596,9 +619,21 @@ YUI.add(
                         var dt_height = dt_node.get('region').height;
                         var unit_body = Y.one(unit.get('wrap')).one('div.yui-layout-bd');
                         var unit_height = unit_body.get('region').height;
-                        var magic = 50; // table header + paginator height?
+                        var magic = 54; // table header + paginator height?
                         if (dt_height > unit_height) {
                             widget._data_table.set('height', (unit_height - magic) + 'px');
+                        }
+                        else {
+                            // not as big as my unit
+                            var dt_data_height = dt_node.one('tbody.yui-dt-data').get('region').height;
+                            var dt_bd_height = dt_node.one('div.yui-dt-bd').get('region').height;
+                            Y.log('dt_data_height: ' + dt_data_height + ' dt_bd_height: ' + dt_bd_height);
+                            if (dt_data_height > dt_bd_height) {
+                                // the table  can be expanded
+                                var new_height = dt_height + (dt_data_height - dt_bd_height);
+                                if (new_height > unit_height) new_height = unit_height;
+                                widget._data_table.set('height', (new_height - magic) + 'px');
+                            }
                         }
                         widget._data_table.scrollTo(widget._data_table.getLastSelectedRecord());
                     }
@@ -696,6 +731,7 @@ YUI.add(
                                 node.remove();
                                 node.destroy(true);
                             }
+                            // also detach any event handlers...
                         });
                     }
                 },
