@@ -214,23 +214,25 @@ YUI.add(
                     // Y.log('tabpanel::initializer');
 
                     var tab = this.get('host');
-                    tab.on('selectedChange', Y.bind(this.afterSelectedChange, this));
+                    tab.on('selectedChange', Y.bind(this._afterSelectedChange, this));
+                    tab.on('ready', Y.bind(this._onReady, this));
                 },
 
                 initStdMod: function(panel) {
                     // Y.log('tabpanel::initStdMod');
-                    panel = panel ? panel : this.get('host').get('panelNode');
                     panel.setContent(''); // clean slate
+
                     /*
                     Y.log('panel -> contentBox');
                     Y.log(panel);
                     Y.log(this.get('contentBox'));
                     */
+
                     this.set('contentBox', panel);
                     this._stdModNode = panel;
-                    this.set('headerContent', 1);
-                    this.set('bodyContent', 1);
-                    this.set('footerContent', 1);  
+                    if (this.get('content')) this.set('headerContent', 1);
+                    if (this.get('uri')) this.set('bodyContent', 1);
+                    if (this.get('related')) this.set('footerContent', 1);
                     this._renderUIStdMod();
                     this._bindUIStdMod();
                     this.populateTab(this);
@@ -251,21 +253,6 @@ YUI.add(
                         }
                         if (tab.get('uri')) {
                             tab.prepareSrc();
-                        }
-                    }
-                },
-
-                afterSelectedChange: function (e) {
-                    // Y.log('tabpanel::afterSelectedChange');
-
-                    // expand the 'src' if there is no treeview
-                    if (e.newVal) {
-                        var cb = this.get('contentBox');
-                        if (cb && !cb.one('.yui3-treeviewlite')) { 
-                            // tab has been selected, and there is no treeview
-                            if (this.get('uri')) {
-                                this.refresh();
-                            }
                         }
                     }
                 },
@@ -343,6 +330,27 @@ YUI.add(
                     tree.treeviewLite.on('collapse', this._onCollapse, this);
                 },
 
+                _onReady: function (e) {
+                    // Y.log('tabpanel::_onReady');
+                    panel = this.get('host').get('panelNode');
+                    this.initStdMod(panel);
+                },
+
+                _afterSelectedChange: function (e) {
+                    // Y.log('tabpanel::_afterSelectedChange');
+
+                    // expand the 'src' if there is no treeview
+                    if (e.newVal) {
+                        var cb = this.get('contentBox');
+                        if (cb && !cb.one('.yui3-treeviewlite')) { 
+                            // tab has been selected, and there is no treeview
+                            if (this.get('uri')) {
+                                this.refresh();
+                            }
+                        }
+                    }
+                },
+
                 _defStartHandler: function (id, o) {
                     // Y.log('tabpanel::_defStartHandler');
                     this._activeIO = o;
@@ -405,17 +413,25 @@ YUI.add(
                             var exp_col = ''; // expand | collapse
                             if (Y.Lang.isValue(v.related)) {
                                 li_class = 'yui3-treeviewlite-collapsed';
-                                exp_col ='\
-  <span class="treeview-action first treeview-expand">Expand All</span> | \
-  <span class="treeview-action treeview-collapse">Collapse All</span>';
+                                exp_col = Y.IC.ManageTreeview.EXPAND_TEMPLATE +
+                                    ' | ' + 
+                                    Y.IC.ManageTreeview.COLLAPSE_TEMPLATE;
                             }
-                            items[v.order] = Y.Node.create('\
-<li class="' + li_class + '">\
-  <span class="treeview-label treeview-toggle">' + v.label + '</span>\
-' + exp_col + '\
-</li>');
-                            var mtp_node = Y.Node.create('\
-<div class="yui3-tab-panel yui3-tab-panel-selected yui3-widget-stdmod">Loading...</div>');
+                            var label = Y.Node.create(
+                                Y.IC.ManageTreeview.LABEL_NODE_TEMPLATE
+                            );
+                            label.setContent(v.label);
+                            var item = Y.Node.create(
+                                '<li class="' + li_class + '"></li>'
+                            );
+                            item.append(label).append(exp_col);
+                            if (exp_col) {
+                                item.one('span.treeview-expand')
+                                    .addClass('first');
+                            }
+                            var mtp_node = Y.Node.create(
+                                Y.IC.ManageTabPanel.MTP_NODE_TEMPLATE
+                            );
 
                             /*
                             Y.log('----------------------------');
@@ -435,7 +451,8 @@ YUI.add(
                             });
                             // the following line recursively preps every related item
                             mtp_node.mtp.initStdMod(mtp_node);
-                            items[v.order].append(mtp_node);
+                            item.append(mtp_node);
+                            items[v.order] = item;
                         }, this);
                         Y.each(items, function (v) {
                             ul.append(v);
@@ -450,10 +467,12 @@ YUI.add(
                 },
 
                 _getDependentPanels: function (container) {
+                    // Y.log('tabpanel::_getDependentPanels');
                     // build an array of dependents to return
                     var ary = [container.mtp];
+                    // NAM!!! this selector is fragile...
                     var dependents = container.all(
-                        'li.yui3-treeviewlite-dependent'
+                        '>div>div>ul>li.yui3-treeviewlite-dependent'
                     );
                     Y.each(dependents, function (v, k) {
                         var dep_stdmod = v.one('div.yui3-widget-stdmod');
@@ -462,10 +481,24 @@ YUI.add(
                     return ary;
                 },
 
+                _getTreeviewContainerForAction: function (e) {
+                    // Y.log('tabpanel::_getTreeviewContainerForAction');
+                    var target = e.details[0].target;
+                    div = target.get('parentNode')
+                        .one('div.yui3-widget-stdmod');
+
+                    if (!div) {
+                        // go up another level (must be the top level menu)
+                        div = target.get('parentNode').get('parentNode')
+                            .one('div.yui3-widget-stdmod');
+                    }
+
+                    return div;
+                },
+
                 _onOpen: function (e) {
                     // Y.log('tabpanel::_onOpen  e -> div');
-                    var div = e.details[0].target.get('parentNode')
-                        .one('div.yui3-widget-stdmod');
+                    var div = this._getTreeviewContainerForAction(e);
 
                     // build an array of things that need opened
                     var opens = this._getDependentPanels(div);
@@ -488,8 +521,7 @@ YUI.add(
 
                 _onCollapse: function (e) {
                     // Y.log('tabpanel::_onCollapse');
-                    var div = e.details[0].target.get('parentNode')
-                        .one('div.yui3-widget-stdmod');
+                    var div = this._getTreeviewContainerForAction(e);
 
                     // build an array of things that need collapses
                     var collapses = this._getDependentPanels(div);
@@ -542,7 +574,10 @@ YUI.add(
                 NS: 'mtp'
             }
         );
-        
+
+        ManageTabPanel.MTP_NODE_TEMPLATE = '\
+<div class="yui3-tab-panel yui3-tab-panel-selected yui3-widget-stdmod">Loading...</div>';
+
         Y.namespace("IC");
         Y.IC.ManageTabPanel = ManageTabPanel;
 

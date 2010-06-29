@@ -30,10 +30,19 @@ YUI.add(
             ManageDetailActions,
             Y.IC.ManageTabView,
             {
-                _afterRender: function (e) {
-                    // Y.log('tabview::_afterRender');
-                }
-
+                // maybe change the classnames?
+                //  although this already boxes the inner tabset in a
+                //  yui3-manage-widget-detailsactions-content div
+                // anything else?
+                // the idea was to render the tabs differently:
+                /*
+                 *  |-----------------------| |-------------|
+                 *  |                       | | tab tab tab |
+                 *  | tabpanel...           | |-------------|
+                 *  |  (content)            |
+                 *  |                       |
+                 *  |-----------------------|
+                 */
             }
         );
 

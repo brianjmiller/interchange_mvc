@@ -31,6 +31,10 @@ YUI.add(
 
                 initializer: function (config) {
                     ManageTabView.superclass.initializer.apply(this, arguments);
+                    this.publish('manageTabView:tabselected', {
+                        broadcast:  2,   // global notification
+                        emitFacade: true // emit a facade so we get the event target
+                    });
                     this.after('addChild', Y.bind(this._afterAddChild, this));
                     this.after('render', Y.bind(this._afterRender, this));
                     this.after('selectionChange', Y.bind(this._myAfterSelectionChange, this));
@@ -172,7 +176,7 @@ YUI.add(
                 _afterRender: function (e) {
                     // Y.log('tabview::_afterRender');
                     Y.each(this._tab_refs, function (v) {
-                        v.tab.mtp.initStdMod();
+                        v.tab.fire('ready');
                     }, this);
                 },
 
@@ -201,6 +205,7 @@ YUI.add(
                     // only update the history if i have state
                     var state = {st: e.newVal.get('index')};
                     Y.HistoryLite.add(this._addMyHistoryPrefix(state));
+                    this.fire('manageTabView:tabselected');
                 }
             }
         );

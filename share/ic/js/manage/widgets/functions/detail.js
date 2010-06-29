@@ -15,65 +15,6 @@
     along with this program. If not, see: http://www.gnu.org/licenses/ 
 */
 
-
-/*
-So what's actually going on here?
-This module should manage an outer ManageTabView, 
-and hosts a tab for (ex: order) the detail, revision 1, 2, 3..., transaction, goods, notes.
-Then each tab's panel is an ManageActionTabView - 
-a subclass of ManageTabView and contains a second level of inner tabs - 
-but the tabs just look like links and simply hide/show panels.
-Those inner panels are things like [the object], log, edit, (maybe new).
-So when we look at an object detail (clicked from a datatable for example), 
-we need metadata to set up the outer tabs.
-Each inner tab can be loaded as needed from a JSON response,
-but might as well pull it all down at once. 
-meta_data = {
-  tabs: [
-    {
-      tab_order: 0,
-      tab_label: 'Detail',
-      content: { 
-        action_log: [...],
-        auto_settings: [...],
-        other_settings: [
-          {
-            field: "delivery_date_preferred",
-            value: "2009-11-30",
-            label: "Preferred Delivery Date",
-            field_type: "date",
-            required: true
-          },
-          ... // other fields
-        ],
-        ... // other things like pk_settings
-      }
-    },
-    {
-      tab_order: 1,
-      tab_label: 'Current Revision',
-      content: { 
-        action_log: [...],
-        auto_settings: [...],
-        other_settings: [...],
-        nested: [
-          {
-            tab_order: 0,
-            tab_label: 'Line [7-13]',
-            content: { 
-              ...
-              nested: [...]
-            }
-          }
-        ]
-      }
-    },
-    ... // etc
-  ]
-}
- */
-
-
 YUI.add(
     "ic-manage-widget-function-detail",
     function(Y) {
@@ -81,6 +22,10 @@ YUI.add(
 
         ManageFunctionDetail = function (config) {
             ManageFunctionDetail.superclass.constructor.apply(this, arguments);
+            this.publish('manageFunctionDetail:tabsrendered', {
+                broadcast:  2,   // global notification
+                emitFacade: true // emit a facade so we get the event target
+            });
         };
 
         ManageFunctionDetail.NAME = "ic_manage_function_detail";
@@ -90,7 +35,7 @@ YUI.add(
             Y.IC.ManageFunction,
             {
                 /*
-                 * For an Order, this is the structure: (treeview only for +1 objects)
+                 * For an Order, this is the structure: 
                  *  _______   _____   _______   ________   _____
                  * |Details| |Goods| |History| |Payments| |Notes|
                  *  |         |       |         |          |
@@ -101,19 +46,18 @@ YUI.add(
                  *                    |         |          |
                  *                    v         |          |
                  *        (treeview) Revision, R|vision, Re|ision, ...
-                 *                     |        |          |
-                 *                     v        |          |
+                 *                       |      |          |
+                 *                       v      |          |
                  *         (treeview) Line+[Elem|nt+[Parcel|ap]], Line, Line, ...
                  *                              |          |
                  *                              v          |
                  *                  (treeview) Transaction+|Allocation], Transaction, Transaction, ...
-                 *                               |         |
-                 *                               v         |
+                 *                                 |       |
+                 *                                 v       |
                  *                   (treeview) Line, Line,|Line...
                  *                                         |
                  *                                         v
                  *                             (treeview) Note, Note, Note
-                 *
                  */
                 _dummy_data: {
                     object_name: "Order",
@@ -382,16 +326,22 @@ YUI.add(
                     this.fire('manageFunction:loaded');
                 },
 
-                _updateOuterTabPanel: function (tab_index) {
-                    // Y.log('detail::_updateOuterTabPanel');
-                    // ...does nothing
-                },
-
+                /*  Needs refactoring!
+                 *  Even though this seems more appropriately a method
+                 *  of tabview (or the tabpanel), it's here because
+                 *  really there's no reason for it to be tied to tabs
+                 *  at all.  If we have detail views without tabs, we
+                 *  may want to add these nesting css classes there as
+                 *  well.
+                 */
                 _afterOuterTabsRender: function (e) {
                     // Y.log('detail::_afterOuterTabsRender');
-                    // first run through each tabpanel and add nesting classes
+                    // run through each tabpanel
                     Y.each(this._tabs._tab_refs, function (v) {
+                        // each ul should have a treeview plugin, 
+                        //  so i could move this logic into ManageTreeview..
                         var uls = v.tab.get('panelNode').all('ul');
+                        // first add nesting classes
                         if (uls.size() > 0) {
                             Y.each(uls, function (v1, i1) {
                                 var lis = v1.get('children');
@@ -399,10 +349,67 @@ YUI.add(
                                 lis.addClass('level' + (i1 % 3));
                             }, this);
                         }
+                        // then add a toplevel menu
+                        if (uls.size() > 1) {
+                            var ul = Y.one(uls._nodes[0]);
+                            var parent = ul.get('parentNode');
+                            var lis = ul.get('children');
+                            // if there's only one li in the top ul,
+                            //  just add the 'menu' action to it                            
+                            if (lis.size() === 1) {
+                                var span = Y.one(lis._nodes[0]).one('span.first');
+                                span.removeClass('first');
+                                span.insert(
+                                    Y.IC.ManageTreeview.SHOW_MENU_TEMPLATE +
+                                        ' |&nbsp;', span
+                                );
+                                var menu_toggle = parent.one('span.treeview-menu-toggle');
+                                menu_toggle.addClass('first');
+                                menu_toggle.on(
+                                    'click', 
+                                    ul.treeviewLite._showMenu, 
+                                    ul.treeviewLite
+                                );
+                        }
+                            // for more than one top level li, add a
+                            //  new menu div with 'menu/expand/collapse'
+                            else if (lis.size() > 1) {
+                                var menu = Y.Node.create(
+                                    Y.IC.ManageTreeview.MENU_CONTAINER_TEMPLATE
+                                );
+                                menu.setContent(
+                                    Y.IC.ManageTreeview.SHOW_MENU_TEMPLATE +
+                                        ' | ' +
+                                        Y.IC.ManageTreeview.EXPAND_TEMPLATE +
+                                        ' | ' +
+                                        Y.IC.ManageTreeview.COLLAPSE_TEMPLATE
+                                );
+                                ul.insert(menu, ul);
+                                // add the treeview events
+                                parent.one('span.treeview-menu-toggle').on(
+                                    'click', 
+                                    ul.treeviewLite._showMenu, 
+                                    ul.treeviewLite
+                                );
+                                parent.one('span.treeview-expand').on(
+                                    'click', 
+                                    ul.treeviewLite._expandTree, 
+                                    ul.treeviewLite,
+                                    parent
+                                );
+                                parent.one('span.treeview-collapse').on(
+                                    'click', 
+                                    ul.treeviewLite._collapseTree, 
+                                    ul.treeviewLite,
+                                    parent
+                                );
+                            }
+                        }
                     }, this);
                     // then select the correct tab from our state
                     var tab_index = e.target.get('state.st') || 0;
                     e.target.selectChild(Number(tab_index));
+                    this.fire('manageFunctionDetail:tabsrendered');
                 },
 
                 /*

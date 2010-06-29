@@ -47,8 +47,7 @@ ul.yui3-treeviewlite li.yui3-treeviewlite-collapsed ul {
   display: none;
 }
 
-ol.yui3-treeviewlite li span.treeview-label,
-ul.yui3-treeviewlite li span.treeview-label {
+span.treeview-label {
   margin-left: -20px;
   *margin-left: -30px;
   padding-bottom: 5px;
@@ -57,27 +56,29 @@ ul.yui3-treeviewlite li span.treeview-label {
   width: auto;
 }
 
-ol.yui3-treeviewlite li span.treeview-action,
-ul.yui3-treeviewlite li span.treeview-action {
+span.treeview-action {
   font-size: 72%;
   color: #0000ff;
 }
 
+span.treeview-action:hover,
 ol.yui3-treeviewlite li span:hover,
 ul.yui3-treeviewlite li span:hover {
   text-decoration: underline;
 }
 
-ol.yui3-treeviewlite li span.treeview-action.first,
-ul.yui3-treeviewlite li span.treeview-action.first {
+span.treeview-action.first {
   padding-left: 30px
 }
 
-ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-action,
-ul.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-action,
-ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-label,
-ul.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-label {
+span.treeview-action,
+span.treeview-label {
   cursor:pointer;
+}
+
+div.treeview-menu {
+  margin-top: 0.5em;
+  margin-bottom: 1em;
 }
 
 ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-label,

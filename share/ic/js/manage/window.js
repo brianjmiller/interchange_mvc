@@ -73,7 +73,10 @@ YUI.add(
                     //  and decorate our layout to match the contents
                     Y.on("manageContainer:widgetshown", this.updateHeaderText);
                     Y.on("manageContainer:widgetmetadata", this.updateHeaderText);
-                    Y.on("manageFunctionList:tablerendered", Y.bind(this._fitDatatableToUnit, this));
+                    Y.on("manageFunctionList:tablerendered", 
+                         Y.bind(this._fitDatatableToUnit, this));
+                    Y.on("manageFunctionDetail:tabsrendered", 
+                         Y.bind(this._fitDetailViewToUnit, this));
                 },
 
                 destructor: function () {
@@ -111,12 +114,13 @@ YUI.add(
                 },
 
                 _setCollapsedHeader: function (e, o) {
-                    Y.log('window::_setCollapsedHeader');
-                    Y.log(o);
+                    // Y.log('window::_setCollapsedHeader');
                     var unit = o.layout.getUnitByPosition(o.unit);
-                    // var wrap = Y.one(e.layout.get('wrap'));
-                    var clip = Y.one(unit._clip); // 'div.yui-layout-clip-' + e.unit);
-                    clip.append('<span class="clip-header">Click to expand ' + o.expand_what + '.</span>');
+                    var clip = Y.one(unit._clip);
+                    clip.append(
+                        '<span class="clip-header">Click to expand ' + 
+                            o.expand_what + '.</span>'
+                    );
                 },
 
                 // called by _afterStateChange
@@ -374,6 +378,8 @@ YUI.add(
                     var top = layout.getUnitByPosition('top')
                     top.subscribe('endResize', this._fitDatatableToUnit, 
                                   null, this);
+                    top.subscribe('endResize', this._fitDetailViewToUnit, 
+                                  null, this);
                     top.subscribe('collapse', this._setCollapsedHeader, {
                         layout: layout, 
                         unit: 'top', 
@@ -627,7 +633,6 @@ YUI.add(
                             // not as big as my unit
                             var dt_data_height = dt_node.one('tbody.yui-dt-data').get('region').height;
                             var dt_bd_height = dt_node.one('div.yui-dt-bd').get('region').height;
-                            Y.log('dt_data_height: ' + dt_data_height + ' dt_bd_height: ' + dt_bd_height);
                             if (dt_data_height > dt_bd_height) {
                                 // the table  can be expanded
                                 var new_height = dt_height + (dt_data_height - dt_bd_height);
@@ -636,6 +641,25 @@ YUI.add(
                             }
                         }
                         widget._data_table.scrollTo(widget._data_table.getLastSelectedRecord());
+                    }
+                },
+
+                _fitDetailViewToUnit: function () {
+                    // Y.log('window::_fitDetailViewsToUnit');
+                    var unit = this._layouts['center'].getUnitByPosition("center");
+                    var widget = this._dv_container.get('current');
+                    if (widget._tabs) {
+                        var cb = widget.get('contentBox');
+                        var panel = cb.one('div.yui3-tabview-panel');
+                        var tabs_height = cb.one('ul.yui3-tabview-list')
+                            .get('region').height;
+                        var unit_body = Y.one(unit.get('wrap')).one('div.yui-layout-bd');
+                        var unit_height = unit_body.get('region').height;
+                        var magic = 10; // the 5px border-width?
+                        panel.setStyles({
+                            height: unit_height - (tabs_height + magic),
+                            overflowY: 'scroll'
+                        });
                     }
                 },
 
