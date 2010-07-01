@@ -163,8 +163,8 @@ YUI.add(
                                     position: "bottom",
                                     body: "manage_footer",
                                     zIndex: 0,
-                                    height: 40,
-                                    resize: true
+                                    height: 32,
+                                    resize: false
                                 }
                             ]
                         }
@@ -185,7 +185,7 @@ YUI.add(
                                     position: "top",
                                     body: "manage_menu",
                                     header: "Main Menu",
-                                    height: 214,
+                                    height: 210,
                                     zIndex: 2,
                                     scroll: null
                                 },
@@ -212,7 +212,7 @@ YUI.add(
                     var YAHOO = Y.YUI2;
                     var center = layout.getUnitByPosition(unit).get("wrap");
                     var body = Y.one(document.body);
-                    var height = 152;
+                    var height = 150;
                     var resize = false;
                     switch (version) {
                     case 'dtmax':
@@ -224,7 +224,7 @@ YUI.add(
                         height = 0;
                     case 'dtdv':
                     default:
-                        height = 152;
+                        height = 150;
                         resize = true;
                         break;
                     }
@@ -625,7 +625,7 @@ YUI.add(
                         var dt_height = dt_node.get('region').height;
                         var unit_body = Y.one(unit.get('wrap')).one('div.yui-layout-bd');
                         var unit_height = unit_body.get('region').height;
-                        var magic = 54; // table header + paginator height?
+                        var magic = 58; // table header + paginator height?
                         if (dt_height > unit_height) {
                             widget._data_table.set('height', (unit_height - magic) + 'px');
                         }
@@ -655,7 +655,7 @@ YUI.add(
                             .get('region').height;
                         var unit_body = Y.one(unit.get('wrap')).one('div.yui-layout-bd');
                         var unit_height = unit_body.get('region').height;
-                        var magic = 10; // the 5px border-width?
+                        var magic = 9; // the 5px border-width?
                         panel.setStyles({
                             height: unit_height - (tabs_height + magic),
                             overflowY: 'scroll'

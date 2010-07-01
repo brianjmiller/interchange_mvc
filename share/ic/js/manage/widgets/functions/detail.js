@@ -70,7 +70,7 @@ YUI.add(
                     tabs: [
                         {
                             order: 0,
-                            label: '0 - Details',
+                            label: '0 - Summary',
                             src: '/manage/function/Orders_orderDetailView/0?_mode=config&_format=json&_pk_id=6'
                         },
                         {
@@ -105,7 +105,7 @@ YUI.add(
                                         },
                                         {
                                             order: 1,
-                                            label: '4 - Inventory Map',
+                                            label: '5 - Inventory Map',
                                             content: {
                                                 Description: 22,
                                                 Status: 'Dynamic Sold',
@@ -117,7 +117,7 @@ YUI.add(
                                             related: [
                                                 {
                                                     order: 0,
-                                                    label: '5 - Inventory Record',
+                                                    label: '6 - Inventory Record',
                                                     src: '/manage/function/Inventories_recordDetailView/0?_mode=config&_format=json&_pk_id=26'
                                                 }
                                             ]
@@ -129,21 +129,21 @@ YUI.add(
                         {
                             order: 2,
                             object_name: "History",
-                            label: '6 - History',
+                            label: '7 - History',
                             related: [
                                 {
                                     order: 0,
-                                    label: '7 - Revision',
+                                    label: '8 - Revision',
                                     src: '/manage/function/Orders__Revisions_revisionDetailView/0?_mode=config&_format=json&_pk_id=2',
                                     related: [
                                         {
                                             order: 0,
-                                            label: '8 - Line',
+                                            label: '9 - Line',
                                             src: '/manage/function/Orders__Revisions__Lines_lineDetailView/0?_mode=config&_format=json&_pk_id=2',
                                             related: [
                                                 {
                                                     order: 0,
-                                                    label: '9 - Element',
+                                                    label: '10 - Element',
                                                     content: {
                                                         Description: 2,
                                                         Variant: 'Test Variant 1 (TEST01-SIL)',
@@ -157,7 +157,7 @@ YUI.add(
                                                     related: [
                                                         {
                                                             order: 0,
-                                                            label: '10 - Parcel',
+                                                            label: '11 - Parcel',
                                                             src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=6'
                                                         }
                                                     ]
@@ -168,56 +168,65 @@ YUI.add(
                                 },
                                 {
                                     order: 1,
-                                    label: '11 - Revision',
-                                    src: '/manage/function/Orders__Revisions_revisionDetailView/0?_mode=config&_format=json&_pk_id=8',
+                                    label: '12 - Revision',
+                                    src: '/manage/function/Orders__Revisions_revisionDetailView/0?_mode=config&_format=json&_pk_id=2',
                                     related: [
                                         {
                                             order: 0,
-                                            label: '12 - Line',
-                                            src: '/manage/function/Orders__Revisions__Lines_lineDetailView/0?_mode=config&_format=json&_pk_id=14',
+                                            label: '13 - Line',
+                                            src: '/manage/function/Orders__Revisions__Lines_lineDetailView/0?_mode=config&_format=json&_pk_id=2',
                                             related: [
                                                 {
                                                     order: 0,
-                                                    label: '13 - Element',
+                                                    label: '14 - Element',
                                                     content: {
-                                                        Description: 14,
+                                                        Description: 2,
                                                         Variant: 'Test Variant 1 (TEST01-SIL)',
-                                                        Kind: 'Receive',
-                                                        Status: 'Pending Return',
-                                                        Price: -78.24,
-                                                        'Declared VAT': -10.21,
-                                                        Balance: -78.24,
-                                                        'Pending Balance': -78.24,
-                                                        Options: '[ Add Adjustment ]'
+                                                        Kind: 'Send',
+                                                        Status: 'Shipped',
+                                                        Price: 78.24,
+                                                        'Declared VAT': 10.21,
+                                                        Balance: 0.00,
+                                                        'Pending Balance': 0.00
                                                     },
                                                     related: [
                                                         {
                                                             order: 0,
-                                                            label: '14 - Parcel',
-                                                            src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=18'
+                                                            label: '15 - Parcel',
+                                                            src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=6'
+                                                        },
+                                                        {
+                                                            order: 1,
+                                                            label: '15a - Parcel',
+                                                            src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=6'
                                                         }
                                                     ]
                                                 },
                                                 {
                                                     order: 1,
-                                                    label: '15 - Element',
+                                                    label: '16 - Element',
                                                     content: {
-                                                        Description: 15,
+                                                        Description: 2,
                                                         Variant: 'Test Variant 1 (TEST01-SIL)',
                                                         Kind: 'Send',
-                                                        Status: 'Dynamic Sold',
+                                                        Status: 'Shipped',
                                                         Price: 78.24,
-                                                        'Declared VAT': 11.65,
-                                                        Balance: 78.24,
-                                                        'Pending Balance': 78.24,
-                                                        Options: '[ Add Adjustment ]'
+                                                        'Declared VAT': 10.21,
+                                                        Balance: 0.00,
+                                                        'Pending Balance': 0.00
                                                     },
                                                     related: [
                                                         {
+                                                            order: 0,
+                                                            label: '17 - Parcel',
+                                                            src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=6'
+                                                        },
+                                                        {
                                                             order: 1,
-                                                            label: '16 - Parcel',
-                                                            src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=18'
+                                                            label: '17a - Parcel',
+                                                            src: '/manage/function/Parcels_parcelDetailView/0?_mode=config&_format=json&_pk_id=6'
                                                         }
+
                                                     ]
                                                 }
                                             ]
@@ -228,11 +237,11 @@ YUI.add(
                         },
                         {
                             order: 3,
-                            label: '17 - Payments',
+                            label: '18 - Payments',
                             related: [
                                 {
                                     order: 0,
-                                    label: '18 - Transaction',
+                                    label: '19 - Transaction',
                                     src: '/manage/function/Transactions_txnDetailView/0?_mode=config&_format=json&_pk_id=122',
                                     content: {
                                         Description: 5,
@@ -241,12 +250,12 @@ YUI.add(
                                     related: [
                                         {
                                             order: 0,
-                                            label: '19 - Line',
+                                            label: '20 - Line',
                                             src: '/manage/function/TransactionAllocations__Lines_talDetailView/0?_mode=config&_format=json&_pk_id=1'
                                         },
                                         {
                                             order: 1,
-                                            label: '20 - Line',
+                                            label: '21 - Line',
                                             src: '/manage/function/TransactionAllocations__Lines_talDetailView/0?_mode=config&_format=json&_pk_id=2'
                                         }
                                     ]
@@ -255,7 +264,7 @@ YUI.add(
                         },
                         {
                             order: 4,
-                            label: '21 - Notes',
+                            label: '22 - Notes',
                             content: 'No notes recorded for this order yet.'
                         }
                     ]
@@ -338,8 +347,6 @@ YUI.add(
                     // Y.log('detail::_afterOuterTabsRender');
                     // run through each tabpanel
                     Y.each(this._tabs._tab_refs, function (v) {
-                        // each ul should have a treeview plugin, 
-                        //  so i could move this logic into ManageTreeview..
                         var uls = v.tab.get('panelNode').all('ul');
                         // first add nesting classes
                         if (uls.size() > 0) {
@@ -347,63 +354,15 @@ YUI.add(
                                 var lis = v1.get('children');
                                 // add level0, level1, level2, level0 ...
                                 lis.addClass('level' + (i1 % 3));
+                                lis.setAttribute('depth', i1);
                             }, this);
                         }
                         // then add a toplevel menu
                         if (uls.size() > 1) {
                             var ul = Y.one(uls._nodes[0]);
-                            var parent = ul.get('parentNode');
-                            var lis = ul.get('children');
-                            // if there's only one li in the top ul,
-                            //  just add the 'menu' action to it                            
-                            if (lis.size() === 1) {
-                                var span = Y.one(lis._nodes[0]).one('span.first');
-                                span.removeClass('first');
-                                span.insert(
-                                    Y.IC.ManageTreeview.SHOW_MENU_TEMPLATE +
-                                        ' |&nbsp;', span
-                                );
-                                var menu_toggle = parent.one('span.treeview-menu-toggle');
-                                menu_toggle.addClass('first');
-                                menu_toggle.on(
-                                    'click', 
-                                    ul.treeviewLite._showMenu, 
-                                    ul.treeviewLite
-                                );
-                        }
-                            // for more than one top level li, add a
-                            //  new menu div with 'menu/expand/collapse'
-                            else if (lis.size() > 1) {
-                                var menu = Y.Node.create(
-                                    Y.IC.ManageTreeview.MENU_CONTAINER_TEMPLATE
-                                );
-                                menu.setContent(
-                                    Y.IC.ManageTreeview.SHOW_MENU_TEMPLATE +
-                                        ' | ' +
-                                        Y.IC.ManageTreeview.EXPAND_TEMPLATE +
-                                        ' | ' +
-                                        Y.IC.ManageTreeview.COLLAPSE_TEMPLATE
-                                );
-                                ul.insert(menu, ul);
-                                // add the treeview events
-                                parent.one('span.treeview-menu-toggle').on(
-                                    'click', 
-                                    ul.treeviewLite._showMenu, 
-                                    ul.treeviewLite
-                                );
-                                parent.one('span.treeview-expand').on(
-                                    'click', 
-                                    ul.treeviewLite._expandTree, 
-                                    ul.treeviewLite,
-                                    parent
-                                );
-                                parent.one('span.treeview-collapse').on(
-                                    'click', 
-                                    ul.treeviewLite._collapseTree, 
-                                    ul.treeviewLite,
-                                    parent
-                                );
-                            }
+                            ul.treeviewLite.addTopLevelMenu(
+                                v.tab.get('panelNode')
+                            );
                         }
                     }, this);
                     // then select the correct tab from our state

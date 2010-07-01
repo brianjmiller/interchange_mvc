@@ -47,6 +47,13 @@ ul.yui3-treeviewlite li.yui3-treeviewlite-collapsed ul {
   display: none;
 }
 
+ol.yui3-treeviewlite>li.yui3-treeviewlite-cleared ol,
+ol.yui3-treeviewlite>li.yui3-treeviewlite-cleared ul,
+ul.yui3-treeviewlite>li.yui3-treeviewlite-cleared ol,
+ul.yui3-treeviewlite>li.yui3-treeviewlite-cleared ul {
+  display: block !important;
+}
+
 span.treeview-label {
   margin-left: -20px;
   *margin-left: -30px;
@@ -79,6 +86,17 @@ span.treeview-label {
 div.treeview-menu {
   margin-top: 0.5em;
   margin-bottom: 1em;
+  width: 260px;
+}
+
+div.treeview-menu a {
+  line-height: 1.75;
+}
+
+div.treeview-menu.yui3-menu-content {
+  position: absolute;
+  top: 20px;
+  left: 6px;
 }
 
 ol.yui3-treeviewlite li.yui3-treeviewlite-haschild>span.treeview-label,

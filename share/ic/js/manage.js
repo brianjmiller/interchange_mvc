@@ -216,6 +216,29 @@ YUI(
     "console",
     "ic-manage-window",
     function (Y) {
+
+        Y.Node.prototype.ancestors = function (selector) {
+            var ancestors = [];
+            var ancestor = this.ancestor(selector);
+            while (1) {
+                if (ancestor) {
+                    ancestors.push(ancestor);
+                    ancestor = ancestor.ancestor('ul.yui3-treeviewlite>li');
+                }
+                else {
+                    break;
+                }
+            }
+            return Y.all(ancestors);
+        };
+
+        Y.Node.prototype.scrollToTop = function (container) {
+            var container_top = container.get('region').top;
+            var node_top = this.get('region').top;
+            var scroll_top = node_top - container_top;
+            Y.Node.getDOMNode(container).scrollTop = scroll_top;
+        };
+
         Y.on(
             "domready",
             function () {

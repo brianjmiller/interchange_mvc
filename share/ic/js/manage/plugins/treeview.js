@@ -26,6 +26,7 @@ YUI.add(
             CSS_HAS_CHILD   = getCN( TREEVIEWLITE , "haschild" ), //"yui3-treeviewlite-haschild", 
             CSS_FINAL_CHILD = getCN( TREEVIEWLITE , "lastchild" ), //"yui3-treeviewlite-lastchild",
             CSS_COLLAPSED   = getCN( TREEVIEWLITE , "collapsed" ), //"yui3-treeviewlite-collapsed";
+            CSS_CLEARED     = getCN( TREEVIEWLITE , "cleared" ), //"yui3-treeviewlite-cleared";
 
         TreeviewLite = function(config) {
             TreeviewLite.superclass.constructor.apply(this, arguments);
@@ -47,19 +48,54 @@ YUI.add(
 
         TreeviewLite.LABEL_NODE_TEMPLATE = '\
 <span class="treeview-label treeview-toggle"></span>';
+        TreeviewLite.MENU_TEMPLATE = '\
+<div class="yui3-menu yui3-menu-horizontal yui3-menubuttonnav treeview-menu">\
+  <div class="yui3-menu-content">\
+    <ul>\
+    </ul>\
+  </div>\
+</div>';
         TreeviewLite.MENU_CONTAINER_TEMPLATE = '\
-<div class="treeview-menu"></div>';
-        TreeviewLite.SHOW_MENU_TEMPLATE = '\
-<span class="treeview-action treeview-menu-toggle">Show Menu</span>';
+<div class="yui3-menu treeview-menu"></div>';
+        TreeviewLite.MENU_CONTENT_TEMPLATE = '\
+<div class="yui3-menu-content"></div>';
+        TreeviewLite.MENU_ITEM_TEMPLATE = '\
+<li class="yui3-menuitem treeview-goto"></li>';
+        TreeviewLite.MENU_ITEM_CONTENT_TEMPLATE = '\
+<span class="yui3-menuitem-content"></span>'
         TreeviewLite.EXPAND_TEMPLATE = '\
 <span class="treeview-action treeview-expand">Expand All</span>';
         TreeviewLite.COLLAPSE_TEMPLATE = '\
 <span class="treeview-action treeview-collapse">Collapse All</span>';
+        TreeviewLite.SHOW_MENU_TEMPLATE = '\
+<span class="treeview-action treeview-menu-toggle">Show Menu</span>';
+        TreeviewLite.EXPAND_MENUITEM_TEMPLATE = '\
+<li class="yui3-menuitem treeview-expand">\
+  <a class="yui3-menuitem-content">Expand All</a>\
+</li>';
+        TreeviewLite.COLLAPSE_MENUITEM_TEMPLATE = '\
+<li class="yui3-menuitem treeview-collapse">\
+  <a class="yui3-menuitem-content">Collapse All</a>\
+</li>';
+        TreeviewLite.SHOW_MENUITEM_TEMPLATE = '\
+<li>\
+  <a class="yui3-menu-label" href="#foo"><em>Show Menu</em></a>\
+  <div class="yui3-menu">\
+    <div class="yui3-menu-content">\
+      <ul>\
+      </ul>\
+    </div>\
+  </div>\
+</li>';
 
         /**
          * There are no attributes to set.  It's that simple.
          */
-        TreeviewLite.ATTRS = {};
+        TreeviewLite.ATTRS = {
+            menu: {
+                value: null
+            }
+        };
         
         Y.extend(TreeviewLite, Y.Plugin.Base, {
             
@@ -153,8 +189,11 @@ YUI.add(
 
             _doAction: function (e, action, bool, selector, parent) {
                 // Y.log('treeview::_doAction');
-                if (!parent) parent = e.currentTarget.get("parentNode");
-                if (parent.hasClass(CSS_COLLAPSED) == bool) { 
+                if (!parent) parent = e.target.get("parentNode");
+                
+                parent.removeClass(CSS_CLEARED);
+                if (parent.test('li') && 
+                    (parent.hasClass(CSS_COLLAPSED) == bool) ) { 
                     this.fire(action, e);
                     if (bool) parent.removeClass(CSS_COLLAPSED);
                     else parent.addClass(CSS_COLLAPSED);
@@ -164,6 +203,7 @@ YUI.add(
                     Y.each(lis, function (li, i) {
                         // ducktype the event
                         this.fire(action, {target: li.one('span')});
+                        li.removeClass(CSS_CLEARED);
                         if (bool) li.removeClass(CSS_COLLAPSED);
                         else li.addClass(CSS_COLLAPSED);
                     }, this);
@@ -182,8 +222,121 @@ YUI.add(
                                'li.yui3-treeviewlite-collapsed', parent);
             },
 
-            _showMenu: function (e) {
-                Y.log('treeview::_showMenu');
+            addTopLevelMenu: function (panel) {
+                var ul = this.get('host');
+                var parent = ul.get('parentNode');
+                var lis = ul.get('children');
+                //  add menu with 'menu/expand/collapse'
+                if (lis.size() > 0) {
+                    var menu = Y.Node.create(
+                        Y.IC.ManageTreeview.MENU_TEMPLATE
+                    );
+                    // walk the DOM and build the submenu
+                    var lis = panel.all('ul.yui3-treeviewlite>li');
+                    var show = Y.Node.create(
+                        Y.IC.ManageTreeview.SHOW_MENUITEM_TEMPLATE
+                    );
+                    var show_ul = show.one('ul');
+                    var prev_depth = 0;  // for adjusting the nest padding
+                    var adjust = 0;      // for adjusting the nest padding
+                    Y.each(lis, function (li) {
+                        // get depth info and pad to show nesting
+                        var depth = li.getAttribute('depth');
+                        var pad = '';
+                        for (var i=0; i < (Number(depth) - adjust); i++)
+                            pad += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                        // do some silly adjustment, due to the way depth is set
+                        if (depth < prev_depth)
+                            adjust += prev_depth - depth;
+                        else prev_depth = depth;
+                        // add the menu item
+                        var label = li.one('span.treeview-label');
+                        if (label) {
+                            var item = Y.Node.create(
+                                Y.IC.ManageTreeview.MENU_ITEM_TEMPLATE
+                            );
+                            var link_to = li.getAttribute('id');
+                            item.setAttribute('for', link_to);
+                            var link = Y.Node.create(
+                                Y.IC.ManageTreeview.MENU_ITEM_CONTENT_TEMPLATE
+                            );
+                            link.setContent(pad + label.get('innerHTML'));
+                            item.append(link);
+                            // link-up each submenu item to it's teemenu item
+                            item.on('click', this._gotoItem, this, link_to);
+                            show_ul.append(item);
+                        }
+                    }, this);
+                    var menu_ul = menu.one('ul');
+                    menu_ul.append(show);
+
+                    // add the top level Expand All action
+                    var expand = Y.Node.create(
+                        Y.IC.ManageTreeview.EXPAND_MENUITEM_TEMPLATE
+                    );
+                    expand.on('click', this._expandTree, this, parent);
+                    menu_ul.append(expand);
+
+                    // add the top level Collapse All action
+                    var collapse = Y.Node.create(
+                        Y.IC.ManageTreeview.COLLAPSE_MENUITEM_TEMPLATE
+                    );
+                    collapse.on('click', this._collapseTree, this, parent);
+                    menu_ul.append(collapse);
+
+                    // make it a real menu, and put it in place
+                    menu.plug(Y.Plugin.NodeMenuNav);
+                    ul.insert(menu, ul);
+                }
+            },
+
+            _gotoItem: function (e, id) {
+                // Y.log('treeview::_gotoItem id:' + id);
+                var item = Y.one('#' + id);
+
+                // build a list of ancestors, and find the root
+                var ancestors = item.ancestors('ul.yui3-treeviewlite>li');
+                var root = item;
+                if (ancestors.size())
+                    root = Y.one(ancestors._nodes[ancestors.size()-1]);
+
+                // collapse everything, using the toplevel menu
+                var ul = root.get('parentNode');
+                var toplevel_menu = ul.previous('div.treeview-menu');
+                var treeview = ul.treeviewLite;
+                treeview._collapseTree({}, Y.one(toplevel_menu.get('parentNode')));
+
+                // add event listeners to scroll the item into view once ready
+                var container = toplevel_menu.ancestor('div.yui3-tabview-panel');
+                var mtp = item.one('div.yui3-widget-stdmod').mtp;
+                if (mtp.get('uri'))
+                    mtp.on('manageTabPanel:srcloaded', function (e) {
+                        item.scrollToTop(container);
+                    });
+                else if (mtp.get('content'))
+                    mtp.on('manageTabPanel:contentloaded', function (e) {
+                        item.scrollToTop(container);
+                    });
+
+                // expand and clear all of it's ancestors/siblings
+                Y.each(ancestors, function (ancestor) {
+                    this._expandAndClear(ancestor);
+                }, this);
+                Y.each(item.siblings('li'), function (sibling) {
+                    this._expandAndClear(sibling);
+                }, this);
+
+                // then open it and scroll it into view
+                item.removeClass(CSS_COLLAPSED);
+                this.fire('open', {target: item.one('span.treeview-label')});
+            },
+
+            _expandAndClear: function (li) {
+                // Y.log('treeview::_expandAndClear');
+                var mtp = li.one('div.yui3-widget-stdmod').mtp;
+                if (mtp.get('headerContent')) mtp.set('headerContent', '');
+                if (mtp.get('bodyContent')) mtp.set('bodyContent', '');
+                li.addClass(CSS_CLEARED);
             },
 
             /**
@@ -211,6 +364,7 @@ YUI.add(
                          */
                         this.fire("collapse" , e);
                     }
+                    parent.removeClass(CSS_CLEARED);
                     parent.toggleClass(CSS_COLLAPSED);
                 }
             }            
@@ -223,6 +377,7 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
+            "ic-manage-plugin-treeview-css"
         ]
     }
 );

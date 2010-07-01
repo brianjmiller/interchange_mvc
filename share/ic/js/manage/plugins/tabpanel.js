@@ -212,6 +212,14 @@ YUI.add(
 
                 initializer: function() {
                     // Y.log('tabpanel::initializer');
+                    this.publish('manageTabPanel:srcloaded', {
+                        broadcast:  2,   // global notification
+                        emitFacade: true // emit a facade so we get the event target
+                    });
+                    this.publish('manageTabPanel:contentloaded', {
+                        broadcast:  2,   // global notification
+                        emitFacade: true // emit a facade so we get the event target
+                    });
 
                     var tab = this.get('host');
                     tab.on('selectedChange', Y.bind(this._afterSelectedChange, this));
@@ -283,6 +291,7 @@ YUI.add(
                         );
                     }
                     this.set('headerContent', content_node);
+                    this.fire('manageTabPanel:contentloaded');
                 },
 
                 prepareSrc: function() {
@@ -316,6 +325,7 @@ YUI.add(
                         }
 
                         this.set('bodyContent', src_node);
+                        this.fire('manageTabPanel:srcloaded');
                     }
                 },
 
@@ -497,19 +507,16 @@ YUI.add(
                 },
 
                 _onOpen: function (e) {
-                    // Y.log('tabpanel::_onOpen  e -> div');
+                    // Y.log('tabpanel::_onOpen');
                     var div = this._getTreeviewContainerForAction(e);
-
                     // build an array of things that need opened
                     var opens = this._getDependentPanels(div);
-
                     Y.each(opens, function (v) {
                         // add any static content
                         var content = v.get('content');
                         if (content) {
                             v.addContent(content);
                         }
-                        
                         // start loading any dynamic content
                         var uri = v.get('uri');
                         if (uri) {

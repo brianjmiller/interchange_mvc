@@ -1,3 +1,7 @@
+.yui3-skin-sam .yui3-tabview-panel {
+  position: relative;
+}
+
 div.yui3-tab-panel dl {
   margin: 2px 0 1em 0;
   padding-left: 2px;
