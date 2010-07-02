@@ -161,7 +161,7 @@ sub function {
         $manage->execute;
     };
     if (my $e = IC::Exception->caught()) {
-        IC::Exception->throw("Failed manage execution (explicitly): $e");
+        IC::Exception->throw("Failed manage execution (explicitly): $e (" . $e->trace . ')');
     }
     elsif ($@) {
         IC::Exception->throw("Failed manage execution: $@");
