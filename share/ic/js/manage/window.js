@@ -74,7 +74,7 @@ YUI.add(
                     Y.on("manageContainer:widgetshown", this.updateHeaderText);
                     Y.on("manageContainer:widgetmetadata", this.updateHeaderText);
                     Y.on("manageFunctionList:tablerendered", 
-                         Y.bind(this._fitDatatableToUnit, this));
+                         Y.bind(this.onCheckFitness, this));
                     Y.on("manageFunctionDetail:tabsrendered", 
                          Y.bind(this._fitDetailViewToUnit, this));
                 },
@@ -553,6 +553,11 @@ YUI.add(
                     });
 
                     if (this.get('state.lc') !== 'dtmax') {
+                        // hide the current widgets to take them out of the history loop
+                        if (this._dt_container)
+                            this._dt_container.hideCurrentWidget();
+                        if (this._dv_container)
+                            this._dv_container.hideCurrentWidget();
                         // save a callback because the layout needs to be built/rendered first
                         this._center_layout_onrender_callback = Y.bind(this._doSubmenuRequest, this, e);
                         Y.HistoryLite.add(this._addMyHistoryPrefix({lc: 'dtmax'}));
@@ -571,15 +576,6 @@ YUI.add(
                     if (!this._dt_container) {
                         this._createDataTableContainer();
                     }
-                    // otherwise, reset the width/height
-                    else {
-                        var dt = this._dt_container.get('current');
-                        if (dt instanceof Y.IC.ManageFunctionExpandableList) {
-                            // expand the datatable to it's max height
-                            this._fitDatatableToUnit();
-                        }
-                    }
-
                     // load the Widget into the Data Table container
                     Y.bind(this._dt_container.loadWidget, this._dt_container)(e);
                 },
@@ -614,34 +610,18 @@ YUI.add(
                     return div;
                 },
 
-                // should this be moved into the list module?
+                onCheckFitness: function (e) {
+                    var widget = this._dt_container.get('current');
+                    // Y.log('window::onCheckFitness - fitted: ' + widget._fitted);
+                    if (!widget._fitted)
+                        this._fitDatatableToUnit();
+                },
+
                 _fitDatatableToUnit: function () {
                     // Y.log('window::_fitDatatableToUnit');
                     var unit = this._layouts['center'].getUnitByPosition("top");
                     var widget = this._dt_container.get('current');
-                    if (widget._data_table) {
-                        widget._data_table.validateColumnWidths();
-                        var dt_node = widget.get('contentBox').one('div.yui-dt-scrollable');
-                        var dt_height = dt_node.get('region').height;
-                        var unit_body = Y.one(unit.get('wrap')).one('div.yui-layout-bd');
-                        var unit_height = unit_body.get('region').height;
-                        var magic = 58; // table header + paginator height?
-                        if (dt_height > unit_height) {
-                            widget._data_table.set('height', (unit_height - magic) + 'px');
-                        }
-                        else {
-                            // not as big as my unit
-                            var dt_data_height = dt_node.one('tbody.yui-dt-data').get('region').height;
-                            var dt_bd_height = dt_node.one('div.yui-dt-bd').get('region').height;
-                            if (dt_data_height > dt_bd_height) {
-                                // the table  can be expanded
-                                var new_height = dt_height + (dt_data_height - dt_bd_height);
-                                if (new_height > unit_height) new_height = unit_height;
-                                widget._data_table.set('height', (new_height - magic) + 'px');
-                            }
-                        }
-                        widget._data_table.scrollTo(widget._data_table.getLastSelectedRecord());
-                    }
+                    widget.fitToContainer(unit);
                 },
 
                 _fitDetailViewToUnit: function () {

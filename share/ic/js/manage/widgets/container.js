@@ -134,6 +134,18 @@ YUI.add(
                     this.loadWidget({target: empty});
                 },
 
+                hideCurrentWidget: function () {
+                    var widget = this.get('current');
+                    if (widget) 
+                        this._hideWidget(widget);
+                },
+
+                showCurrentWidget: function () {
+                    var widget = this.get('current');
+                    if (widget) 
+                        this._showWidget(widget);
+                },
+
                 _afterStateChange: function (e) {
                     // Y.log('container::_afterStateChange');
                     // Y.log('state: ' + Y.QueryString.stringify(this.get('state')));
@@ -214,8 +226,8 @@ YUI.add(
                 _hideWidget: function (widget) {
                     // Y.log('container::_hideWidget');
                     try {
-                        widget.hide();
                         widget.disable();
+                        widget.hide();
                         this.fire('manageContainer:widgethidden');
                     } catch (err) {
                         Y.log(err); // probably not a Widget subclass

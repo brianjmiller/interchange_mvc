@@ -306,8 +306,8 @@ YUI.add(
                     if (response) {
                         var data = this._parseJSON(response);
                         // debug with dummy data
-                        if (this.get('label') === '0 - Details' ||
-                           this.get('label') === '8 - Line') {
+                        if (this.get('label') === '0 - Summary' ||
+                           this.get('label') === '9 - Line') {
                             data = this._dummy_details;
                         }
                         var src_node = this._buildEmptySrcNode();
