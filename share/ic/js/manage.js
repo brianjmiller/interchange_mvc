@@ -15,6 +15,7 @@
     along with this program. If not, see: http://www.gnu.org/licenses/ 
 */
 
+
 YUI(
     {
         filter: 'raw',
@@ -30,6 +31,14 @@ YUI(
                         requires: [
                             "ic-manage-widget-dashboard-css",
                             "ic-manage-widget"
+                        ]
+                    },
+                    "ic-manage-history": {
+                        path: "manage/history.js",
+                        requires: [
+                            "gallery-history-lite",
+                            "base-base",
+                            "event-custom"
                         ]
                     },
                     "ic-history-manager": {
@@ -161,8 +170,7 @@ YUI(
                             "ic-manage-widget-dashboard",
                             "ic-history-manager",
                             "yui2-layout",
-                            "yui2-resize",
-                            "yui2-animation"
+                            "yui2-resize"
                         ]
                     }
                 }
@@ -215,6 +223,7 @@ YUI(
 ).use(
     "console",
     "ic-manage-window",
+    "ic-manage-history",
     function (Y) {
 
         Y.Node.prototype.ancestors = function (selector) {
@@ -276,6 +285,12 @@ YUI(
                     console_toggle,
                     console
                 );
+
+                // both the history and window instances
+                //  should be singletons...
+
+                // instantiate a history instance
+                var hist = new Y.IC.ManageHistory();
 
                 // Y.log("setting up manage window");
                 var mw = new Y.IC.ManageWindow({prefix: '_mw'});

@@ -23,7 +23,7 @@ YUI.add(
         ManageFunctionList = function (config) {
             ManageFunctionList.superclass.constructor.apply(this, arguments);
             this.publish('manageFunctionList:tablerendered', {
-                broadcast:  2,   // global notification
+                broadcast:  1,   // instance notification
                 emitFacade: true // emit a facade so we get the event target
             });
         };
@@ -68,12 +68,20 @@ YUI.add(
                         );
                     }
                     this._setInitialState();
-
                     this.fire('manageFunction:loaded');
                 },
 
                 _setInitialState: function() {
-                    this.set('state', this.getRelaventHistory());
+                    // Y.log('list:_setInitialState');
+                    var rh = {};
+                    if (this._has_history) {
+                        rh = this.getRelaventHistory();
+                    }
+                    if (Y.Object.size(rh) === 0) {
+                        rh = this._generateRequest();
+                        rh.srec = '-1';
+                    }
+                    this.set('state', rh);
                 },
 
                 _bindDataTableEvents: function() {
@@ -106,7 +114,7 @@ YUI.add(
                     var pkv = encodeURIComponent(e.record._oData[pk]);
                     if (this.get('state.srec') !== pkv) {
                         this.set('state.srec', pkv);
-                        Y.HistoryLite.add(this._addMyHistoryPrefix(this.get('state')));
+                        this.notifyHistory();
                     }
                 },
 
@@ -136,10 +144,10 @@ YUI.add(
                     // Y.log('list::setNewPaginator');
                     this._has_data = false;
                     var YAHOO = Y.YUI2;
-                    Y.HistoryLite.add(this._addMyHistoryPrefix({results: num_results}));
                     var new_state = this._data_pager.getState({rowsPerPage: num_results});
                     this._data_pager = new YAHOO.widget.Paginator(new_state);
                     this._data_table.set('paginator', this._data_pager);
+                    this.set('state.results', num_results);
                 },
 
                 _getDataSource: function () {
@@ -221,25 +229,15 @@ YUI.add(
                         this._data_source,
                         data_table_config
                     );
-                    this._data_table.showTableMessage(this._data_table.get("MSG_LOADING"), 
-                                                      YAHOO.widget.DataTable.CLASS_LOADING);
-
+                    this._data_table.showTableMessage(
+                        this._data_table.get("MSG_LOADING"), 
+                        YAHOO.widget.DataTable.CLASS_LOADING
+                    );
                 },
 
                 _handleDataReturnPayload: function(oRequest, oResponse, oPayload) {
                     oPayload.totalRecords = oResponse.meta.totalRecords;
                     return oPayload;
-                },
-
-                _setInitialState: function() {
-                    var rh = this.getRelaventHistory();
-                    if (rh.results || rh.start_index || rh.sort || rh.dir) {
-                        this.set('state', rh);
-                    }
-                    else {
-                        var request = this._addMyHistoryPrefix(this._generateRequest());
-                        Y.HistoryLite.add(request);
-                    }
                 },
 
                 _doBeforeLoadData: function(oRequest, oResponse, oPayload) { 
@@ -265,7 +263,7 @@ YUI.add(
                 },
 
                 _handlePagination: function (state) { 
-                    // Y.log('list::_handlePagination');
+                    // Y.log('list::_handlePagination - state');
 
                     // The next state will reflect the new pagination values 
                     // while preserving existing sort values 
@@ -273,9 +271,10 @@ YUI.add(
                     var new_state = this._generateRequest( 
                         state.recordOffset, sorted_by.key, sorted_by.dir, state.rowsPerPage 
                     );
-
-                    // Pass the state along to the History Manager 
-                    Y.HistoryLite.add(this._addMyHistoryPrefix(new_state)); 
+                    var srec = this.get('state.srec');
+                    if (srec) new_state.srec = srec;
+                    this.set('state', new_state);
+                    this.get('state');
                 },
 
                 _generateRequest: function (start_index, sort_key, dir, results) { 
@@ -303,7 +302,7 @@ YUI.add(
                 },
 
                 _updateFromHistory: function (state) {
-                    // Y.log('list::_updateFromHistory - this');
+                    // Y.log('list::_updateFromHistory');
                     this._data_source.sendRequest(Y.QueryString.stringify(state), {
                         success: Y.bind(this._updateDataTableRecords, this),
                         failure: function() { 
@@ -321,8 +320,9 @@ YUI.add(
                 },
 
                 _afterStateChange: function (e) {
-                    // Y.log('list::_afterStateChange');
+                    // Y.log('list::_afterStateChange - state');
                     var state = this.get('state');
+                    // Y.log(state);
                     var pstate = this._data_pager.getState();
                     var tstate = this._data_table.getState();
 

@@ -70,6 +70,14 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                                               YAHOO.widget.DataTable.CLASS_LOADING);
         },
 
+        _updateFromHistory: function (state) {
+            // Y.log('expandable_list::_updateFromHistory');
+            Y.IC.ManageFunctionExpandableList.superclass
+                ._updateFromHistory.apply(this, arguments);
+            if (this._has_data) this.fitToContainer();
+        },
+
+
         hide: function () {
             Y.IC.ManageFunctionExpandableList.superclass.hide.apply(this, arguments);
             this._has_data = false;
@@ -115,6 +123,7 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                         if (Number(this.get('state.results')) != recs_per_page)
                             this.setNewPaginator(recs_per_page);
                         this._fitted = true;
+                        this._notifyHistory();
                     }
                     else {
                         // there are no visible rows, so not fitted
@@ -146,8 +155,10 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                         this._fitted = false;
                     }
                     dt.set('height', (new_height - magic) + 'px');
-                    if (Number(this.get('state.results')) != max_rows)
+                    if (Number(this.get('state.results')) != max_rows) {
                         this.setNewPaginator(max_rows);
+                        this._notifyHistory();
+                    }
                 }
             }
         },

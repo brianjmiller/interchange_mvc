@@ -23,19 +23,19 @@ YUI.add(
         ManageContainer = function (config) {
             ManageContainer.superclass.constructor.apply(this, arguments);
             this.publish('manageContainer:widgetloaded', {
-                broadcast:  2,   // global notification
+                broadcast:  1,   // instance notification
                 emitFacade: true // emit a facade so we get the event target
             });
             this.publish('manageContainer:widgetmetadata', {
-                broadcast:  2,   // global notification
+                broadcast:  1,   // instance notification
                 emitFacade: true // emit a facade so we get the event target
             });
             this.publish('manageContainer:widgetshown', {
-                broadcast:  2,   // global notification
+                broadcast:  1,   // instance notification
                 emitFacade: true // emit a facade so we get the event target
             });
             this.publish('manageContainer:widgethidden', {
-                broadcast:  2,   // global notification
+                broadcast:  1,   // instance notification
                 emitFacade: true // emit a facade so we get the event target
             });
         };
@@ -105,7 +105,11 @@ YUI.add(
 
                 syncUI: function () {
                     // Y.log('container::syncUI');
-                    this.set('state', this.getRelaventHistory());
+                    var rh = {};
+                    if (this._has_history) {
+                        rh = this.getRelaventHistory();
+                    }
+                    this.set('state', rh);
                 },
 
                 loadWidget: function (e) {
@@ -123,10 +127,7 @@ YUI.add(
                         args: addtl_args
                     };
 
-                    // log this action with the history manager, 
-                    //  and let it load the widget
                     this.set('state', load_widget_config);
-                    Y.HistoryLite.add(this._addMyHistoryPrefix(this.get('state')));
                 },
 
                 unloadWidget: function () {
@@ -147,18 +148,20 @@ YUI.add(
                 },
 
                 _afterStateChange: function (e) {
-                    // Y.log('container::_afterStateChange');
-                    // Y.log('state: ' + Y.QueryString.stringify(this.get('state')));
+                    // Y.log('container::_afterStateChange - state');
+                    // Y.log(this.get('state'));
                     var state = this.get('state');
                     this._doLoadWidget(state);
+                    this._notifyHistory();
                 },
 
                 _doLoadWidget: function (config) {
                     // Y.log("container::_doLoadWidget");
-                    // Y.log("kind: " + config.kind + 
-                    //       " sub_kind: " + config.sub_kind +
-                    //       " args: " + config.args);
-
+                    /*
+                    Y.log("kind: " + config.kind + 
+                          " sub_kind: " + config.sub_kind +
+                          " args: " + config.args);
+                    */
                     this.set('previous', this.get('current'));
                     var new_widget = null;
 

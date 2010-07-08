@@ -23,7 +23,7 @@ YUI.add(
         ManageFunctionDetail = function (config) {
             ManageFunctionDetail.superclass.constructor.apply(this, arguments);
             this.publish('manageFunctionDetail:tabsrendered', {
-                broadcast:  2,   // global notification
+                broadcast:  1,   // instance notification
                 emitFacade: true // emit a facade so we get the event target
             });
         };

@@ -27,11 +27,11 @@ YUI.add(
         ManageFunction = function (config) {
             ManageFunction.superclass.constructor.apply(this, arguments);
             this.publish('manageFunction:loaded', {
-                broadcast:  2,   // global notification
+                broadcast:  1,   // instance notification
                 emitFacade: true // emit a facade so we get the event target
             });
             this.publish('manageFunction:metadata', {
-                broadcast:  2,   // global notification
+                broadcast:  1,   // instance notification
                 emitFacade: true // emit a facade so we get the event target
             });
         };

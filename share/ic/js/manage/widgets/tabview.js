@@ -32,7 +32,7 @@ YUI.add(
                 initializer: function (config) {
                     ManageTabView.superclass.initializer.apply(this, arguments);
                     this.publish('manageTabView:tabselected', {
-                        broadcast:  2,   // global notification
+                        broadcast:  1,   // instance notification
                         emitFacade: true // emit a facade so we get the event target
                     });
                     this.after('addChild', Y.bind(this._afterAddChild, this));
@@ -54,7 +54,9 @@ YUI.add(
                         this
                     );
 
-                    this.set('state', this.getRelaventHistory());
+                    if (this._has_history) {
+                        this.set('state', this.getRelaventHistory());
+                    }
                 },
 
                 destructor: function () {
@@ -193,18 +195,28 @@ YUI.add(
 
                 _afterStateChange: function (e) {
                     // Y.log('tabview::_afterStateChange - prefix: ' + this.get('prefix'));
-                    var state = this.get('state.st');
+                    var state = Number(this.get('state.st'));
                     // Y.log('state.st: ' + state);
-                    if (state) {
+                    if (state !== undefined) {
                         this.selectTabByIndex(state);
                     }
+                    this._notifyHistory();
                 },
 
                 _myAfterSelectionChange: function (e) {
                     // Y.log('tabview::_myAfterSelectionChange - st: ' + e.newVal.get('index'));
-                    // only update the history if i have state
-                    var state = {st: e.newVal.get('index')};
-                    Y.HistoryLite.add(this._addMyHistoryPrefix(state));
+                    var st = e.newVal.get('index');
+
+                    // only update state if it doesn't match the current tab
+                    //  to prevent an infinite loop
+                    if (this.get('state.st') != st) {
+                        // Y.log('setting state: ' + st);
+                        this.set('state.st', st)
+                    }
+                    else {
+                        // Y.log('states already match: ' + 
+                        //       this.get('state.st') + ':' + st);
+                    }
                     this.fire('manageTabView:tabselected');
                 }
             }

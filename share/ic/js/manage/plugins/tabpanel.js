@@ -213,11 +213,11 @@ YUI.add(
                 initializer: function() {
                     // Y.log('tabpanel::initializer');
                     this.publish('manageTabPanel:srcloaded', {
-                        broadcast:  2,   // global notification
+                        broadcast:  1,   // instance notification
                         emitFacade: true // emit a facade so we get the event target
                     });
                     this.publish('manageTabPanel:contentloaded', {
-                        broadcast:  2,   // global notification
+                        broadcast:  1,   // instance notification
                         emitFacade: true // emit a facade so we get the event target
                     });
 

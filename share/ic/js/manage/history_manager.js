@@ -21,7 +21,7 @@ YUI.add(
         var HistoryManager;
 
         HistoryManager = function () {
-            // empty constructor
+            // empty constructor - this is a mixin
         };
 
         HistoryManager.ATTRS = {
@@ -58,6 +58,8 @@ YUI.add(
                         if (!sp[k]) {
                             delete obj[k];
                         }
+                        // convert any numbers to strings
+                        obj[k] = obj[k] + '';
                     });
 
                     var m = Y.merge(old_state, new_state);
@@ -69,6 +71,7 @@ YUI.add(
         HistoryManager.prototype = {
 
             STATE_PROPERTIES: {},
+            _has_history: false,
             _on_history_change: null,
 
             hide: function () {
@@ -92,28 +95,25 @@ YUI.add(
                     );
                 }
                 var state = this.get('state');
+                Y.Global.fire('updatehistory', this);
+                /*
                 var new_hist = this._addMyHistoryPrefix(state);
                 Y.HistoryLite.add(new_hist);
+                */
                 return this.set('visible', true);
             },
 
-            isEmpty: function (obj) {
-                for(var i in obj) { 
-                    return false; 
-                } 
-                return true;
-            },
-
             areEqualObjects: function (a, b) {
+                // Y.log('history_manager::areEqualObjects');
                 if (typeof(a) != typeof(b)) {
                     return false;
                 }
                 var allkeys = {};
-                for (var i in a) {
-                    allkeys[i] = 1;
+                for (var j in a) {
+                    allkeys[j] = 1;
                 }
-                for (var i in b) {
-                    allkeys[i] = 1;
+                for (var k in b) {
+                    allkeys[k] = 1;
                 }
                 for (var i in allkeys) {
                     if (a.hasOwnProperty(i) != b.hasOwnProperty(i)) {
@@ -121,10 +121,12 @@ YUI.add(
                             (a.hasOwnProperty(i) && Y.Lang.isFunction(b[i]))) {
                             continue;
                         } else {
+                            // Y.log('failed on missing property');
                             return false;
                         }
                     }
-                    if (typeof(a[i]) != typeof(b[i])) {
+                    if (typeof(a[i]) !== typeof(b[i])) {
+                        // Y.log('failed on matching types');
                         return false;
                     }
                     if (Y.Lang.isObject(a[i])) {
@@ -133,6 +135,7 @@ YUI.add(
                         }
                     } else {
                         if (a[i] !== b[i]) {
+                            // Y.log('failed on matching values');
                             return false;
                         }
                     }
@@ -145,10 +148,10 @@ YUI.add(
              * STATE_PROPERTIES that are set in history data.
              */
             getRelaventHistory: function () {
+                var rh = {}; // relavent history
                 var sp = this.STATE_PROPERTIES;
                 var prefix = this.get('prefix');
                 var history = Y.HistoryLite.get();
-                var rh = {}; // relavent history
                 Y.each(sp, function (v, k, obj) {
                     if (!Y.Lang.isUndefined(history[prefix + k])) {
                         rh[k] = history[prefix + k];
@@ -177,8 +180,7 @@ YUI.add(
                 Y.each(keys, function (v, i, ary) {
                     clear[v] = null;
                 });
-                Y.HistoryLite.add(this._addMyHistoryPrefix(clear));
-                this.set('state', saved_state);
+                Y.Global.fire('ic_manage_history:clear', clear);
             },
 
             _addMyHistoryPrefix: function (o) {
@@ -215,13 +217,27 @@ YUI.add(
                 return copy;
             },
 
+            _notifyHistory: function () {
+                // Y.log('history_manager::_notifyHistory - prefix -> state');
+                // Y.log(this.get('prefix'));
+                // Y.log(this.get('state'));
+                if (!this.stateMatchesHistory()) {
+                    try {
+                        Y.Global.fire('ic_manage_history:update', this);
+                    } catch (err) {
+                        Y.log(err);
+                    }
+                }
+            },
+
             _onHistoryChange: function (e) {
                 // Y.log('history_manager::_onHistoryChange - prefix: ' + this.get('prefix'));
+                this._has_history = true;
                 if ( ! this.stateMatchesHistory() ) {
                     /*
                     Y.log('_onHistoryChange - state does not match history ... state -> history');
-                    Y.log(this.get('state'));
-                    Y.log(this.getRelaventHistory());
+                    Y.log(Y.merge(this.get('state')));
+                    Y.log(Y.merge(this.getRelaventHistory()));
                     */
                     this.set('state', this.getRelaventHistory());
                 }

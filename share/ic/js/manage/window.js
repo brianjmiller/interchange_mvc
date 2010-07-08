@@ -66,8 +66,9 @@ YUI.add(
 
                     this.after('stateChange', this._afterStateChange);
                     Y.on('history-lite:change', Y.bind(this._onHistoryChange, this));
-
-                    this.set('state', this.getRelaventHistory());
+                    var rh = this.getRelaventHistory();
+                    if (!rh.lc) rh = {lc: 'dash'};
+                    this.set('state', rh);
 
                     // listen for widget loaded events 
                     //  and decorate our layout to match the contents
@@ -262,7 +263,6 @@ YUI.add(
                     );
                     this._destroyExtraLayoutElements(key);
                     this._layouts[key] = new_layout;
-                    Y.HistoryLite.add(this._addMyHistoryPrefix({lc: version}));
                 },
 
                 /*
@@ -297,7 +297,6 @@ YUI.add(
                     );
                     this._destroyExtraLayoutElements(key);
                     this._layouts[key] = new_layout;
-                    Y.HistoryLite.add(this._addMyHistoryPrefix({lc: 'dash'}));
                 },
 
                 _onOuterLayoutRender: function (center_layout) {
@@ -419,8 +418,10 @@ YUI.add(
                         this._createDetailViewContainer();
                     }
 
-                    // widgets are loaded from the history of the containers
+                    // widgets are loaded from the state of the containers
                     this._executeSubmenuCallback();
+                    // Y.log('window:_onDTDVLayoutRender - calling notifyHistory');
+                    this._notifyHistory();
                 },
 
                 _onDashLayoutRender: function () {
@@ -446,6 +447,8 @@ YUI.add(
                         this._dash.show();
                     }
                     this._executeSubmenuCallback();
+                    // Y.log('window:_onDashLayoutRender - calling notifyHistory');
+                    this._notifyHistory();
                 },
 
                 _initMainMenu: function (layout, unit, orientation) {
@@ -494,6 +497,7 @@ YUI.add(
                 },
 
                 _createDataTableContainer: function () {
+                    // Y.log('window::_createDataTableContainer');
                     var top = this._layouts['center'].getUnitByPosition("top");
                     var dt_div = this._initContainerDiv('manage_datatable', top);
                     this._dt_container = new Y.IC.ManageContainer(
@@ -516,6 +520,7 @@ YUI.add(
                 },
 
                 _createDetailViewContainer: function () {
+                    // Y.log('window::_createDetailViewContainer');
                     var center = this._layouts['center'].getUnitByPosition("center");
                     var dv_div = this._initContainerDiv('manage_detail', center);
                     // no detail view container
@@ -553,6 +558,7 @@ YUI.add(
                     });
 
                     if (this.get('state.lc') !== 'dtmax') {
+                        // Y.log('window::_onSubmenuMousedown - hiding current widgets');
                         // hide the current widgets to take them out of the history loop
                         if (this._dt_container)
                             this._dt_container.hideCurrentWidget();
@@ -560,7 +566,8 @@ YUI.add(
                             this._dv_container.hideCurrentWidget();
                         // save a callback because the layout needs to be built/rendered first
                         this._center_layout_onrender_callback = Y.bind(this._doSubmenuRequest, this, e);
-                        Y.HistoryLite.add(this._addMyHistoryPrefix({lc: 'dtmax'}));
+                        // Y.log('window::_onSubmenuMousedown - setting state to dtmax');
+                        this.set('state.lc', 'dtmax');
                     }
                     else {
                         this._doSubmenuRequest(e);
@@ -591,9 +598,10 @@ YUI.add(
                 _onDetailClick: function (e) {
                     // Y.log('window::_onDetailClick');
                     if (this.get('state.lc') !== 'dtdv') {
-                        Y.HistoryLite.add(this._addMyHistoryPrefix({lc: 'dtdv'}));
                         // save a callback, because the layout needs to be built/rendered first
                         this._center_layout_onrender_callback = Y.bind(this._doDetailRequest, this, e);
+                        // Y.log('window::_onDetailClick - setting state to dtdv');
+                        this.set('state.lc', 'dtdv');
                     }
                     else {
                         this._doDetailRequest(e);
@@ -622,6 +630,7 @@ YUI.add(
                     var unit = this._layouts['center'].getUnitByPosition("top");
                     var widget = this._dt_container.get('current');
                     widget.fitToContainer(unit);
+                    // Y.log('made it through _fitDatatableToUnit');
                 },
 
                 _fitDetailViewToUnit: function () {
@@ -747,7 +756,7 @@ YUI.add(
                  * history.
                  */
                 _afterStateChange: function (e) {
-                    // Y.log('window::_afterStateChange');
+                    // Y.log('window::_afterStateChange - lc:' + this.get('state.lc'));
                     var state = this.get('state');
                     if (state.lc === undefined) {
                         this._initOuterLayout('dash');
@@ -803,8 +812,7 @@ YUI.add(
             "ic-manage-widget-dashboard",
             "ic-history-manager",
             "yui2-layout",
-            "yui2-resize",
-            "yui2-animation"
+            "yui2-resize"
         ]
     }
 );
