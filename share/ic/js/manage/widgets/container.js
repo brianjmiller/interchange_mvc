@@ -105,10 +105,7 @@ YUI.add(
 
                 syncUI: function () {
                     // Y.log('container::syncUI');
-                    var rh = {};
-                    if (this._has_history) {
-                        rh = this.getRelaventHistory();
-                    }
+                    var rh = this.getRelaventHistory();
                     this.set('state', rh);
                 },
 
@@ -196,7 +193,12 @@ YUI.add(
                             else {
                             }
                         }
+                        else {
+                            // Y.log('pulling the widget from the cache');
+                        }
                         new_widget = this._cache[config.args];
+                        // Y.log('new_widget vvvvvv');
+                        // Y.log(new_widget);
                     }
                     else if (config.kind === "empty") {
                         // Y.log('container::_doLoadWidget - Unloading -- EMPTY');
@@ -204,7 +206,8 @@ YUI.add(
                         new_widget = null;
                     }
                     else {
-                        // Y.log("Load widget called with undefined/unrecognized kind.  Doing nothing.  kind: " + config.kind);
+                        // Y.log("Load widget called with undefined/unrecognized kind. " +
+                        //       "Doing nothing.  kind: " + config.kind);
                         return;
                     }
 

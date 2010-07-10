@@ -19,21 +19,10 @@ YUI.add(
     "ic-manage-history",
     function (Y) {
 
-        var ManageHistory = function (config) {
-            ManageHistory.superclass.constructor.apply(this, arguments);
-            Y.Global.publish('ic_manage_history:update', {
-                broadcast:  2,   // global notification
-                emitFacade: true // emit a facade so we get the event target
-            });
-            Y.Global.publish('ic_manage_history:clear', {
-                broadcast:  2,   // global notification
-                emitFacade: true // emit a facade so we get the event target
-            });
-        };
- 
-        ManageHistory.NAME = "ic_manage_history";
- 
-        Y.extend(ManageHistory, Y.Base, {
+        var ManageHistory;
+        Y.namespace("IC");
+
+        Y.IC.ManageHistory = ManageHistory = {
 
             hqueue: {},    // not really a queue... 
                            //  keeps track of what needs to be in the 
@@ -59,17 +48,6 @@ YUI.add(
                 }
             ],
 
-            initializer : function (cfg) {
-                Y.Global.on(
-                    'ic_manage_history:update', 
-                    Y.bind(this.onUpdateHistory, this)
-                );
-                Y.Global.on(
-                    'ic_manage_history:clear', 
-                    Y.bind(this.onClearHistory, this)
-                );
-            },
-
             enqueueState: function (obj, state) {
                 // Y.log('history:enqueueState - hqueue');
                 if (!state)
@@ -77,37 +55,31 @@ YUI.add(
 
                 // push a prefixed version of the state onto the queue
                 var prefixed = obj._addMyHistoryPrefix(state);
-                this.hqueue = Y.merge(this.hqueue, prefixed);
-                // Y.log(Y.merge(this.hqueue));
+                ManageHistory.hqueue = Y.merge(ManageHistory.hqueue, prefixed);
+                // Y.log(Y.merge(ManageHistory.hqueue));
             },
 
             dequeueState: function (obj) {
                 // Y.log('history:dequeueState - hqueue');
-                this.hqueue = Y.merge(this.hqueue, obj);
-                // Y.log(Y.merge(this.hqueue));
+                ManageHistory.hqueue = Y.merge(ManageHistory.hqueue, obj);
+                // Y.log(Y.merge(ManageHistory.hqueue));
             },
 
             checkCompleteness: function (history) {
-                // Y.log('history:checkCompleteness - hqueue');
-                // Y.log(this.hqueue);
+                // Y.log('history:checkCompleteness - states');
 
                 if (!history) 
                     history = Y.HistoryLite.get();
 
-                // if the layout becomes less complex, clear the history
-                if (this.hqueue._mwlc &&
-                    this.hqueue._mwlc !== history._mwlc &&
-                    (history._mwlc === 'dtdv' ||
-                     (history._mwlc === 'dtmax' && 
-                      this.hqueue._mwlc === 'dash'))) {
-                    history = {};
-                }
-                // otherwise, merge the history with the queue (we're building)
-                var states = Y.merge(history, this.hqueue);
+                // merge the history with the queue, often necessary
+                //  when just one state has changed, in order to achieve
+                //  a profile.
+                var states = Y.merge(history, ManageHistory.hqueue);
+                // Y.log(states);
                 
                 // run through each of our profiles
                 var test;
-                Y.some(this.profiles, function (profile) {
+                Y.some(ManageHistory.profiles, function (profile) {
                     test = false;
                     // first test the sizes (have to account for cleared states)
                     var states_size = 0;
@@ -173,74 +145,45 @@ YUI.add(
                 }
 
                 // clear the queue
-                this.hqueue = {};
+                ManageHistory.hqueue = {};
 
                 // write a new history entry
-                // Y.log(new_history);
                 Y.HistoryLite.add(new_history);
             },
 
-            getEventObject: function (e) {
-                // sometimes I get e.details, othertimes e is the obj...
-                var obj;
-                try {
-                    obj = e.details[0];
-                } catch (err) {
-                    if (Y.Lang.isFunction(e.get)) 
-                        obj = e;
-                }
-
-                return obj;
-            },
-
-            onUpdateHistory: function (e) {
-                // Y.log('history:onUpdateHistory e');
-                // Y.log(e);
-
-                // if i don't stop event propagation, it continues forever.
-                if (Y.Lang.isFunction(e.stopPropagation))
-                    e.stopPropagation();
-
-                var obj = this.getEventObject(e);
+            updateHistory: function (obj) {
+                // Y.log('history:updateHistory');
                 if (obj) {
                     var state = obj.get('state');
                     var history = Y.HistoryLite.get();
+
                     /*
                     Y.log('state -> history -> hqueue');
                     Y.log(Y.merge(state));
                     Y.log(Y.merge(history));
-                    Y.log(Y.merge(this.hqueue));
+                    Y.log(Y.merge(ManageHistory.hqueue));
                     */
-                    this.enqueueState(obj, state);
-                    var states = this.checkCompleteness(history);
+
+                    ManageHistory.enqueueState(obj, state);
+                    var states = ManageHistory.checkCompleteness(history);
                     if (states) {
-                        this.setHistory(history, states);
+                        ManageHistory.setHistory(history, states);
                     }
                 }
             },
 
-            onClearHistory: function (e) {
-                // Y.log('history:onClearHistory - e');
-                // Y.log(e);
-
-                if (Y.Lang.isFunction(e.stopPropagation))
-                    e.stopPropagation();
-
-                var obj = this.getEventObject(e);
+            clearHistory: function (obj) {
+                // Y.log('history:clearHistory');
                 if (obj && Y.Object.size(obj) > 0) {
                     // add each item in the object to the clear queue
-                    this.dequeueState(obj);
+                    ManageHistory.dequeueState(obj);
                 }
             }
-        });
-
-        Y.namespace("IC");
-        Y.IC.ManageHistory = ManageHistory;
+        };
     },
     "@VERSION@",
     {
         requires: [
-            "base-base",
             "gallery-history-lite",
             "event-custom"
         ]

@@ -305,11 +305,13 @@ YUI.add(
                     // Y.log('tabpanel::addSrc');
                     if (response) {
                         var data = this._parseJSON(response);
-                        // debug with dummy data
+
+                        // NAM!!! debug with dummy data...
                         if (this.get('label') === '0 - Summary' ||
                            this.get('label') === '9 - Line') {
                             data = this._dummy_details;
                         }
+
                         var src_node = this._buildEmptySrcNode();
                         // check to see what renderer we should use
                         var renderer, content;

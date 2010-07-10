@@ -277,11 +277,13 @@ YUI.add(
                 },
 
                 getHeaderText: function () {
+                    // Y.log('detail::getHeaderText');
                     if (this._meta_data) {
                         var pks = this._meta_data.pk_settings[0];
                         var value = pks.value;
                         var header = this._meta_data.object_name + ' Detail ' + value;
-                        // Y.log('detail::getHeaderText - header: ' + header);
+                        // Y.log('detail::getHeaderText - header: ' + header + ' -> meta_data');
+                        // Y.log(this._meta_data);
                         return header;
                     }
                     else {
@@ -295,8 +297,10 @@ YUI.add(
 
                     if (! this.get('visible') ) return;
 
-                    // the meta_data is already available, so build the outer tabs from it
+                    // NAM!!! to test with th edummy data, uncomment next line
                     this._meta_data = this._dummy_data; // testing...
+
+                    // the meta_data is already available, so build the outer tabs from it
                     var prefix = this.get('prefix') + '_ot';
                     this._tabs = new Y.IC.ManageTabView(
                         {
@@ -366,8 +370,14 @@ YUI.add(
                         }
                     }, this);
                     // then select the correct tab from our state
-                    var tab_index = e.target.get('state.st') || 0;
-                    e.target.selectChild(Number(tab_index));
+                    // (there may not be any tabs, if the data is bad...)
+                    try {
+                        var tab_index = e.target.get('state.st') || 0;
+                        e.target.selectChild(Number(tab_index));
+                    } 
+                    catch (err) {
+                        Y.log(err);
+                    }
                     this.fire('manageFunctionDetail:tabsrendered');
                 },
 

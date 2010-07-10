@@ -48,7 +48,7 @@ YUI.add(
                     // Y.log('detail_actions::_afterStateChange - prefix: ' + 
                     //       this.get('prefix'));
                     var state = Number(this.get('state.st'));
-                    Y.log('state.st: ' + state);
+                    // Y.log('state.st: ' + state);
                     if (state !== undefined) {
                         this.selectTabByIndex(state);
                     }

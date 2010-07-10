@@ -54,9 +54,8 @@ YUI.add(
                         this
                     );
 
-                    if (this._has_history) {
-                        this.set('state', this.getRelaventHistory());
-                    }
+                    // xxx
+                    this.set('state', this.getRelaventHistory());
                 },
 
                 destructor: function () {
@@ -209,7 +208,7 @@ YUI.add(
 
                     // only update state if it doesn't match the current tab
                     //  to prevent an infinite loop
-                    if (this.get('state.st') != st) {
+                    if (this.get('state.st') !== st) {
                         // Y.log('setting state: ' + st);
                         this.set('state.st', st)
                     }

@@ -46,7 +46,6 @@ YUI.add(
                 _data_table: null,
                 _data_pager: null,
                 _has_data: false,
-                _fitted: false,
 
                 _buildUI: function() {
                     // build the table from our meta_data
@@ -73,10 +72,7 @@ YUI.add(
 
                 _setInitialState: function() {
                     // Y.log('list:_setInitialState');
-                    var rh = {};
-                    if (this._has_history) {
-                        rh = this.getRelaventHistory();
-                    }
+                    var rh = this.getRelaventHistory();
                     if (Y.Object.size(rh) === 0) {
                         rh = this._generateRequest();
                         rh.srec = '-1';
@@ -94,6 +90,25 @@ YUI.add(
                     this._data_table.doBeforeLoadData = Y.bind(this._doBeforeLoadData, this);
                     this._data_pager.unsubscribe("changeRequest", this._data_table.onPaginatorChangeRequest); 
                     this._data_pager.subscribe("changeRequest", this._handlePagination, this, true); 
+                },
+
+                hide: function () {
+                    // Y.log('list::hide - setting srec to -1');
+                    this.set('state.srec', -1);
+                    ManageFunctionList.superclass.hide.apply(this, arguments);
+                },
+
+                getHeaderText: function () {
+                    if (this._meta_data) {
+                        // Y.log(this._meta_data);
+                        var header = ' List ' + this._meta_data.model_name_plural;
+                        // Y.log('list::getHeaderText - header: ' + header);
+                        return header;
+                    }
+                    else {
+                        // Y.log('list::getHeaderText - header is null - no meta_data');
+                        return null;
+                    }
                 },
 
                 onPostRenderEvent: function (e) {
@@ -114,22 +129,29 @@ YUI.add(
                     var pkv = encodeURIComponent(e.record._oData[pk]);
                     if (this.get('state.srec') !== pkv) {
                         this.set('state.srec', pkv);
-                        this.notifyHistory();
+                        this._notifyHistory();
                     }
                 },
 
                 selectRecordFromHistory: function () {
-                    // Y.log('list::selectRecordFromHistory srec -> pk -> recs');
+                    // Y.log('list::selectRecordFromHistory srec');
 
                     /* 
                      *  preselect a record specified in the browser history
                      *  this only works if the record is on the first page.
                      *  need to integrate the paginator with the history manager...
                      */  
+
                     var srec = this.get('state.srec');
+                    // Y.log(srec);
                     if (srec) {
 	                    var recs = this._data_table.getRecordSet()._records;
                         var pk = this._meta_data.data_source_fields[0].key;
+                        /*
+                        Y.log('pk -> recs');
+                        Y.log(pk);
+                        Y.log(recs);
+                        */
 	                    var i,len;
 	                    for (i = 0,len = recs.length; i < len; ++i) { 
 	                        if (recs[i] && (recs[i].getData(pk) === decodeURIComponent(srec))) { 
@@ -140,14 +162,23 @@ YUI.add(
 	                }
                 },
 
-                setNewPaginator: function (num_results) {
-                    // Y.log('list::setNewPaginator');
+                setNewPaginator: function (num_results, offset) {
+                    if (!num_results) num_results = this._meta_data.page_count;
+                    if (!offset) offset = 0;
+                    // Y.log('list::setNewPaginator - num_results:' + 
+                    //       num_results + ' offset:' + offset);
                     this._has_data = false;
                     var YAHOO = Y.YUI2;
-                    var new_state = this._data_pager.getState({rowsPerPage: num_results});
+                    var new_state = this._data_pager.getState({
+                        rowsPerPage: num_results,
+                        recordOffset: offset
+                    });
                     this._data_pager = new YAHOO.widget.Paginator(new_state);
                     this._data_table.set('paginator', this._data_pager);
-                    this.set('state.results', num_results);
+
+                    var state = this.get('state');
+                    state.results = num_results;
+                    state.startIndex = offset;
                 },
 
                 _getDataSource: function () {
@@ -274,7 +305,7 @@ YUI.add(
                     var srec = this.get('state.srec');
                     if (srec) new_state.srec = srec;
                     this.set('state', new_state);
-                    this.get('state');
+                    // Y.log(this.get('state'));
                 },
 
                 _generateRequest: function (start_index, sort_key, dir, results) { 
@@ -301,12 +332,12 @@ YUI.add(
                     }
                 },
 
-                _updateFromHistory: function (state) {
-                    // Y.log('list::_updateFromHistory');
+                _sendDataTableRequest: function (state) {
+                    // Y.log('list::_sendDataTableRequest');
                     this._data_source.sendRequest(Y.QueryString.stringify(state), {
                         success: Y.bind(this._updateDataTableRecords, this),
                         failure: function() { 
-                            Y.log('list::_updateFromHistory - data_source.sendRequest failure'); 
+                            Y.log('list::_sendDataTableRequest - data_source.sendRequest failure'); 
                         },
                         scope: this._data_table,
                         argument: {} // Pass in container for population at runtime via doBeforeLoadData 
@@ -343,23 +374,9 @@ YUI.add(
                          pstate.rowsPerPage != state.results ||
                          (Y.Lang.isValue(tstate.sortedBy) && tstate.sortedBy.key != state.sort) ||
                          (Y.Lang.isValue(tstate.sortedBy) && tstate.sortedBy.dir != state.dir))) {
-                        this._updateFromHistory(state);
-                    }
-                },
-
-                getHeaderText: function () {
-                    if (this._meta_data) {
-                        // Y.log(this._meta_data);
-                        var header = ' List ' + this._meta_data.model_name_plural;
-                        // Y.log('list::getHeaderText - header: ' + header);
-                        return header;
-                    }
-                    else {
-                        // Y.log('list::getHeaderText - header is null - no meta_data');
-                        return null;
+                        this._sendDataTableRequest(state);
                     }
                 }
-
             }
         );
 

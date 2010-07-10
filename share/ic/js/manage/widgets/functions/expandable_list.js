@@ -23,6 +23,8 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
         [],                                             // classes to mix in  
         {                                               // overrides/additions
 
+        _fitted: false,
+
         _bindDataTableEvents: function () {
             // Y.log('expandable_list::_bindDataTableEvents');
             Y.IC.ManageFunctionExpandableList.superclass._bindDataTableEvents.call(this);
@@ -66,31 +68,38 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                 this._data_source,
                 data_table_config
             );
-            this._data_table.showTableMessage(this._data_table.get("MSG_LOADING"), 
-                                              YAHOO.widget.DataTable.CLASS_LOADING);
+            this._data_table.showTableMessage(
+                this._data_table.get("MSG_LOADING"), 
+                YAHOO.widget.DataTable.CLASS_LOADING
+            );
         },
 
-        _updateFromHistory: function (state) {
-            // Y.log('expandable_list::_updateFromHistory');
+        _sendDataTableRequest: function (state) {
+            // Y.log('expandable_list::_sendDataTableRequest - has_data:' + this._has_data);
             Y.IC.ManageFunctionExpandableList.superclass
-                ._updateFromHistory.apply(this, arguments);
+                ._sendDataTableRequest.apply(this, arguments);
+            this._fitted = false;
             if (this._has_data) this.fitToContainer();
         },
 
 
         hide: function () {
-            Y.IC.ManageFunctionExpandableList.superclass.hide.apply(this, arguments);
+            // Y.log('expandable_list::hide - setting has_data and fitted to false');
+            Y.IC.ManageFunctionExpandableList.superclass
+                .hide.apply(this, arguments);
             this._has_data = false;
             this._fitted = false;
         },
 
         show: function () {
-            Y.IC.ManageFunctionExpandableList.superclass.show.apply(this, arguments);
+            // Y.log('expandable_list::show - fitted:' + this._fitted);
+            Y.IC.ManageFunctionExpandableList.superclass
+                .show.apply(this, arguments);
             if (!this._fitted) this.fitToContainer();
         },
 
         fitToContainer: function (container) {
-            // Y.log('expandable_list::fitToContainer');            
+            // Y.log('BEGIN expandable_list::fitToContainer');
             var dt = this._data_table;
             if (dt) {
                 if (!container) {
@@ -109,9 +118,17 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                     .one('div.yui-layout-bd');
                 var unit_height = unit_body.get('region').height;
                 var magic = 58; // table header + paginator height?
-
+                var state = this.get('state');
+                var results = Number(state.results);
+                var total_recs = this._meta_data.total_objects;
+                /*
+                Y.log('dt_height: ' + dt_height +
+                      ' unit_height: ' + unit_height +
+                      ' results: ' + results +
+                      ' total_recs: ' + total_recs);
+                */
                 if (dt_height > unit_height) {
-                    // shrink the table to fit
+                    // Y.log('shrink the table to fit');
                     dt.set('height', (unit_height - magic) + 'px');
                     // determine the number of visible rows
                     var tr = Y.one(dt.getFirstTrEl());
@@ -120,9 +137,27 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                         var bd_height = dt_node.one('div.yui-dt-bd')
                             .get('region').height;
                         var recs_per_page = Math.round(bd_height / row_height);
-                        if (Number(this.get('state.results')) != recs_per_page)
-                            this.setNewPaginator(recs_per_page);
+                        if (results != recs_per_page) {
+                            // if there's a selected record, 
+                            //  calculate the recordOffset so that it
+                            //  becomes the top row of the new page
+                            var offset = state.startIndex || 0;
+                            var srow = this._data_table.getSelectedRows()[0];
+                            /*
+                            Y.log('recs_per_page -> offset -> srow');
+                            Y.log(recs_per_page);
+                            Y.log(offset);
+                            Y.log(srow);
+                            */
+                            if (srow) {
+                                var ri = this._data_table.getRecordIndex(srow);
+                                offset = Math.floor(ri / recs_per_page) * recs_per_page
+                                // Y.log('offset = ' + offset);
+                            }
+                            this.setNewPaginator(recs_per_page, offset);
+                        }
                         this._fitted = true;
+                        // Y.log('notifying history the new results after shriking.');
                         this._notifyHistory();
                     }
                     else {
@@ -132,12 +167,11 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                 }
 
                 else if (dt_height < unit_height) {
-                    // not as big as my unit, try to expand
+                    // Y.log('not as big as my unit, try to expand');
                     var tr = Y.one(dt.getFirstTrEl());
                     var new_height;
                     if (tr) {
                         var row_height = tr.get('region').height;
-                        var total_recs = this._meta_data.total_objects;
                         var max_rows = Math.round(
                             (unit_height - magic) / row_height
                         );
@@ -146,19 +180,35 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                         new_height = (max_rows * row_height) + magic;
                         if (new_height > unit_height) 
                             new_height = unit_height;
+                        // Y.log('fitted with max_rows:' + max_rows);
                         this._fitted = true;
                     }
                     else {
-                        // no visible rows, so set height to the unit_height,
-                        //  and leave us unfitted, to try again
+                        // Y.log('no visible rows, so set height to the ' +
+                        //       'unit_height, be unfitted, and try again');
                         new_height = unit_height;
                         this._fitted = false;
                     }
                     dt.set('height', (new_height - magic) + 'px');
-                    if (Number(this.get('state.results')) != max_rows) {
-                        this.setNewPaginator(max_rows);
-                        this._notifyHistory();
+                    if (results != max_rows) {
+                        // Y.log('notifying history new results after expansion.')
+                        // do i need to get new records?
+                        if (!(results > total_recs) &&
+                            (results < total_recs)) { 
+                            state.results = max_rows;
+                            state.startIndex = 0;
+                            // this._sendDataTableRequest(state);
+                            this._notifyHistory();
+                        }
+                        else {
+                            this._notifyHistory();
+                        }
                     }
+                }
+
+                else {
+                    // Y.log('notifying history with no change.');
+                    this._notifyHistory();
                 }
             }
         },

@@ -37,7 +37,8 @@ YUI.add(
                     var old_state = this.get('state'); //Y.HistoryLite.get();
                     var sp = this.STATE_PROPERTIES;
 
-                    /* // useful debug for a specific object
+                    // useful debug for a specific object
+                    /*
                     if (this.get('prefix') === '_ls') {
                         Y.log('sp -> old_state -> new_state :: prefix = ' + this.get('prefix'));
                         Y.log(sp);
@@ -71,7 +72,6 @@ YUI.add(
         HistoryManager.prototype = {
 
             STATE_PROPERTIES: {},
-            _has_history: false,
             _on_history_change: null,
 
             hide: function () {
@@ -95,7 +95,7 @@ YUI.add(
                     );
                 }
                 var state = this.get('state');
-                Y.Global.fire('updatehistory', this);
+                Y.IC.ManageHistory.updateHistory(this);
                 /*
                 var new_hist = this._addMyHistoryPrefix(state);
                 Y.HistoryLite.add(new_hist);
@@ -148,13 +148,19 @@ YUI.add(
              * STATE_PROPERTIES that are set in history data.
              */
             getRelaventHistory: function () {
+                // Y.log('history_manager::getRelaventHistory - prefix:' + this.get('prefix'));
                 var rh = {}; // relavent history
                 var sp = this.STATE_PROPERTIES;
                 var prefix = this.get('prefix');
                 var history = Y.HistoryLite.get();
                 Y.each(sp, function (v, k, obj) {
-                    if (!Y.Lang.isUndefined(history[prefix + k])) {
-                        rh[k] = history[prefix + k];
+                    var pfk = prefix + k;
+                    if (!Y.Lang.isUndefined(history[pfk])) {
+                        // sometimes this history is out-dated,
+                        //  so check for null values in the hqueue
+                        if (Y.IC.ManageHistory.hqueue[pfk] !== null) {
+                            rh[k] = history[pfk];
+                        }
                     }
                 });
                 return rh;
@@ -171,7 +177,7 @@ YUI.add(
             },
 
             clearHistoryOf: function (keys) {
-                // Y.log('history_manager::clearHistoryOf - prefix: ' + this.get('prefix'));
+                // Y.log('history_manager::clearHistoryOf');
                 if (Y.Lang.isString(keys)) {
                     keys = [keys];
                 }
@@ -180,7 +186,7 @@ YUI.add(
                 Y.each(keys, function (v, i, ary) {
                     clear[v] = null;
                 });
-                Y.Global.fire('ic_manage_history:clear', clear);
+                Y.IC.ManageHistory.clearHistory(clear);
             },
 
             _addMyHistoryPrefix: function (o) {
@@ -223,7 +229,7 @@ YUI.add(
                 // Y.log(this.get('state'));
                 if (!this.stateMatchesHistory()) {
                     try {
-                        Y.Global.fire('ic_manage_history:update', this);
+                        Y.IC.ManageHistory.updateHistory(this);
                     } catch (err) {
                         Y.log(err);
                     }
@@ -232,7 +238,6 @@ YUI.add(
 
             _onHistoryChange: function (e) {
                 // Y.log('history_manager::_onHistoryChange - prefix: ' + this.get('prefix'));
-                this._has_history = true;
                 if ( ! this.stateMatchesHistory() ) {
                     /*
                     Y.log('_onHistoryChange - state does not match history ... state -> history');
@@ -251,6 +256,7 @@ YUI.add(
     {
         requires: [
             "gallery-history-lite",
+            "ic-manage-history",
             "widget"
         ]
     }

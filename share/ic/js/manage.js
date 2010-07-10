@@ -44,7 +44,8 @@ YUI(
                     "ic-history-manager": {
                         path: "manage/history_manager.js",
                         requires: [
-                            "gallery-history-lite"
+                            "gallery-history-lite",
+                            "ic-manage-history"
                         ]
                     },
                     "ic-manage-widget": {
@@ -223,7 +224,6 @@ YUI(
 ).use(
     "console",
     "ic-manage-window",
-    "ic-manage-history",
     function (Y) {
 
         Y.Node.prototype.ancestors = function (selector) {
@@ -285,12 +285,6 @@ YUI(
                     console_toggle,
                     console
                 );
-
-                // both the history and window instances
-                //  should be singletons...
-
-                // instantiate a history instance
-                var hist = new Y.IC.ManageHistory();
 
                 // Y.log("setting up manage window");
                 var mw = new Y.IC.ManageWindow({prefix: '_mw'});

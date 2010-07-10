@@ -49,7 +49,7 @@ YUI.add(
             Y.IC.ManageWidget,
             {
                 initializer: function(config) {
-                    Y.log("dashboard initializer");
+                    // Y.log("dashboard initializer");
                 },
 
                 renderUI: function() {
