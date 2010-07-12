@@ -37,12 +37,14 @@ YUI.add(
                 {
                     _mwlc: 'dtmax', 
                     _dtkind: 'function', _dtsub_kind: 'list', _dtargs: true,
-                    _lsresults: true, _lsstartIndex: true, _lssort: true, _lsdir: true, _lssrec: '-1'
+                    _lsresults: true, _lsstartIndex: true, _lssort: true, 
+                    _lsdir: true, _lssrec: '-1'
                 },
                 {
                     _mwlc: 'dtdv', 
                     _dtkind: 'function', _dtsub_kind: 'list', _dtargs: true,
-                    _lsresults: true, _lsstartIndex: true, _lssort: true, _lsdir: true, _lssrec: true,
+                    _lsresults: true, _lsstartIndex: true, _lssort: true, 
+                    _lsdir: true, _lssrec: true,
                     _dvkind: 'function', _dvsub_kind: 'detail', _dvargs: true,
                     _dx_otst: true
                 }

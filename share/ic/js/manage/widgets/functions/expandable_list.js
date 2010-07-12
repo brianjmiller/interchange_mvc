@@ -29,7 +29,9 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
             // Y.log('expandable_list::_bindDataTableEvents');
             Y.IC.ManageFunctionExpandableList.superclass._bindDataTableEvents.call(this);
             if (this.get('expandable')) {
-                this._data_table.on('cellClickEvent', this._data_table.onEventToggleRowExpansion);
+                this._data_table.on(
+                    'cellClickEvent', 
+                    this._data_table.onEventToggleRowExpansion);
             }
         },
 
@@ -62,12 +64,14 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
             // Y.log('expandable_list::_initDataTable');
             // Y.log(this._data_source);
             var YAHOO = Y.YUI2;
+
             this._data_table = new YAHOO.widget.RowExpansionDataTable(
                 this.get('code'),
                 this._meta_data.data_table_column_defs,
                 this._data_source,
                 data_table_config
             );
+
             this._data_table.showTableMessage(
                 this._data_table.get("MSG_LOADING"), 
                 YAHOO.widget.DataTable.CLASS_LOADING
@@ -75,7 +79,8 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
         },
 
         _sendDataTableRequest: function (state) {
-            // Y.log('expandable_list::_sendDataTableRequest - has_data:' + this._has_data);
+            // Y.log('expandable_list::_sendDataTableRequest - has_data:' + 
+            //       this._has_data);
             Y.IC.ManageFunctionExpandableList.superclass
                 ._sendDataTableRequest.apply(this, arguments);
             this._fitted = false;
@@ -214,10 +219,11 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
         },
 
 		/**
-		 * This "expansionTemplate" function will be passed to the "rowExpansionTemplate" property
-		 * of the YUI DataTable to enable the row expansion feature. It is passed an arguments object
-		 * which contains context for the record that has been expanded as well as the newly created 
-		 * row.
+		 * This "expansionTemplate" function will be passed to the
+		 * "rowExpansionTemplate" property of the YUI DataTable to
+		 * enable the row expansion feature. It is passed an arguments
+		 * object which contains context for the record that has been
+		 * expanded as well as the newly created row.
 		 **/
 		expansionTemplate: function(o) {
             var _options = Y.Node.create(o.data.getData('_options'));

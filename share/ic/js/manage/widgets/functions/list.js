@@ -48,6 +48,7 @@ YUI.add(
                 _has_data: false,
 
                 _buildUI: function() {
+                    // Y.log('list::_buildUI');
                     // build the table from our meta_data
                     var data_table_config = {};
                     this._getDataSource();
@@ -56,9 +57,10 @@ YUI.add(
                     this._initDataTablePager(data_table_config);
                     this._adjustDataTableConfig(data_table_config);
                     this._initDataTable(data_table_config);
-                    this._data_table.handleDataReturnPayload = Y.bind(this._handleDataReturnPayload, this);
+                    this._data_table.handleDataReturnPayload = Y.bind(
+                        this._handleDataReturnPayload, this
+                    );
                     this._bindDataTableEvents();
-
                     this.after('stateChange', Y.bind(this._afterStateChange, this));
                     if (!this._on_history_change) {
                         this._on_history_change = Y.on(
@@ -81,15 +83,44 @@ YUI.add(
                 },
 
                 _bindDataTableEvents: function() {
-                    this._data_table.subscribe("rowMouseoverEvent", this._data_table.onEventHighlightRow);
-                    this._data_table.subscribe("rowMouseoutEvent", this._data_table.onEventUnhighlightRow);
-                    this._data_table.subscribe("rowClickEvent", this._data_table.onEventSelectRow);
-                    this._data_table.subscribe("postRenderEvent", Y.bind(this.onPostRenderEvent, this));
-                    this._data_table.subscribe("rowSelectEvent", Y.bind(this.onRowSelectEvent, this));
+                    this._data_table.subscribe(
+                        "rowMouseoverEvent", 
+                        this._data_table.onEventHighlightRow
+                    );
+                    this._data_table.subscribe(
+                        "rowMouseoutEvent", 
+                        this._data_table.onEventUnhighlightRow
+                    );
+                    this._data_table.subscribe(
+                        "rowClickEvent", 
+                        this._data_table.onEventSelectRow
+                    );
+                    this._data_table.subscribe(
+                        "postRenderEvent", 
+                        Y.bind(this.onPostRenderEvent, this)
+                    );
+                    this._data_table.subscribe(
+                        "rowSelectEvent", 
+                        Y.bind(this.onRowSelectEvent, this)
+                    );
+
                     // the state/history management additions:
-                    this._data_table.doBeforeLoadData = Y.bind(this._doBeforeLoadData, this);
-                    this._data_pager.unsubscribe("changeRequest", this._data_table.onPaginatorChangeRequest); 
-                    this._data_pager.subscribe("changeRequest", this._handlePagination, this, true); 
+                    this._data_table.doBeforeLoadData = Y.bind(
+                        this._doBeforeLoadData, 
+                        this
+                    );
+                    this._data_pager.unsubscribe(
+                        "changeRequest", 
+                        this._data_table.onPaginatorChangeRequest
+                    ); 
+                    this._data_pager.subscribe(
+                        "changeRequest", 
+                        this._handlePagination, 
+                        this, 
+                        true
+                    );
+
+                    this._data_table.sortColumn = Y.bind(this._handleSorting, this);
                 },
 
                 hide: function () {
@@ -154,7 +185,8 @@ YUI.add(
                         */
 	                    var i,len;
 	                    for (i = 0,len = recs.length; i < len; ++i) { 
-	                        if (recs[i] && (recs[i].getData(pk) === decodeURIComponent(srec))) { 
+	                        if (recs[i] && 
+                                (recs[i].getData(pk) === decodeURIComponent(srec))) { 
 	                            this._data_table.selectRow(recs[i]); 
 	                            break; 
 	                        } 
@@ -202,11 +234,12 @@ YUI.add(
                                 schema: {
                                     resultListLocator: 'rows',
                                     resultFields: this._meta_data.data_source_fields,
-                                    // none but 'total_objects' are actually delivered - modify the server side
+                                    // none but 'total_objects' are actually delivered
+                                    //  modify the server side
                                     metaFields: {
                                         totalRecords: 'total_objects',
                                         paginationRecordOffset : "startIndex", 
-                                        paginationRowsPerPage : "results", //"page_size", 
+                                        paginationRowsPerPage : "results",
                                         sortKey: "sort", 
                                         sortDir: "dir" 
                                     }
@@ -226,8 +259,12 @@ YUI.add(
                 },
 
                 _initDataTableSort: function (data_table_config) {
+                    // Y.log('list::_initDataTableSort');
                     if (Y.Lang.isValue(this._meta_data.data_table_initial_sort)) {
-                        data_table_config.sortedBy = this._meta_data.data_table_initial_sort;
+                        // make a copy, as config may change the values
+                        data_table_config.sortedBy = Y.merge(
+                            this._meta_data.data_table_initial_sort
+                        );
                     }
                 },
 
@@ -275,21 +312,45 @@ YUI.add(
                     // Y.log('list::doBeforeLoadData');
                     var meta = oResponse.meta; 
 
-                    /*
-                    Y.log('oRequest -> oResponse -> oPayload -> _meta_data');
-                    Y.log(oRequest);
-                    Y.log(oResponse);
-                    Y.log(oPayload);
-                    Y.log(this._meta_data);
-                    */
-
                     oPayload.totalRecords = meta.totalRecords || oPayload.totalRecords; 
                     oPayload.pagination = { 
-                        rowsPerPage: Number(meta.paginationRowsPerPage) || this._meta_data.page_count,
+                        rowsPerPage: Number(meta.paginationRowsPerPage) || 
+                            this._meta_data.page_count,
                         recordOffset: Number(meta.paginationRecordOffset) || 0 
                     }; 
-                    this._initDataTableSort(oPayload);
+
+                    // Convert from server value to DataTable format
+                    if (meta.sortDir) {
+                        if (!meta.sortDir.match(/^yui\-dt\-/)) {
+                            meta.sortDir = 'yui-dt-' + meta.sortDir;
+                        }
+                    }
+                    else {
+                        if (this._meta_data.data_table_initial_sort &&
+                            this._meta_data.data_table_initial_sort.dir) {
+                            meta.sortDir = 'yui-dt-' + 
+                                this._meta_data.data_table_initial_sort.dir;
+                        }
+                        else {
+                            meta.sortDir = 'yui-dt-desc'
+                        }
+                    }
+                    oPayload.sortedBy = {
+                        key: meta.sortKey || 
+                            this._meta_data.data_table_initial_sort.key || 
+                            "id",
+                        dir: meta.sortDir
+                    }; 
+
                     this._has_data = true;
+                    var new_state = {
+                        startIndex: oPayload.pagination.recordOffset,
+                        results: oPayload.pagination.rowsPerPage,
+                        sort: oPayload.sortedBy.key,
+                        dir: oPayload.sortedBy.dir,
+                        srec: this.get('state.srec') || '-1'
+                    };
+                    this.set('state', new_state);
                     return true; 
                 },
 
@@ -298,9 +359,13 @@ YUI.add(
 
                     // The next state will reflect the new pagination values 
                     // while preserving existing sort values 
-                    var sorted_by = this._data_table.get("sortedBy") || {key: null, dir: null};
+                    var sorted_by = this._data_table.get("sortedBy") || 
+                        {key: null, dir: null};
                     var new_state = this._generateRequest( 
-                        state.recordOffset, sorted_by.key, sorted_by.dir, state.rowsPerPage 
+                        state.recordOffset, 
+                        sorted_by.key, 
+                        sorted_by.dir, 
+                        state.rowsPerPage 
                     );
                     var srec = this.get('state.srec');
                     if (srec) new_state.srec = srec;
@@ -308,21 +373,46 @@ YUI.add(
                     // Y.log(this.get('state'));
                 },
 
+                _handleSorting: function (col, dir) {
+                    // Y.log('list::_handleSorting - col');
+                    // Y.log(col);
+
+                    // Calculate next sort direction for given Column
+                    var sort_dir = this._data_table.getColumnSortDir(col);
+
+                    // The next state will reflect the new sort values
+                    // while preserving existing pagination rows-per-page
+                    // As a best practice, a new sort will reset to page 0
+                    var new_state = this._generateRequest(
+                        0, 
+                        col.key, 
+                        sort_dir, 
+                        this._data_table.get("paginator").getRowsPerPage()
+                    );
+                    var srec = this.get('state.srec');
+                    if (srec) new_state.srec = srec;
+                    this.set('state', new_state);
+                },
+
                 _generateRequest: function (start_index, sort_key, dir, results) { 
                     // Y.log('list::_generateRequest');
                     var meta_sort_key = 'id';
-                    var meta_sort_dir = 'desc';
+                    var meta_sort_dir = 'yui-dt-desc';
                     if (Y.Lang.isValue(this._meta_data.data_table_initial_sort)) {
                         meta_sort_key = this._meta_data.data_table_initial_sort.key;
                         meta_sort_dir = this._meta_data.data_table_initial_sort.dir;
                     }
                     start_index = start_index || 0; 
                     sort_key = sort_key || meta_sort_key; 
-                    // Converts from DataTable format "yui-dt-[dir]" to server value "[dir]" 
-                    if (dir)
-                        dir = dir.substring(7);
-                    else 
+
+                    // converts sort dir to yui format
+                    if (!dir) {
                         dir = meta_sort_dir;
+                    }
+                    if (!dir.match(/^yui\-dt\-/)) {
+                        dir = 'yui-dt-' + dir;
+                    }
+
                     results = results || this._meta_data.page_count;
                     return {
                         'results': results,
@@ -332,15 +422,22 @@ YUI.add(
                     }
                 },
 
+
                 _sendDataTableRequest: function (state) {
                     // Y.log('list::_sendDataTableRequest');
+                    // make sure the sort dir is in server format
+                    if (state.dir && state.dir.match(/^yui\-dt\-/)) {
+                        state.dir = state.dir.substring(7);
+                    }
+
                     this._data_source.sendRequest(Y.QueryString.stringify(state), {
                         success: Y.bind(this._updateDataTableRecords, this),
                         failure: function() { 
-                            Y.log('list::_sendDataTableRequest - data_source.sendRequest failure'); 
+                            Y.log('list::_sendDataTableRequest - ' +
+                                  'data_source.sendRequest failure'); 
                         },
                         scope: this._data_table,
-                        argument: {} // Pass in container for population at runtime via doBeforeLoadData 
+                        argument: {} // populated at runtime via doBeforeLoadData 
                     });
                 },
 
@@ -353,15 +450,19 @@ YUI.add(
                 _afterStateChange: function (e) {
                     // Y.log('list::_afterStateChange - state');
                     var state = this.get('state');
-                    // Y.log(state);
+                    // Y.log(Y.merge(state));
                     var pstate = this._data_pager.getState();
                     var tstate = this._data_table.getState();
 
                     /*
-                    Y.log('pstate.recordOffset: ' + pstate.recordOffset + '  state.startIndex: ' + state.startIndex);
-                    Y.log('pstate.rowsPerPage: ' + pstate.rowsPerPage + '  state.results: ' + state.results);
-                    Y.log('tstate.sortedBy.key: ' + tstate.sortedBy.key + '  state.sort: ' + state.sort);
-                    Y.log('tstate.sortedBy.dir: ' + tstate.sortedBy.dir + '  state.dir: ' + state.dir);
+                    Y.log('pstate.recordOffset: ' + pstate.recordOffset + 
+                          '  state.startIndex: ' + state.startIndex);
+                    Y.log('pstate.rowsPerPage: ' + pstate.rowsPerPage + 
+                          '  state.results: ' + state.results);
+                    Y.log('tstate.sortedBy.key: ' + tstate.sortedBy.key + 
+                          '  state.sort: ' + state.sort);
+                    Y.log('tstate.sortedBy.dir: ' + tstate.sortedBy.dir + 
+                          '  state.dir: ' + state.dir);
                     Y.log('visible: ' + this.get('visible'));
                     Y.log('has_data: ' + this._has_data);
                     */
@@ -372,8 +473,10 @@ YUI.add(
                         (!this._has_data ||
                          pstate.recordOffset != state.startIndex ||
                          pstate.rowsPerPage != state.results ||
-                         (Y.Lang.isValue(tstate.sortedBy) && tstate.sortedBy.key != state.sort) ||
-                         (Y.Lang.isValue(tstate.sortedBy) && tstate.sortedBy.dir != state.dir))) {
+                         (Y.Lang.isValue(tstate.sortedBy) && 
+                          tstate.sortedBy.key != state.sort) ||
+                         (Y.Lang.isValue(tstate.sortedBy) && 
+                          tstate.sortedBy.dir != state.dir))) {
                         this._sendDataTableRequest(state);
                     }
                 }

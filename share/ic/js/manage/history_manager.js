@@ -40,7 +40,8 @@ YUI.add(
                     // useful debug for a specific object
                     /*
                     if (this.get('prefix') === '_ls') {
-                        Y.log('sp -> old_state -> new_state :: prefix = ' + this.get('prefix'));
+                        Y.log('sp -> old_state -> new_state :: prefix = ' + 
+                              this.get('prefix'));
                         Y.log(sp);
                         Y.log(Y.merge(old_state));
                         Y.log(Y.merge(new_state));
@@ -148,7 +149,8 @@ YUI.add(
              * STATE_PROPERTIES that are set in history data.
              */
             getRelaventHistory: function () {
-                // Y.log('history_manager::getRelaventHistory - prefix:' + this.get('prefix'));
+                // Y.log('history_manager::getRelaventHistory - prefix:' + 
+                //       this.get('prefix'));
                 var rh = {}; // relavent history
                 var sp = this.STATE_PROPERTIES;
                 var prefix = this.get('prefix');
@@ -237,10 +239,12 @@ YUI.add(
             },
 
             _onHistoryChange: function (e) {
-                // Y.log('history_manager::_onHistoryChange - prefix: ' + this.get('prefix'));
+                // Y.log('history_manager::_onHistoryChange - prefix: ' + 
+                //       this.get('prefix'));
                 if ( ! this.stateMatchesHistory() ) {
                     /*
-                    Y.log('_onHistoryChange - state does not match history ... state -> history');
+                    Y.log('_onHistoryChange - state does not match history ' +
+                          '... state -> history');
                     Y.log(Y.merge(this.get('state')));
                     Y.log(Y.merge(this.getRelaventHistory()));
                     */

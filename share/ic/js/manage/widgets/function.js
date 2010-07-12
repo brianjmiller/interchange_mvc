@@ -61,7 +61,8 @@ YUI.add(
                 initializer: function(config) {
                     // Y.log("function initializer: " + this.get("code"));
 
-                    var url = "/manage/function/" + this.get("code") + "/0?_mode=config&_format=json";
+                    var url = "/manage/function/" + this.get("code") + 
+                        "/0?_mode=config&_format=json";
 
                     if (config.addtl_args) {
                         url = url + "&" + config.addtl_args;
@@ -85,7 +86,9 @@ YUI.add(
                     // Y.log('function::renderUI');
 
                     // add a container
-                    this._content_node = Y.Node.create('<div id="' + this.get('code') + '">Loading...</div>');
+                    this._content_node = Y.Node.create(
+                        '<div id="' + this.get('code') + '">Loading...</div>'
+                    );
                     var cb = this.get('contentBox');
                     cb.setContent("");
                     cb.prepend(this._content_node);
