@@ -37,7 +37,7 @@ BEGIN
         column_list := column_list || quote_ident(column.column_name);
     END LOOP;
 
-    EXECUTE 'DROP VIEW clean.' || quote_ident(table_name);
+    EXECUTE 'DROP VIEW IF EXISTS clean.' || quote_ident(table_name);
     EXECUTE 'CREATE VIEW clean.' || quote_ident(table_name) || ' AS SELECT ' ||
         column_list || ' FROM public.' || quote_ident(table_name);
 
