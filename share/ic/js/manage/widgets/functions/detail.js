@@ -298,7 +298,7 @@ YUI.add(
                     if (! this.get('visible') ) return;
 
                     // NAM!!! to test with th edummy data, uncomment next line
-                    this._meta_data = this._dummy_data; // testing...
+                    // this._meta_data = this._dummy_data; // testing...
 
                     // the meta_data is already available, so build the outer tabs from it
                     var prefix = this.get('prefix') + '_ot';
