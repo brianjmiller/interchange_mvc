@@ -78,6 +78,8 @@ YUI.add(
                     //  and decorate our layout to match the contents
                     Y.on("manageFunctionList:tablerendered", 
                          Y.bind(this.onCheckFitness, this));
+                    Y.on("manageFunctionList:tablerendered", 
+                         Y.bind(this._listenToTheList, this));
                     Y.on("manageFunctionDetail:tabsrendered", 
                          Y.bind(this._fitDetailViewToUnit, this));
                 },
@@ -128,10 +130,12 @@ YUI.add(
                     // Y.log('window::_setCollapsedHeader');
                     var unit = o.layout.getUnitByPosition(o.unit);
                     var clip = Y.one(unit._clip);
-                    clip.append(
-                        '<span class="clip-header">Click to expand ' + 
-                            o.expand_what + '.</span>'
-                    );
+                    if (!Y.one('span.clip-header')) {
+                        clip.append(
+                            '<span class="clip-header">Click to expand ' + 
+                                o.expand_what + '.</span>'
+                        );
+                    }
                 },
 
                 // called by _afterStateChange
@@ -409,16 +413,11 @@ YUI.add(
                     // Y.log('window::_clearContainer');
                     Y.each(ary, function (v) {
                         var c = this._containers[v];
-                        if (c) {
-                            // clear history of any old state
-                            var sp = c.STATE_PROPERTIES;
-                            var keys = Y.Object.keys(
-                                c._addMyHistoryPrefix(sp)
-                            );
-                            c.clearHistoryOf(keys);
-                            if (c.hideCurrentWidget) {
-                                c.hideCurrentWidget();
-                            }
+                        if (c && c.clear) {
+                            c.clear();
+                        }
+                        if (c && c.hideCurrentWidget) {
+                            c.hideCurrentWidget();
                         }
                     }, this);
                 },
@@ -578,6 +577,22 @@ YUI.add(
                         "manageContainer:widgethidden", 
                         Y.bind(this.clearHeaderText, this)
                     );
+                },
+
+                _listenToTheList: function (e) {
+                    // Y.log('window::_listenToTheList');
+                    var widget = this._containers['dt'].get('current');
+                    if (widget.detach) {
+                        widget.detach('manageFunctionList:rowselected');
+                        widget.on(
+                            'manageFunctionList:rowselected',
+                            function () {
+                                this._clearContainer(['dv']);
+                                widget._notifyHistory();
+                            },
+                            this
+                        );
+                    }
                 },
 
                 _createDetailViewContainer: function () {

@@ -26,6 +26,10 @@ YUI.add(
                 broadcast:  1,   // instance notification
                 emitFacade: true // emit a facade so we get the event target
             });
+            this.publish('manageFunctionList:rowselected', {
+                broadcast:  1,   // instance notification
+                emitFacade: true // emit a facade so we get the event target
+            });
         };
 
         ManageFunctionList.NAME = "ic_manage_function_list";
@@ -160,7 +164,7 @@ YUI.add(
                     var pkv = encodeURIComponent(e.record._oData[pk]);
                     if (this.get('state.srec') !== pkv) {
                         this.set('state.srec', pkv);
-                        this._notifyHistory();
+                        this.fire('manageFunctionList:rowselected');
                     }
                 },
 

@@ -104,6 +104,17 @@ YUI.add(
                 return this.set('visible', true);
             },
 
+            clear: function () {
+                // Y.log('widget::clear - prefix: ' + this.get('prefix'));
+
+                // clear history of any old state
+                var sp = this.STATE_PROPERTIES;
+                var keys = Y.Object.keys(
+                    this._addMyHistoryPrefix(sp)
+                );
+                this.clearHistoryOf(keys);
+            },
+
             areEqualObjects: function (a, b) {
                 // Y.log('history_manager::areEqualObjects');
                 if (typeof(a) != typeof(b)) {

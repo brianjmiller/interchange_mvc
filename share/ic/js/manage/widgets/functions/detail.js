@@ -321,7 +321,7 @@ YUI.add(
                         this._tabs.add({
                             label: v.label, 
                             content: 'Loading...',
-                            index: v.order,
+                            index: i,
                             plugins: [{
                                 fn: Y.IC.ManageTabPanel,
                                 cfg: {
@@ -331,7 +331,7 @@ YUI.add(
                                     related: v.related || null
                                 }
                             }] 
-                        }, v.order);
+                        }, i);
                     }, this));
                     this._tabs.after('render', Y.bind(this._afterOuterTabsRender, this));
                     this._content_node.setContent('');
