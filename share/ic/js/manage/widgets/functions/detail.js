@@ -71,7 +71,187 @@ YUI.add(
                         {
                             order: 0,
                             label: '0 - Summary',
-                            src: '/manage/function/Orders_orderDetailView/0?_mode=config&_format=json&_pk_id=6'
+                            src: '/manage/function/Orders_orderDetailView/0?_mode=config&_format=json&_pk_id=6',
+                            content: {
+                                "renderer": {
+                                    "name": "ManageRevisionDetails",
+                                    "config": {}
+                                },
+                                "pk_settings": [
+                                    {
+                                        "value": 6,
+                                        "field": "id"
+                                    }
+                                ],
+                                "auto_settings": [
+                                    {
+                                        "value": "2009-11-30T11:01:00",
+                                        "field": "date_created"
+                                    },
+                                    {
+                                        "value": "2009-11-30T11:01:11",
+                                        "field": "last_modified"
+                                    },
+                                    {
+                                        "value": "",
+                                        "field": "created_by"
+                                    },
+                                    {
+                                        "value": "",
+                                        "field": "modified_by"
+                                    }
+                                ],
+                                "foreign_objects": [
+                                    {
+                                        "value": "web",
+                                        "display": "Web",
+                                        "field": "Order Kind"
+                                    }
+                                ],
+                                "object_name": "Order",
+                                "action_log": [
+                                    {
+                                        "by_name": "",
+                                        "content": "through checkout",
+                                        "date_created": "2009-11-30T11:01:00",
+                                        "label": "Row Created",
+                                        "details": [
+                                            "kind_code: web",
+                                            "status_code: new"
+                                        ]
+                                    },
+                                    {
+                                        "by_name": "",
+                                        "content": "",
+                                        "date_created": "2009-11-30T11:01:00",
+                                        "label": "Status Change",
+                                        "details": [
+                                            "from 'new' to '3d_auth_request_pending'"
+                                        ]
+                                    },
+                                    {
+                                        "by_name": "",
+                                        "content": "",
+                                        "date_created": "2009-11-30T11:01:03",
+                                        "label": "Status Change",
+                                        "details": [
+                                            "from '3d_auth_request_pending' to '3d_auth_requested'"
+                                        ]
+                                    },
+                                    {
+                                        "by_name": "",
+                                        "content": "",
+                                        "date_created": "2009-11-30T11:01:10",
+                                        "label": "Status Change",
+                                        "details": [
+                                            "from '3d_auth_requested' to '3d_auth_returned'"
+                                        ]
+                                    },
+                                    {
+                                        "by_name": "",
+                                        "content": "(from 3D auth result)",
+                                        "date_created": "2009-11-30T11:01:11",
+                                        "label": "Status Change",
+                                        "details": [
+                                            "from '3d_auth_returned' to 'revision_check_pending'"
+                                        ]
+                                    },
+                                    {
+                                        "by_name": "",
+                                        "content": "",
+                                        "date_created": "2009-11-30T11:01:11",
+                                        "label": "Status Change",
+                                        "details": [
+                                            "from 'revision_check_pending' to 'revision_pending'"
+                                        ]
+                                    }
+                                ],
+                                "other_settings": [
+                                    {
+                                        "value": 8,
+                                        "field": "billing_address_id"
+                                    },
+                                    {
+                                        "value": "",
+                                        "field": "comments"
+                                    },
+                                    {
+                                        "value": 8,
+                                        "field": "delivery_address_id"
+                                    },
+                                    {
+                                        "value": null,
+                                        "field": "delivery_date_authoritative"
+                                    },
+                                    {
+                                        "value": "2009-11-30",
+                                        "field": "delivery_date_preferred"
+                                    },
+                                    {
+                                        "value": "brian@endpoint.com",
+                                        "field": "email"
+                                    },
+                                    {
+                                        "value": "automated",
+                                        "field": "fraud_status_code"
+                                    },
+                                    {
+                                        "value": "24.74.61.172",
+                                        "field": "ip_address"
+                                    },
+                                    {
+                                        "value": null,
+                                        "field": "logistics_service_code"
+                                    },
+                                    {
+                                        "value": {
+                                            "local_rd_secs": 39660,
+                                            "local_rd_days": 733741,
+                                            "rd_nanosecs": 217529000,
+                                            "locale": {
+                                                "default_time_format_length": "medium",
+                                                "native_territory": "United States",
+                                                "native_language": "English",
+                                                "native_complete_name": "English United States",
+                                                "en_language": "English",
+                                                "id": "en_US",
+                                                "default_date_format_length": "medium",
+                                                "en_complete_name": "English United States",
+                                                "en_territory": "United States"
+                                            },
+                                            "local_c": {
+                                                "hour": 11,
+                                                "second": 0,
+                                                "month": 11,
+                                                "quarter": 4,
+                                                "day_of_year": 334,
+                                                "day_of_quarter": 61,
+                                                "minute": 1,
+                                                "day": 30,
+                                                "day_of_week": 1,
+                                                "year": 2009},
+                                            "utc_rd_secs": 39660,
+                                            "formatter": null,
+                                            "tz": {
+                                                "name": "floating",
+                                                "offset": 0
+                                            },
+                                            "utc_year": 2010,
+                                            "utc_rd_days": 733741,
+                                            "offset_modifier": 0
+                                        },
+                                        "field": "order_date"
+                                    },
+                                    {
+                                        "value": "jWCu5YZF",
+                                        "field": "session"
+                                    },
+                                    {
+                                        "value": "revision_pending",
+                                        "field": "status_code"
+                                    }
+                                ]
+                            }
                         },
                         {
                             order: 1,
@@ -278,16 +458,24 @@ YUI.add(
 
                 getHeaderText: function () {
                     // Y.log('detail::getHeaderText');
-                    if (this._meta_data) {
+                    if (this._meta_data) {                        
                         var pks = this._meta_data.pk_settings[0];
                         var value = pks.value;
-                        var header = this._meta_data.object_name + ' Detail ' + value;
-                        // Y.log('detail::getHeaderText - header: ' + header + ' -> meta_data');
+                        var header_desc = '';
+                        if (this._meta_data.header_desc) {
+                            header_desc = ' - ' + 
+                                this._meta_data.header_desc + ' ';
+                        }
+                        var header = this._meta_data.object_name + ' Detail ' +
+                            header_desc + '[' + value + ']';
+                        // Y.log('detail::getHeaderText - header: ' 
+                        //       + header + ' -> meta_data');
                         // Y.log(this._meta_data);
                         return header;
                     }
                     else {
-                        // Y.log('detail::getHeaderText - header is null - no meta_data');
+                        // Y.log('detail::getHeaderText - ' +
+                        //       'header is null - no meta_data');
                         return null;
                     }
                 },
@@ -300,7 +488,8 @@ YUI.add(
                     // NAM!!! to test with th edummy data, uncomment next line
                     // this._meta_data = this._dummy_data; // testing...
 
-                    // the meta_data is already available, so build the outer tabs from it
+                    // the meta_data is already available, 
+                    //  so build the outer tabs from it
                     var prefix = this.get('prefix') + '_ot';
                     this._tabs = new Y.IC.ManageTabView(
                         {
@@ -309,15 +498,15 @@ YUI.add(
                     );
                     Y.each(this._meta_data.tabs, Y.bind(function (v, i) {
                         // Y.log('_meta_data.tab: ' + i);
-                        if (!Y.Lang.isValue(v.src)) v['src'] = null;
-                        if (!Y.Lang.isValue(v.related)) v['related'] = null;
+
                         /*
                         Y.log('v -> src -> related -> content');
                         Y.log(v);
                         Y.log(v.src);
                         Y.log(v.related);
-                        Y.log(content);
+                        Y.log(v.content);
                         */
+
                         this._tabs.add({
                             label: v.label, 
                             content: 'Loading...',
@@ -333,7 +522,10 @@ YUI.add(
                             }] 
                         }, i);
                     }, this));
-                    this._tabs.after('render', Y.bind(this._afterOuterTabsRender, this));
+                    this._tabs.after(
+                        'render', 
+                        Y.bind(this._afterOuterTabsRender, this)
+                    );
                     this._content_node.setContent('');
                     this._tabs.render(this._content_node);
                     this.fire('manageFunction:loaded');

@@ -68,6 +68,9 @@ YUI.add(
                             content.push('<dt>' + k + ': </dt>' +
                                          '<dd>' + v + '&nbsp;</dd>');
                         }
+                        else if (k === 'renderer') {
+                            // skip these for now...
+                        }
                         else if (k === 'action_log') {
                             // skip these for now...
                         }

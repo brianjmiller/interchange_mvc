@@ -88,9 +88,6 @@ YUI.add(
   </div>\
 </li>';
 
-        /**
-         * There are no attributes to set.  It's that simple.
-         */
         TreeviewLite.ATTRS = {
             menu: {
                 value: null

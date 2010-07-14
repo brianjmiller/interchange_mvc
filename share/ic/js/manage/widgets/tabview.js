@@ -193,7 +193,8 @@ YUI.add(
                 },
 
                 _afterStateChange: function (e) {
-                    // Y.log('tabview::_afterStateChange - prefix: ' + this.get('prefix'));
+                    // Y.log('tabview::_afterStateChange - prefix: ' + 
+                    //       this.get('prefix'));
                     var state = Number(this.get('state.st'));
                     // Y.log('state.st: ' + state);
                     if (state !== undefined) {
@@ -203,7 +204,8 @@ YUI.add(
                 },
 
                 _myAfterSelectionChange: function (e) {
-                    // Y.log('tabview::_myAfterSelectionChange - st: ' + e.newVal.get('index'));
+                    // Y.log('tabview::_myAfterSelectionChange - st: ' + 
+                    //       e.newVal.get('index'));
                     var st = e.newVal.get('index');
 
                     // only update state if it doesn't match the current tab

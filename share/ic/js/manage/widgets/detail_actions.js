@@ -44,6 +44,14 @@ YUI.add(
                  *  |-----------------------|
                  */
 
+                _afterRender: function (e) {
+                    Y.log('detail_actions::_afterRender - v[list]');
+                    Y.each(this._tab_refs, function (v) {
+                        Y.log(v);
+                        // v.tab.fire('ready');
+                    }, this);
+                },
+
                 _afterStateChange: function (e) {
                     // Y.log('detail_actions::_afterStateChange - prefix: ' + 
                     //       this.get('prefix'));

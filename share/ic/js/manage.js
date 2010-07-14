@@ -68,13 +68,21 @@ YUI(
                             "ic-manage-plugin-tabpanel-css",
                             "gallery-widget-io",
                             "widget-stdmod",
+                            "ic-manage-renderers-default",
                             "ic-manage-renderers-revisiondetails",
                             "ic-manage-plugin-treeview"
+                        ]
+                    },
+                    "ic-manage-renderers-default": {
+                        path: "manage/renderers/default.js",
+                        requires: [
+                            "base-base"
                         ]
                     },
                     "ic-manage-renderers-revisiondetails": {
                         path: "manage/renderers/revision_details.js",
                         requires: [
+                            "base-base",
                             "ic-manage-widget-detailactions",
                             "gallery-form"
                         ]

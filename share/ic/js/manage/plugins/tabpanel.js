@@ -26,189 +26,11 @@ YUI.add(
                 Y.WidgetStdMod
             ],
             {                        // prototype overrides/additions
-
-                _dummy_details: {
-                    "renderer": {
-                        "name": "ManageRevisionDetails",
-                        "config": {}
-                    },
-                    "pk_settings": [
-                        {
-                            "value": 6,
-                            "field": "id"
-                        }
-                    ],
-                    "auto_settings": [
-                        {
-                            "value": "2009-11-30T11:01:00",
-                            "field": "date_created"
-                        },
-                        {
-                            "value": "2009-11-30T11:01:11",
-                            "field": "last_modified"
-                        },
-                        {
-                            "value": "",
-                            "field": "created_by"
-                        },
-                        {
-                            "value": "",
-                            "field": "modified_by"
-                        }
-                    ],
-                    "foreign_objects": [
-                        {
-                            "value": "web",
-                            "display": "Web",
-                            "field": "Order Kind"
-                        }
-                    ],
-                    "object_name": "Order",
-                    "action_log": [
-                        {
-                            "by_name": "",
-                            "content": "through checkout",
-                            "date_created": "2009-11-30T11:01:00",
-                            "label": "Row Created",
-                            "details": [
-                                "kind_code: web",
-                                "status_code: new"
-                            ]
-                        },
-                        {
-                            "by_name": "",
-                            "content": "",
-                            "date_created": "2009-11-30T11:01:00",
-                            "label": "Status Change",
-                            "details": [
-                                "from 'new' to '3d_auth_request_pending'"
-                            ]
-                        },
-                        {
-                            "by_name": "",
-                            "content": "",
-                            "date_created": "2009-11-30T11:01:03",
-                            "label": "Status Change",
-                            "details": [
-                                "from '3d_auth_request_pending' to '3d_auth_requested'"
-                            ]
-                        },
-                        {
-                            "by_name": "",
-                            "content": "",
-                            "date_created": "2009-11-30T11:01:10",
-                            "label": "Status Change",
-                            "details": [
-                                "from '3d_auth_requested' to '3d_auth_returned'"
-                            ]
-                        },
-                        {
-                            "by_name": "",
-                            "content": "(from 3D auth result)",
-                            "date_created": "2009-11-30T11:01:11",
-                            "label": "Status Change",
-                            "details": [
-                                "from '3d_auth_returned' to 'revision_check_pending'"
-                            ]
-                        },
-                        {
-                            "by_name": "",
-                            "content": "",
-                            "date_created": "2009-11-30T11:01:11",
-                            "label": "Status Change",
-                            "details": [
-                                "from 'revision_check_pending' to 'revision_pending'"
-                            ]
-                        }
-                    ],
-                    "other_settings": [
-                        {
-                            "value": 8,
-                            "field": "billing_address_id"
-                        },
-                        {
-                            "value": "",
-                            "field": "comments"
-                        },
-                        {
-                            "value": 8,
-                            "field": "delivery_address_id"
-                        },
-                        {
-                            "value": null,
-                            "field": "delivery_date_authoritative"
-                        },
-                        {
-                            "value": "2009-11-30",
-                            "field": "delivery_date_preferred"
-                        },
-                        {
-                            "value": "brian@endpoint.com",
-                            "field": "email"
-                        },
-                        {
-                            "value": "automated",
-                            "field": "fraud_status_code"
-                        },
-                        {
-                            "value": "24.74.61.172",
-                            "field": "ip_address"
-                        },
-                        {
-                            "value": null,
-                            "field": "logistics_service_code"
-                        },
-                        {
-                            "value": {
-                                "local_rd_secs": 39660,
-                                "local_rd_days": 733741,
-                                "rd_nanosecs": 217529000,
-                                "locale": {
-                                    "default_time_format_length": "medium",
-                                    "native_territory": "United States",
-                                    "native_language": "English",
-                                    "native_complete_name": "English United States",
-                                    "en_language": "English",
-                                    "id": "en_US",
-                                    "default_date_format_length": "medium",
-                                    "en_complete_name": "English United States",
-                                    "en_territory": "United States"
-                                },
-                                "local_c": {
-                                    "hour": 11,
-                                    "second": 0,
-                                    "month": 11,
-                                    "quarter": 4,
-                                    "day_of_year": 334,
-                                    "day_of_quarter": 61,
-                                    "minute": 1,
-                                    "day": 30,
-                                    "day_of_week": 1,
-                                    "year": 2009},
-                                "utc_rd_secs": 39660,
-                                "formatter": null,
-                                "tz": {
-                                    "name": "floating",
-                                    "offset": 0
-                                },
-                                "utc_year": 2010,
-                                "utc_rd_days": 733741,
-                                "offset_modifier": 0
-                            },
-                            "field": "order_date"
-                        },
-                        {
-                            "value": "jWCu5YZF",
-                            "field": "session"
-                        },
-                        {
-                            "value": "revision_pending",
-                            "field": "status_code"
-                        }
-                    ]
-                },
-
                 _actions: null,
+                _default_renderer: {
+                    name: 'ManageDefaultRenderer',
+                    config: {}
+                },
 
                 initializer: function() {
                     // Y.log('tabpanel::initializer');
@@ -222,7 +44,10 @@ YUI.add(
                     });
 
                     var tab = this.get('host');
-                    tab.on('selectedChange', Y.bind(this._afterSelectedChange, this));
+                    tab.on(
+                        'selectedChange', 
+                        Y.bind(this._afterSelectedChange, this)
+                    );
                     tab.on('ready', Y.bind(this._onReady, this));
                 },
 
@@ -238,16 +63,20 @@ YUI.add(
 
                     this.set('contentBox', panel);
                     this._stdModNode = panel;
-                    if (this.get('content')) this.set('headerContent', 1);
-                    if (this.get('uri')) this.set('bodyContent', 1);
+
+                    // never header..?
+                    if (this.get('content') || this.get('uri')) {
+                        this.set('bodyContent', 1);
+                    }
                     if (this.get('related')) this.set('footerContent', 1);
+
                     this._renderUIStdMod();
                     this._bindUIStdMod();
                     this.populateTab(this);
                 },
                 
                 populateTab: function (tab) {
-                    // Y.log('tabpanel::populateTab');
+                    // Y.log('tabpanel::populateTab - label:' + this.get('label'));
 
                     // first, deal with recursion
                     if (tab.get('related')) {
@@ -259,7 +88,7 @@ YUI.add(
                         if (tab.get('content')) {
                             tab.addContent(tab.get('content'));
                         }
-                        if (tab.get('uri')) {
+                        else if (tab.get('uri')) {
                             tab.prepareSrc();
                         }
                     }
@@ -276,60 +105,40 @@ YUI.add(
                     }
                 }, 
 
-                addContent: function (content) {
-                    // Y.log('tabpanel::addContent');
-                    var content_node = this._buildEmptyContentNode();
-                    if (Y.Lang.isString(content)) {
-                        content_node.setContent(content);
+                addContent: function (data) {
+                    // Y.log('tabpanel::addContent - data');
+                    // Y.log(data);
+                    var node = this._buildEmptyContentNode();
+                    if (Y.Lang.isString(data)) {
+                        node.setContent(data);
                     }
-                    else if (Y.Lang.isObject(content)) {
-                        // content (the stdmod hd) should never be too complex.
-                        // - either a simple string or table.
-                        // So it gets the default renderer
-                        content_node.setContent(
-                            this._buildContentString(content)
-                        );
+                    else if (Y.Lang.isObject(data)) {
+                        var renderer;
+                        if (Y.Lang.isValue(data.renderer)) {
+                            renderer = data.renderer;
+                        }
+                        else {
+                            renderer = this._default_renderer;
+                        }
+                        renderer = new Y.IC[renderer.name](renderer.config);
+                        node = renderer.getContent(data, node);
                     }
-                    this.set('headerContent', content_node);
+                    this.set('bodyContent', node);
                     this.fire('manageTabPanel:contentloaded');
                 },
 
                 prepareSrc: function() {
                     // Y.log('tabpanel::prepareSrc');
-                    var src_node = this._buildEmptySrcNode();
-                    src_node.setContent('');
-                    this.set('bodyContent', src_node);
+                    var node = this._buildEmptyContentNode();
+                    node.setContent('');
+                    this.set('bodyContent', node);
                 },
 
                 addSrc: function(response) {
                     // Y.log('tabpanel::addSrc');
                     if (response) {
                         var data = this._parseJSON(response);
-
-                        // NAM!!! debug with dummy data...
-                        /*
-                        if (this.get('label') === '0 - Summary' ||
-                           this.get('label') === '9 - Line') {
-                            data = this._dummy_details;
-                        }
-                        */
-
-                        var src_node = this._buildEmptySrcNode();
-                        // check to see what renderer we should use
-                        var renderer, content;
-                        if (Y.Lang.isValue(data.renderer)) 
-                            renderer = data.renderer;
-                        if (!renderer) {
-                            content = this._buildContentString(data);
-                            src_node.setContent(content);
-                        }
-                        else {
-                            renderer = new Y.IC[renderer.name](renderer.config);
-                            src_node = renderer.getContent(data, src_node);
-                        }
-
-                        this.set('bodyContent', src_node);
-                        this.fire('manageTabPanel:srcloaded');
+                        this.addContent(data);
                     }
                 },
 
@@ -346,7 +155,7 @@ YUI.add(
 
                 _onReady: function (e) {
                     // Y.log('tabpanel::_onReady');
-                    panel = this.get('host').get('panelNode');
+                    var panel = this.get('host').get('panelNode');
                     this.initStdMod(panel);
                 },
 
@@ -388,33 +197,6 @@ YUI.add(
                         Y.log(json_str);
                     }
                     return json;
-                },
-
-                _buildContentString: function (data) {
-                    // Y.log('tabpanel::_buildContentString');
-                    var content = ['<dl>'];
-                    Y.each(data, function (v, k) {
-                        if (Y.Lang.isString(v) || Y.Lang.isNumber(v)) {
-                            content.push('<dt>' + k + ': </dt>' +
-                                         '<dd>' + v + '&nbsp;</dd>');
-                        }
-                        else if (k === 'action_log') {
-                            // skip these for now...
-                        }
-                        else if (Y.Lang.isArray(v) && 
-                                 Y.Lang.isObject(v[0]) && 
-                                 Y.Lang.isValue(v[0].field)) {
-                            Y.each(v, function (o) {
-                                content.push('<dt>' + o.field + ': </dt>' + 
-                                             '<dd>' + o.value + '&nbsp;</dd>');
-                            });
-                        }
-                        else if (Y.Lang.isObject(v)) {
-                            content.push(this._buildContentString(v));
-                        }
-                    }, this);
-                    content.push('</dl>');
-                    return content.join('');
                 },
 
                 _buildRelatedTreeview: function (related_ary) {
