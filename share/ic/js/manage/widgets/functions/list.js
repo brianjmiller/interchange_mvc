@@ -426,9 +426,30 @@ YUI.add(
                     }
                 },
 
+                _onFailedRequest: function (e) {
+                    var guid = Y.guid();
+                    this._data_table.showTableMessage(
+                        "Failed to load. " + 
+                            '<a id="' + guid + '">Try again?</a>', 
+                        "yui-dt-error"
+                    );
+                    Y.log('list::_sendDataTableRequest - ' +
+                          'data_source.sendRequest failure'); 
+                    var link = Y.one('#' + guid);
+                    link.on('click', function () {
+                        this._sendDataTableRequest(
+                            this._generateRequest()
+                        );
+                    }, this);
+                },
 
                 _sendDataTableRequest: function (state) {
                     // Y.log('list::_sendDataTableRequest');
+
+                    this._data_table.showTableMessage(
+                        "Loading...", "yui-dt-loading"
+                    );
+
                     // make sure the sort dir is in server format
                     if (state.dir && state.dir.match(/^yui\-dt\-/)) {
                         state.dir = state.dir.substring(7);
@@ -436,10 +457,7 @@ YUI.add(
 
                     this._data_source.sendRequest(Y.QueryString.stringify(state), {
                         success: Y.bind(this._updateDataTableRecords, this),
-                        failure: function() { 
-                            Y.log('list::_sendDataTableRequest - ' +
-                                  'data_source.sendRequest failure'); 
-                        },
+                        failure: Y.bind(this._onFailedRequest, this),
                         scope: this._data_table,
                         argument: {} // populated at runtime via doBeforeLoadData 
                     });
