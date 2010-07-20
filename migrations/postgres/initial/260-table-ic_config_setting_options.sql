@@ -27,7 +27,7 @@ CREATE TABLE ic_config_setting_options (
     last_modified           TIMESTAMP NOT NULL,
     modified_by             VARCHAR(32) NOT NULL,
 
-    setting_code            VARCHAR(50) NOT NULL
+    setting_code            VARCHAR(255) NOT NULL
                                 CONSTRAINT fk_setting_code
                                 REFERENCES ic_config_settings(code)
                                 ON DELETE RESTRICT
@@ -39,8 +39,8 @@ CREATE TABLE ic_config_setting_options (
                                 REFERENCES ic_config_levels(code)
                                 ON DELETE RESTRICT
                                 ON UPDATE CASCADE,
-    code                    VARCHAR(50) NOT NULL,
-    display_label           VARCHAR(100) NOT NULL,
+    code                    VARCHAR(255) NOT NULL,
+    display_label           VARCHAR(255) NOT NULL,
     is_default              BOOLEAN NOT NULL,
     sort_order              INTEGER,
 

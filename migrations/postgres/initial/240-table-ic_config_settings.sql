@@ -18,7 +18,7 @@ BEGIN;
 set client_min_messages='ERROR';
 
 CREATE TABLE ic_config_settings (
-    code                        VARCHAR(50) PRIMARY KEY
+    code                        VARCHAR(255) PRIMARY KEY
                                     CONSTRAINT ic_config_settings_code_valid
                                     CHECK (length(code) > 0 AND code = trim(code)),
 
@@ -27,7 +27,7 @@ CREATE TABLE ic_config_settings (
     last_modified               TIMESTAMP NOT NULL,
     modified_by                 VARCHAR(32) NOT NULL,
 
-    display_label               VARCHAR(100) NOT NULL
+    display_label               VARCHAR(255) NOT NULL
                                     CONSTRAINT ic_config_settings_display_label_valid
                                     CHECK (length(display_label) > 0 AND display_label = trim(display_label)),
     should_cascade              BOOLEAN NOT NULL,
