@@ -12,10 +12,10 @@ __PACKAGE__->meta->setup(
 
         __PACKAGE__->boilerplate_columns,
 
-        setting_code  => { type => 'varchar', length => 50, not_null => 1 },
+        setting_code  => { type => 'varchar', length => 255, not_null => 1 },
         level_code    => { type => 'varchar', length => 30, not_null => 1 },
-        code          => { type => 'varchar', length => 50, not_null => 1 },
-        display_label => { type => 'varchar', length => 50, not_null => 1 },
+        code          => { type => 'varchar', length => 255, not_null => 1 },
+        display_label => { type => 'varchar', length => 255, not_null => 1 },
 
         is_default   => { type => 'boolean', not_null => 1, },
         sort_order   => { type => 'integer' },

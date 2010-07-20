@@ -8,11 +8,11 @@ use base qw( IC::Model::Rose::Object );
 __PACKAGE__->meta->setup(
     table         => 'ic_config_settings',
     columns       => [
-        code                      => { type => 'varchar', not_null => 1, length => 50, primary_key => 1 },
+        code                      => { type => 'varchar', not_null => 1, length => 255, primary_key => 1 },
 
         __PACKAGE__->boilerplate_columns,
 
-        display_label             => { type => 'varchar', not_null => 1, length => 100 },
+        display_label             => { type => 'varchar', not_null => 1, length => 255 },
         should_cascade            => { type => 'boolean', not_null => 1 },
         should_combine            => { type => 'boolean', not_null => 1 },
         is_web_editable           => { type => 'boolean', not_null => 1 },
