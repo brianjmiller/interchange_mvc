@@ -17,6 +17,7 @@ __PACKAGE__->export_tag(
     all => [
         qw(
             get_file
+            delete_file
             get_file_url
             get_file_resource_objs
             get_file_property_values
@@ -206,6 +207,48 @@ sub store_file_for_resource {
         my ($suffix) = $file =~ /\.(\w+)$/;
 
         $file_obj->store( $file, extension => $suffix, copy => 1 );
+    };
+    if ($@) {
+        my $exception = $@;
+
+        $db->rollback;
+
+        die $exception;
+    }
+
+    $db->commit unless $in_transaction;
+}
+
+#
+# Utility sub to delete the indicated filesystem path for the object
+# in the indicated resource.
+#
+# If there is no file to delete, it returns without raising any issues
+# You'll need to check for the file separately if that is a condition you
+# care about.
+#
+sub delete_file {
+    my $self = shift;
+    my $args = { @_ };
+
+    my $file_obj = $self->get_file(@{[%$args]});
+    return unless $file_obj;
+
+    #unless ($file_obj) {
+        #IC::Exception->throw("Can't retrieve file object for deletion");
+    #}
+
+    my $db = $self->db;
+    my $in_transaction = $db->dbh->ping == 3;
+
+    eval {
+        $db->begin_work unless $in_transaction;
+
+        unlink($file_obj->local_path) == 1 
+            or IC::Exception->throw('Unable to unlink ' . $file_obj->local_path)
+        ;
+
+        $file_obj->delete;
     };
     if ($@) {
         my $exception = $@;
