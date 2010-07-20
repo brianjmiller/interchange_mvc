@@ -172,7 +172,12 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
+            "ic-manage-widget-menu-css", 
             "widget",
+            "node-menunav", 
+            "io", 
+            "json-parse", 
+            "substitute"
         ]
     }
 );

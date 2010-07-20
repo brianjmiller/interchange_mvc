@@ -315,11 +315,12 @@ YUI.add(
                 _doBeforeLoadData: function(oRequest, oResponse, oPayload) { 
                     // Y.log('list::doBeforeLoadData');
                     var meta = oResponse.meta; 
+                    var meta_data = this._meta_data;
 
                     oPayload.totalRecords = meta.totalRecords || oPayload.totalRecords; 
                     oPayload.pagination = { 
                         rowsPerPage: Number(meta.paginationRowsPerPage) || 
-                            this._meta_data.page_count,
+                            meta_data.page_count,
                         recordOffset: Number(meta.paginationRecordOffset) || 0 
                     }; 
 
@@ -330,10 +331,10 @@ YUI.add(
                         }
                     }
                     else {
-                        if (this._meta_data.data_table_initial_sort &&
-                            this._meta_data.data_table_initial_sort.dir) {
+                        if (meta_data.data_table_initial_sort &&
+                            meta_data.data_table_initial_sort.dir) {
                             meta.sortDir = 'yui-dt-' + 
-                                this._meta_data.data_table_initial_sort.dir;
+                                meta_data.data_table_initial_sort.dir;
                         }
                         else {
                             meta.sortDir = 'yui-dt-desc'
@@ -341,7 +342,10 @@ YUI.add(
                     }
                     oPayload.sortedBy = {
                         key: meta.sortKey || 
-                            this._meta_data.data_table_initial_sort.key || 
+                            (function () {
+                                if (meta_data.data_table_initial_sort)
+                                    return meta_data.data_table_initial_sort.key;
+                            })() || 
                             "id",
                         dir: meta.sortDir
                     }; 

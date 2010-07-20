@@ -1,0 +1,125 @@
+.yui3-accordion-item-label {
+  position: relative !important;
+  top: 3px !important;
+  left: 2px !important;
+}
+
+.yui3-accordion-item-content .yui3-widget-bd {
+  overflow-y: auto !important;
+}
+
+.yui3-skin-sam .yui3-accordion-item .yui3-widget-hd {
+  background-image: url(http://yui.yahooapis.com/2.8.0r4/build/assets/skins/sam/sprite.png) !important;
+  background-position: 0 0 !important;
+  border-top: 1px solid #7f7f7f !important;
+  border-bottom: 1px solid #7f7f7f !important;
+  border-left: 0 none !important;
+  border-right: 0 none !important;
+  height: 22px !important;
+}
+
+.yui3-skin-sam .yui3-accordion-item-iconexpanded, 
+.yui3-skin-sam .yui3-accordion-item-iconexpanded-off {
+  background-image: url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/vertical-menu-submenu-indicator.png) !important;
+  background-position: 8px 6px !important;
+}
+
+.yui3-skin-sam .yui3-accordion-item-iconexpanded-off:hover {
+  background-image: url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/vertical-menu-submenu-indicator.png) !important;
+  background-position: 9px 6px !important;
+}
+
+.yui3-skin-sam .yui3-accordion-item-iconexpanded-on {
+  background-image: url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/horizontal-menu-submenu-indicator.png) !important;
+  background-position: 6px 7px !important;
+}
+
+.yui3-skin-sam .yui3-accordion-item-iconexpanded-on:hover {
+  background-image: url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/horizontal-menu-submenu-indicator.png) !important;
+  background-position: 6px 8px !important;
+}
+
+#ql-forms form {
+  margin-top: 0.5em;
+  margin-bottom: 1em;
+}
+
+#ql-forms label {
+  font-size: 85%;
+  font-weight: bold;
+}
+
+#ql-forms .yui3-form-field {
+  margin-left: 2px;
+}
+
+#ql-forms input[type="text"] {
+  width: 150px;
+}
+
+#ql-links button {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+#ql-links h4 {
+  border-top: 1px solid #cccccc;
+  background-color: #d7d7d7;
+  padding-top: 4px;
+  padding-left: 0.5em;
+  margin-bottom: 4px;
+}
+
+#ql-links ul {
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+}
+
+#ql-links li {
+  clear: both;
+  list-style-type: none;
+  border-bottom: 1px solid #d7d7d7;
+  padding-left: 0.5em;
+}
+
+#ql-links li.instructions {
+  border-bottom: 0 none;
+  padding-left: 0.5em;
+}
+
+#ql-links li:hover {
+  background-color: #b3d4ff;
+}
+
+#ql-links li.instructions {
+  background-color: transparent;
+}
+
+#ql-links ul a,
+#ql-links ul a:visited {
+  text-decoration: none;
+  color: #000000;
+  font-size: 93%;
+  line-height: 1.5;
+}
+
+#ql-links ul a:hover,
+#ql-links ul a:active {
+  text-decoration: underline;
+  color: #0066cc;
+}
+
+#ql-links .ql-link {
+  display: block;
+  width: 95px;
+  padding-right: 5px;
+  float: left;
+}
+
+#ql-links .ql-remove {
+  display: block;
+  float: left;
+  font-size: 75% !important;
+  line-height: 2 !important;
+}

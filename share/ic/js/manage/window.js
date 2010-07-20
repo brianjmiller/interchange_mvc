@@ -199,7 +199,7 @@ YUI.add(
                                 {
                                     position: "top",
                                     body: "manage_menu",
-                                    header: "Main Menu",
+                                    header: "Menu",
                                     height: 210,
                                     zIndex: 2,
                                     scroll: null
@@ -207,7 +207,6 @@ YUI.add(
                                 {
                                     position: "center",
                                     body: "manage_quick",
-                                    header: "Quick Links",
                                     zIndex: 0
                                 }
                             ]
@@ -232,9 +231,10 @@ YUI.add(
 
                     switch (version) {
                     case 'dtmax':
-                        height = Y.DOM.region(center).height;  // used to initially render the top
-                                                               // unit to the max available height
-                                                               // effectively hiding the detail view
+                        // used to initially render the top unit to
+                        // the max available height effectively hiding
+                        // the detail view
+                        height = Y.DOM.region(center).height;
                         this._clearContainer(['dv', 'dash']);
                         break;
                     case 'dvmax':
@@ -336,13 +336,11 @@ YUI.add(
                             Y.bind(this._onDTDVLayoutRender, this);
                     }
 
-                    Y.bind(
-                        this._buildLeftLayout,
-                        this,                     // context
+                    this._buildLeftLayout(
                         this._layouts['outer'],   // parent layout
                         'left',                   // unit
                         'left'                    // new layout key
-                    )();
+                    );
                     Y.bind(
                         buildCenterLayout, 
                         this,                     // context
@@ -368,13 +366,15 @@ YUI.add(
                 _onLeftLayoutRender: function () {
                     // Y.log('window::_onLeftLayoutRender');
                     this._layouts['left'].removeListener('render');
-                    Y.bind(
-                        this._initMainMenu, 
-                        this,                   // context
+                    this._initMainMenu(
                         this._layouts['left'],  // layout 
                         'top',                  // unit
                         'vertical'              // menu orientation
-                    )();
+                    );
+                    this._initQuickLinks(
+                        this._layouts['left'],  // layout 
+                        'center'                // unit
+                    );
                 },
 
                 _restoreContainerFromCache: function (id, layout, unit_label) {
@@ -478,12 +478,7 @@ YUI.add(
                     layout.removeListener('render');
 
                     if (! this._containers['dash']) {
-                        Y.bind(
-                            this._initDashboard, 
-                            this,                     // context
-                            this._layouts['center'],  // layout 
-                            'center'                  // unit   
-                        )();
+                        this._initDashboard(layout, 'center');
                     }
                     else {
                         // restore the container
@@ -523,6 +518,17 @@ YUI.add(
                         this._containers['menu'].get("boundingBox"),
                         'em.yui3-menuitem-content, a.yui3-menuitem-content',
                         this
+                    );
+                },
+
+                _initQuickLinks: function (layout, unit) {
+                    var ql_unit = layout.getUnitByPosition(unit);
+                    this._containers['links'] = new Y.IC.ManageQuickLinks(
+                        {                            
+                            render_to: ql_unit.body.childNodes[0],
+                            layout: this._layouts['left'],
+                            layout_unit: ql_unit
+                        }
                     );
                 },
 
@@ -669,10 +675,7 @@ YUI.add(
                         this._createDataTableContainer();
                     }
                     // load the Widget into the Data Table container
-                    Y.bind(
-                        this._containers['dt'].loadWidget, 
-                        this._containers['dt']
-                    )(e);
+                    this._containers['dt'].loadWidget(e);
                 },
 
                 /*
@@ -780,10 +783,7 @@ YUI.add(
                     }
 
                     // load the Widget into the Detail View container
-                    Y.bind(
-                        this._containers['dv'].loadWidget, 
-                        this._containers['dv']
-                    )(e);
+                    this._containers['dv'].loadWidget(e);
                 },
 
                 /*

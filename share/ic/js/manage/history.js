@@ -24,6 +24,11 @@ YUI.add(
 
         Y.IC.ManageHistory = ManageHistory = {
 
+            // profile name constants, link into the profiles[] array
+            DASH: 0,
+            DTMAX: 1,
+            DTDV: 2,
+
             hqueue: {},    // not really a queue... 
                            //  keeps track of what needs to be in the 
                            //  next history update

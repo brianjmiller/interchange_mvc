@@ -21,14 +21,7 @@
     <div id="manage_header">
         <span>Management Area</span>
     </div>
-    <div id="manage_quick">
-      <ul>
-        <li><a href="#">Go to Order #321</a></li>
-        <li><a href="#">Go to Product SKU:a321</a></li>
-        <li><a href="#">Bulk Customer Order Fraud Check (2)</a></li>
-        <li><a href="#">Create Stock Orders (Customer Orders Pending: 4)</a></li>
-      </ul>
-    </div>
+    <div id="manage_quick"></div>
     <div id="manage_menu"></div>
     <div id="manage_datatable"></div>
     <div id="manage_detail"></div>

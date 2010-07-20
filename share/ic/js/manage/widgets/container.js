@@ -169,28 +169,35 @@ YUI.add(
                             var code       = splits[0];
                             // Y.log("code: " + code);
                             if (config.sub_kind === "list") {
-                                this._cache[config.args] = new Y.IC.ManageFunctionExpandableList(
-                                    {
-                                        code: code,
-                                        expandable: false,
-                                        prefix: '_ls'
-                                    }
+                                this._cache[config.args] = 
+                                    new Y.IC.ManageFunctionExpandableList(
+                                        {
+                                            code: code,
+                                            expandable: false,
+                                            prefix: '_ls'
+                                        }
+                                    );
+                                this._cache[config.args].render(
+                                    this.get("contentBox") 
                                 );
-                                this._cache[config.args].render( this.get("contentBox") );
                             }
                             else if (config.sub_kind === "detail") {
                                 var addtl_args = splits[1] + "";
                                 // Y.log("addtl_args: " + addtl_args);
-                                this._cache[config.args] = new Y.IC.ManageFunctionDetail(
-                                    {
-                                        code: code,
-                                        addtl_args: addtl_args,
-                                        prefix: '_dx'
-                                    }
+                                this._cache[config.args] = 
+                                    new Y.IC.ManageFunctionDetail(
+                                        {
+                                            code: code,
+                                            addtl_args: addtl_args,
+                                            prefix: '_dx'
+                                        }
+                                    );
+                                this._cache[config.args].render(
+                                    this.get("contentBox")
                                 );
-                                this._cache[config.args].render( this.get("contentBox") );
                             }
                             else {
+                                // any other functions..?
                             }
                         }
                         else {
@@ -206,7 +213,7 @@ YUI.add(
                         new_widget = null;
                     }
                     else {
-                        // Y.log("Load widget called with undefined/unrecognized kind. " +
+                        // Y.log("Load widget called with unrecognized kind. " +
                         //       "Doing nothing.  kind: " + config.kind);
                         return;
                     }

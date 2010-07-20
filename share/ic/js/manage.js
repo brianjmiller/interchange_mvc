@@ -18,6 +18,7 @@
 
 YUI(
     {
+        gallery: 'gallery-2010.07.14-19-50',
         filter: 'raw',
         combine: false,
         insertBefore: 'styleoverrides',
@@ -161,12 +162,23 @@ YUI(
                         path: "manage/widgets/menu.js",
                         requires: [ 
                             "ic-manage-widget-menu-css", 
+                            "widget",
                             "node-menunav", 
                             "io", 
                             "json-parse", 
-                            "event", 
-                            "node",
                             "substitute"
+                        ]
+                    },
+                    "ic-manage-widget-quicklinks": {
+                        path: "manage/widgets/quicklinks.js",
+                        requires: [ 
+                            "ic-manage-widget-quicklinks-css", 
+                            "widget",
+                            "gallery-accordion-css",
+                            "gallery-accordion",
+                            "gallery-form",
+                            "gallery-form-values",
+                            "gallery-storage-lite"
                         ]
                     },
                     "ic-manage-window": {
@@ -176,6 +188,7 @@ YUI(
                             "base-base",
                             "ic-manage-widget-container",
                             "ic-manage-widget-menu",
+                            "ic-manage-widget-quicklinks",
                             "ic-manage-widget-dashboard",
                             "ic-history-manager",
                             "yui2-layout",
@@ -211,6 +224,10 @@ YUI(
                         path: "manage/widgets/menu.css",
                         type: "css"
                     },
+                    "ic-manage-widget-quicklinks-css": {
+                        path: "manage/widgets/quicklinks.css",
+                        type: "css"
+                    },
                     "ic-manage-plugin-tabpanel-css": {
                         path: "manage/plugins/tabpanel.css",
                         type: "css"
@@ -221,6 +238,15 @@ YUI(
                     },
                     "ic-manage-window-css": {
                         path: "manage/window.css",
+                        type: "css"
+                    }
+                }
+            },
+            gallerycss: {
+                base: "http://yui.yahooapis.com/gallery-2010.04.21-21-51/build/",
+                modules: {
+                    "gallery-accordion-css": {
+                        path: "gallery-accordion/assets/skins/sam/gallery-accordion.css",
                         type: "css"
                     }
                 }
