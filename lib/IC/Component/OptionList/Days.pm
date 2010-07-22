@@ -28,14 +28,17 @@ sub execute {
     my @options;
     for my $day (1..$num_days) {
         my $selected = 0;
-        if (defined $self->selected and $self->selected eq '_current') {
-            if ($day == $self->current) {
+        if (defined $self->selected and $self->selected ne '') {
+            if ($self->selected eq '_current') {
+                if ($day == $self->current) {
+                    $selected = 1;
+                }
+            }
+            elsif ($self->selected == $day) {
                 $selected = 1;
             }
         }
-        elsif (defined $self->selected and $self->selected == $day) {
-            $selected = 1;
-        }
+
         push @options, {
             label    => $day,
             value    => sprintf('%02d', $day),

@@ -101,13 +101,15 @@ sub execute {
     my @options;
     for my $month (@$months) {
         my $selected = 0;
-        if (defined $self->selected and $self->selected eq '_current') {
-            if ($month->{numerical} == $self->current) {
+        if (defined $self->selected and $self->selected ne '') {
+            if ($self->selected eq '_current') {
+                if ($month->{numerical} == $self->current) {
+                    $selected = 1;
+                }
+            }
+            elsif ($self->selected == $month->{numerical}) {
                 $selected = 1;
             }
-        }
-        elsif (defined $self->selected and $self->selected == $month->{numerical}) {
-            $selected = 1;
         }
 
         push @options, {

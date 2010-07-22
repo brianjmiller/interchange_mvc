@@ -42,14 +42,17 @@ sub execute {
     my @options;
     for my $year ($self->range_start..$self->range_end) {
         my $selected = 0;
-        if (defined $self->selected and $self->selected eq '_current') {
-            if ($year == $self->current) {
+        if (defined $self->selected and $self->selected ne '') {
+            if ($self->selected eq '_current') {
+                if ($year == $self->current) {
+                    $selected = 1;
+                }
+            }
+            elsif ($self->selected == $year) {
                 $selected = 1;
             }
         }
-        elsif (defined $self->selected and $self->selected == $year) {
-            $selected = 1;
-        }
+
         push @options, {
             label    => $year,
             value    => $year,
