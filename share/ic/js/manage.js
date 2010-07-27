@@ -321,8 +321,8 @@ YUI(
                 );
 
                 // Y.log("setting up manage window");
-                var mw = new Y.IC.ManageWindow({prefix: '_mw'});
-
+                var mw = Y.IC.ManageWindow();
+                
                 // hide our loading screen
                 Y.on('contentready', function () {
                     Y.one('#application-loading').addClass('hide');

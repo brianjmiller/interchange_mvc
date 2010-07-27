@@ -46,6 +46,18 @@ YUI.add(
                     },
                     kind: {
                         value: null
+                    },
+                    addtl_args: {
+                        value: null,
+                        setter: function (new_val) {
+                            // container.js stingifies the new_val...
+                            if (new_val === 'undefined') {
+                                return null;
+                            }
+                            else {
+                                return new_val;
+                            }
+                        }
                     }
                 }
             }
@@ -59,13 +71,17 @@ YUI.add(
                 _content_node: null,
 
                 initializer: function(config) {
-                    // Y.log("function initializer: " + this.get("code"));
+                    // Y.log('function::initializer code -> addtl_args');
+                    var code = this.get('code');
+                    var addtl_args = this.get('addtl_args');
+                    // Y.log(code);
+                    // Y.log(addtl_args);
 
-                    var url = "/manage/function/" + this.get("code") + 
+                    var url = "/manage/function/" + code + 
                         "/0?_mode=config&_format=json";
 
-                    if (config.addtl_args) {
-                        url = url + "&" + config.addtl_args;
+                    if (addtl_args) {
+                        url = url + "&" + addtl_args;
                     }
                     // Y.log("Url: " + url, "debug");
                     Y.io(
@@ -92,6 +108,10 @@ YUI.add(
                     var cb = this.get('contentBox');
                     cb.setContent("");
                     cb.prepend(this._content_node);
+                },
+
+                updateAddtlArgs: function (addtl_args) {
+                    this.set('addtl_args', addtl_args);
                 },
 
                 _parseMetaData: function(txnId, response) {

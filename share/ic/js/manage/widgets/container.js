@@ -163,28 +163,50 @@ YUI.add(
                     var new_widget = null;
 
                     if (config.kind === "function") {
-                        if (! this._cache[config.args]) {
-                            // Y.log("instantiating function: " + config.args + "...");
-                            var splits     = config.args.split("-", 2);
-                            var code       = splits[0];
-                            // Y.log("code: " + code);
-                            if (config.sub_kind === "list") {
-                                this._cache[config.args] = 
+                        var splits     = config.args.split("-", 2);
+                        var code       = splits[0];
+                        var addtl_args = splits[1] + "";
+                        var key;
+                        // Y.log("code: " + code + "  " +
+                        //       "addtl_args: " + addtl_args);
+                        /* 
+                         * List and Detail widgets use addtl_args
+                         * differently.  For a List, the extra args
+                         * define filter (or search) params.  For a
+                         * Detail, the extra args are the primary key.
+                         * If it's a List, we want to key the cache on
+                         * the 'code', because we can reuse the same
+                         * datatable for different searches (filters).
+                         * The Detail widgets need to be keyed on the
+                         * 'args' (code + addtl_args) because each
+                         * detail view is unique to it's primary key.
+                         */
+                        if (config.sub_kind === "list") {
+                            key = code;
+                            if (! this._cache[key]) {
+                                this._cache[key] = 
                                     new Y.IC.ManageFunctionExpandableList(
                                         {
                                             code: code,
+                                            addtl_args: addtl_args,
                                             expandable: false,
                                             prefix: '_ls'
                                         }
                                     );
-                                this._cache[config.args].render(
+                                this._cache[key].render(
                                     this.get("contentBox") 
                                 );
                             }
-                            else if (config.sub_kind === "detail") {
-                                var addtl_args = splits[1] + "";
-                                // Y.log("addtl_args: " + addtl_args);
-                                this._cache[config.args] = 
+                            else {
+                                // Y.log('pulling the widget from the cache');
+                                // update any addtl_args
+                                this._cache[key].updateAddtlArgs(addtl_args);
+                            }
+                        }
+                        else if (config.sub_kind === "detail") {
+                            key = config.args;
+                            if (! this._cache[key]) {
+                                this._cache[key] = 
                                     new Y.IC.ManageFunctionDetail(
                                         {
                                             code: code,
@@ -192,20 +214,18 @@ YUI.add(
                                             prefix: '_dx'
                                         }
                                     );
-                                this._cache[config.args].render(
+                                this._cache[key].render(
                                     this.get("contentBox")
                                 );
                             }
                             else {
-                                // any other functions..?
+                                // Y.log('pulling the widget from the cache');
                             }
                         }
                         else {
-                            // Y.log('pulling the widget from the cache');
+                            // any other functions..?
                         }
-                        new_widget = this._cache[config.args];
-                        // Y.log('new_widget vvvvvv');
-                        // Y.log(new_widget);
+                        new_widget = this._cache[key];
                     }
                     else if (config.kind === "empty") {
                         // Y.log('container::_doLoadWidget - Unloading -- EMPTY');
@@ -222,7 +242,8 @@ YUI.add(
                 },
 
                 _showWidget: function (widget) {
-                    // Y.log('container::_showWidget');
+                    // Y.log('container::_showWidget - widget');
+                    // Y.log(widget);
                     try {
                         widget.enable();
                         widget.show();
@@ -237,7 +258,8 @@ YUI.add(
                 },
 
                 _hideWidget: function (widget) {
-                    // Y.log('container::_hideWidget');
+                    // Y.log('container::_hideWidget - widget');
+                    // Y.log(widget);
                     try {
                         widget.disable();
                         widget.hide();

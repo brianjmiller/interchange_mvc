@@ -219,14 +219,14 @@ YUI.add(
             var profile = Y.IC.ManageHistory.profiles[Y.IC.ManageHistory.DTDV];
             var state = {
                 _dtargs: 'Orders_orderList',
-                _lsresults: 50, _lsstartIndex: 0, _lssort: 'order_date', 
+                _lsresults: '50', _lsstartIndex: '0', _lssort: 'order_date', 
                 _lsdir: 'yui-dt-desc', _lssrec: values._pk_id,
                 _dvargs: 'Orders_orderDetailView-_pk_id=' + values._pk_id,
-                _dx_otst: 0
+                _dx_otst: '0'
             };
             this._loadProfile(profile, state);
             form1.reset();
-        });
+        }, this);
 
         // add the goto product 
         fields = [];
@@ -251,11 +251,17 @@ YUI.add(
         form2_node.one('button').on('click', function (e) {
             e.stopPropagation();
             var values = form2_node.values.getValues();
-            Y.log(values);
-            Y.log('Will need to build a "search" profile...');
-            Y.log('Currently does nothing.');
+            var args = 'Products_productList-search_by[]=sku%3Dilike&sku=' + 
+                values.sku
+            var profile = Y.IC.ManageHistory.profiles[Y.IC.ManageHistory.DTMAX];
+            // still need to add the search_by[] and sku query params...
+            var state = {
+                _dtargs: args, _lsresults: '50', _lsstartIndex: '0', 
+                _lssort: 'sku', _lsdir: 'asc'
+            };
+            this._loadProfile(profile, state);
             form2.reset();
-        });
+        }, this);
     },
 
     _createPageLink: function (e) {

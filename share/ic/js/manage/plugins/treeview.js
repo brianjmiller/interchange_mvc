@@ -79,7 +79,7 @@ YUI.add(
 </li>';
         TreeviewLite.SHOW_MENUITEM_TEMPLATE = '\
 <li>\
-  <a class="yui3-menu-label" href="#foo"><em>Show Menu</em></a>\
+  <a class="yui3-menu-label" href=""><em>Show Menu</em></a>\
   <div class="yui3-menu">\
     <div class="yui3-menu-content">\
       <ul>\

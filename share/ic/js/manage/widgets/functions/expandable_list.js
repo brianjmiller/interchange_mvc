@@ -24,6 +24,7 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
         {                                               // overrides/additions
 
         _fitted: false,
+        _rows: null,
 
         _bindDataTableEvents: function () {
             // Y.log('expandable_list::_bindDataTableEvents');
@@ -79,14 +80,23 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
         },
 
         _sendDataTableRequest: function (state) {
-            // Y.log('expandable_list::_sendDataTableRequest - has_data:' + 
-            //       this._has_data);
+            // Y.log('expandable_list::_sendDataTableRequest');
             Y.IC.ManageFunctionExpandableList.superclass
                 ._sendDataTableRequest.apply(this, arguments);
-            this._fitted = false;
-            if (this._has_data) this.fitToContainer();
+            var new_req = Y.QueryString.stringify(state);
+            if (new_req !== this._prev_req) {
+                this._fitted = false;
+            }
         },
 
+        _updateDataTableRecords: function (oRequest, oResponse, oPayload) {
+            // Y.log('expandable_list::_updateDataTableRecords');
+            Y.IC.ManageFunctionExpandableList.superclass
+                ._updateDataTableRecords.apply(this, arguments);
+            if (this._has_data) {
+                this.fitToContainer();
+            }
+        },
 
         hide: function () {
             // Y.log('expandable_list::hide - setting has_data and fitted to false');
@@ -100,11 +110,13 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
             // Y.log('expandable_list::show - fitted:' + this._fitted);
             Y.IC.ManageFunctionExpandableList.superclass
                 .show.apply(this, arguments);
-            if (!this._fitted) this.fitToContainer();
+            if (!this._fitted) {
+                this.fitToContainer();
+            }
         },
 
         fitToContainer: function (container) {
-            // Y.log('BEGIN expandable_list::fitToContainer');
+            // Y.log('expandable_list::fitToContainer');
             var dt = this._data_table;
             if (dt) {
                 if (!container) {
@@ -113,9 +125,16 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                     var mc = this.get('boundingBox')
                         .ancestor('div.yui3-ic_manage_container');
                     var widget = Y.Widget.getByNode(mc);
-                    container = widget.get('layout_unit');
+                    if (widget)
+                        container = widget.get('layout_unit');
+                    else
+                        return;
                 }
+
+                // make sure the table columns have final widths
                 dt.validateColumnWidths();
+
+                // get ready to do some height calcs
                 var dt_node = this.get('contentBox')
                     .one('div.yui-dt-scrollable');
                 var dt_height = dt_node.get('region').height;
@@ -123,91 +142,63 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                     .one('div.yui-layout-bd');
                 var unit_height = unit_body.get('region').height;
                 var magic = 58; // table header + paginator height?
-                var state = this.get('state');
-                var results = Number(state.results);
                 var total_recs = this._meta_data.total_objects;
-                /*
-                Y.log('dt_height: ' + dt_height +
-                      ' unit_height: ' + unit_height +
-                      ' results: ' + results +
-                      ' total_recs: ' + total_recs);
-                */
+                var tr = Y.one(dt.getFirstTrEl());
+                var delta_height, row_height, new_height;
+
+                // make sure there is a table
+                if (!tr) {
+                    this._fitted = false;
+                    new_height = unit_height;
+                    dt.set('height', (new_height - magic) + 'px');
+                    // Y.log('exited, no table to work with'); 
+                    return;
+                }
+
+                // there are two possibilities.
+                // the table is either to tall or too short.
+
+                // but first, check to make sure it's worth it
+                delta_height = Math.abs(dt_height - unit_height);
+                row_height = tr.get('region').height;
+                var num_recs = this._data_table.getRecordSet().getLength();
+                if (Number(this.get('state.results')) === this._rows &&
+                    delta_height < row_height) {
+                    this._fitted = true;
+                    // Y.log('exited, not worth the trouble'); 
+                    return;
+                }
+
+                // then tackle the too tall problem
                 if (dt_height > unit_height) {
                     // Y.log('shrink the table to fit');
                     dt.set('height', (unit_height - magic) + 'px');
-                    // determine the number of visible rows
-                    var tr = Y.one(dt.getFirstTrEl());
-                    if (tr) {
-                        var row_height = tr.get('region').height;
-                        var bd_height = dt_node.one('div.yui-dt-bd')
-                            .get('region').height;
-                        var recs_per_page = Math.round(bd_height / row_height);
-                        if (results != recs_per_page) {
-                            // if there's a selected record, 
-                            //  calculate the recordOffset so that it
-                            //  becomes the top row of the new page
-                            var offset = state.startIndex || 0;
-                            var srow = this._data_table.getSelectedRows()[0];
-                            /*
-                            Y.log('recs_per_page -> offset -> srow');
-                            Y.log(recs_per_page);
-                            Y.log(offset);
-                            Y.log(srow);
-                            */
-                            if (srow) {
-                                var ri = this._data_table.getRecordIndex(srow);
-                                offset = Math.floor(ri / recs_per_page) * recs_per_page
-                                // Y.log('offset = ' + offset);
-                            }
-                            this.setNewPaginator(recs_per_page, offset);
-                        }
-                        this._fitted = true;
-                        // Y.log('notifying history the new results after shriking.');
-                        this._notifyHistory();
-                    }
-                    else {
-                        // there are no visible rows, so not fitted
-                        this._fitted = false;
-                    }
+                    bd_height = dt_node.one('div.yui-dt-bd')
+                        .get('region').height;
+                    this._rows = Math.round(bd_height / row_height);
+                    this._getNewRecords();
                 }
 
+                // or it's too small and needs to expand
                 else if (dt_height < unit_height) {
                     // Y.log('not as big as my unit, try to expand');
-                    var tr = Y.one(dt.getFirstTrEl());
-                    var new_height;
-                    if (tr) {
-                        var row_height = tr.get('region').height;
-                        var max_rows = Math.round(
-                            (unit_height - magic) / row_height
-                        );
-                        max_rows = max_rows > total_recs ? 
-                            total_recs : max_rows;
-                        new_height = (max_rows * row_height) + magic;
-                        if (new_height > unit_height) 
-                            new_height = unit_height;
-                        // Y.log('fitted with max_rows:' + max_rows);
-                        this._fitted = true;
+                    var prev_rows = this._rows;
+                    this._rows = Math.round(
+                        (unit_height - magic) / row_height
+                    );
+                    if (this._rows > total_recs) {
+                        this._rows = total_recs;
                     }
-                    else {
-                        // Y.log('no visible rows, so set height to the ' +
-                        //       'unit_height, be unfitted, and try again');
+                    new_height = (this._rows * row_height) + magic;
+                    if (new_height > unit_height) {
                         new_height = unit_height;
-                        this._fitted = false;
                     }
                     dt.set('height', (new_height - magic) + 'px');
-                    if (results != max_rows) {
-                        // Y.log('notifying history new results after expansion.')
-                        // do i need to get new records?
-                        if (!(results > total_recs) &&
-                            (results < total_recs)) { 
-                            state.results = max_rows;
-                            state.startIndex = 0;
-                            // this._sendDataTableRequest(state);
-                            this._notifyHistory();
-                        }
-                        else {
-                            this._notifyHistory();
-                        }
+
+                    // so i've set a new height, but i may not have
+                    // enought records to fill that space
+                    if (prev_rows < total_recs) {
+                        this._getNewRecords();
                     }
                 }
 
@@ -216,6 +207,24 @@ YUI.add("ic-manage-widget-function-expandable-list", function (Y) {
                     this._notifyHistory();
                 }
             }
+        },
+
+        _getNewRecords: function () {
+            // if there's a selected record, 
+            //  calculate the recordOffset so that it
+            //  becomes the top row of the new page
+            var state = this.get('state');
+            var offset = state.startIndex || 0;
+            var srow = this._data_table.getSelectedRows()[0];
+            if (srow) {
+                var ri = this._data_table.getRecordIndex(srow);
+                offset = Math.floor(ri / this._rows) * this._rows;
+            }
+            state.results = this._rows;
+            state.startIndex = offset;
+            this.setNewPaginator(this._rows, offset);
+            this._notifyHistory();
+            this._sendDataTableRequest(state);
         },
 
 		/**

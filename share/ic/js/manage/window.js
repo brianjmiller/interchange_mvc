@@ -19,12 +19,11 @@ YUI.add(
     "ic-manage-window",
     function (Y) {
 
-        var ManageWindow = Y.Base.create (
+        var MW = Y.Base.create (
             "ic_manage_window",     // module identifier  
             Y.Base,                 // what to extend     
             [Y.IC.HistoryManager],  // classes to mix in  
             {                       // overrides/additions
-                // Instance Members //
 
                 // i'm using the following as a sort of cache.
                 // these first for are for the widget containers
@@ -433,6 +432,8 @@ YUI.add(
                                   null, this);
                     top.subscribe('endResize', this._fitDetailViewToUnit, 
                                   null, this);
+                    layout.subscribe('resize', this._updateCenterUnitSizes, 
+                                     null, this);
                     top.subscribe('collapse', this._setCollapsedHeader, {
                         layout: layout, 
                         unit: 'top', 
@@ -712,11 +713,28 @@ YUI.add(
                     return div;
                 },
 
+                _updateCenterUnitSizes: function (e) {
+                    // Y.log('window::_updateCenterUnitSizes');
+                    var layout = this._layouts['center'];
+                    var layout_body = Y.one(layout._doc);
+                    var layout_height = layout_body.get('region').height;
+                    if (this.get('state.lc') === 'dtmax') {
+                        var top = layout.getUnitByPosition('top');
+                        top.set('height', layout_height);
+                        top.resize();
+                        this._fitDatatableToUnit();
+                    }
+                    else if (this.get('state.lc') === 'dtdv') {
+                        this._fitDetailViewToUnit();
+                    }
+                },
+
                 onCheckFitness: function (e) {
                     var widget = this._containers['dt'].get('current');
                     // Y.log('window::onCheckFitness - fitted: ' + widget._fitted);
-                    if (!widget._fitted)
+                    if (!widget._fitted) {
                         this._fitDatatableToUnit();
+                    }
                 },
 
                 _fitDatatableToUnit: function () {
@@ -848,7 +866,11 @@ YUI.add(
                                 node.destroy(true);
                             }
                             // also detach any event handlers...
+                            v.unsubscribe();
                         });
+                        if (key === 'center') {
+                            this._layouts[key].unsubscribe();
+                        }
                     }
                 },
 
@@ -903,6 +925,28 @@ YUI.add(
             }
         );
 
+        // make all of that into a Singleton so that I can access the
+        // layouts from any module
+        var ManageWindow = function() {
+            var mw = new MW({prefix: '_mw'});
+            this.instance = null;
+            
+            var getInstance = function () {
+                if (!this.instance) {
+                    this.instance = createInstance();
+                }
+                return this.instance;
+            };
+
+            var createInstance = function () {
+                return {
+                    mw: mw
+                };
+            };
+
+            return getInstance();
+        };
+        
         Y.namespace("IC");
         Y.IC.ManageWindow = ManageWindow;
     },

@@ -41,7 +41,7 @@ YUI.add(
                 STATE_PROPERTIES: {
                     'srec': 1,         // selected record
                     'results': 1,      // results
-                    'startIndex': 1,  // start index
+                    'startIndex': 1,   // start index
                     'sort': 1,         // sort column
                     'dir' : 1          // sort direction
                 },
@@ -50,6 +50,7 @@ YUI.add(
                 _data_table: null,
                 _data_pager: null,
                 _has_data: false,
+                _prev_req: '',
 
                 _buildUI: function() {
                     // Y.log('list::_buildUI');
@@ -129,7 +130,7 @@ YUI.add(
 
                 hide: function () {
                     // Y.log('list::hide - setting srec to -1');
-                    this.set('state.srec', -1);
+                    this.set('state.srec', '-1');
                     ManageFunctionList.superclass.hide.apply(this, arguments);
                 },
 
@@ -163,7 +164,7 @@ YUI.add(
                     // encode the pk value - it will end up in the browser history
                     var pkv = encodeURIComponent(e.record._oData[pk]);
                     if (this.get('state.srec') !== pkv) {
-                        this.set('state.srec', pkv);
+                        this.set('state.srec', pkv + '');
                         this.fire('manageFunctionList:rowselected');
                     }
                 },
@@ -174,7 +175,6 @@ YUI.add(
                     /* 
                      *  preselect a record specified in the browser history
                      *  this only works if the record is on the first page.
-                     *  need to integrate the paginator with the history manager...
                      */  
 
                     var srec = this.get('state.srec');
@@ -213,11 +213,22 @@ YUI.add(
                     this._data_table.set('paginator', this._data_pager);
 
                     var state = this.get('state');
-                    state.results = num_results;
-                    state.startIndex = offset;
+                    state.results = num_results + '';
+                    state.startIndex = offset + '';
+                },
+
+                updateAddtlArgs: function (addtl_args) {
+                    // Y.log('list::updateAddtlArgs');
+                    Y.IC.ManageFunctionList.superclass.updateAddtlArgs
+                        .apply(this, arguments);
+                    this._getDataSource();
+                    this._sendDataTableRequest(
+                        this._generateRequest()
+                    );
                 },
 
                 _getDataSource: function () {
+                    // Y.log('list::_getDataSource');
                     /**
                      *   set up a YUI3 data source that we will then
                      *   wrap in a YUI2 compatibility container to
@@ -225,12 +236,20 @@ YUI.add(
                      *   YUI3 gets its own datatable we can remove
                      *   this layer
                      **/
-                    this._data_source = new Y.DataSource.IO(
-                        {
-                            source: "/manage/function/" + this.get("code")
-                                + "/0?_mode=data&_format=json&_query_mode=listall&"
-                        }
-                    );
+
+                    // whether we're dealing with an unfiltered list or
+                    //  a search is determined by the presence of addtl_args
+                    var source = "/manage/function/" + this.get("code") + 
+                        "/0?_mode=data&_format=json&";
+                    var addtl_args = this.get('addtl_args');
+                    if (addtl_args) {
+                        source += "filter_mode=search&" + addtl_args + '&';
+                    }
+                    else {
+                        source += "_query_mode=listall&";
+                    }
+
+                    this._data_source = new Y.DataSource.IO({source: source});
                     this._data_source.plug(
                         {
                             fn: Y.Plugin.DataSourceJSONSchema,
@@ -273,6 +292,7 @@ YUI.add(
                 },
 
                 _initDataTablePager: function (data_table_config) {
+                    // Y.log('list::_initDataTablePager');
                     if (this._meta_data.paging_provider !== "none") {
                         // Y.log("setting up pager: " + this._meta_data.paging_provider);
                         var YAHOO = Y.YUI2;
@@ -290,10 +310,12 @@ YUI.add(
                 },
 
                 _adjustDataTableConfig: function (data_table_config) {
+                    // Y.log('list::_adjustDataTableConfig');
                     data_table_config.initialLoad = false;
                 },
 
                 _initDataTable: function (data_table_config) {
+                    // Y.log('list::_initDataTable');
                     var YAHOO = Y.YUI2;
                     this._data_table = new YAHOO.widget.DataTable(
                         this.get('code'), // renders us into this._content_node
@@ -301,19 +323,22 @@ YUI.add(
                         this._data_source,
                         data_table_config
                     );
+                    /*
                     this._data_table.showTableMessage(
                         this._data_table.get("MSG_LOADING"), 
                         YAHOO.widget.DataTable.CLASS_LOADING
                     );
+                    */
                 },
 
                 _handleDataReturnPayload: function(oRequest, oResponse, oPayload) {
+                    // Y.log('list::_handleDataReturnPayload');
                     oPayload.totalRecords = oResponse.meta.totalRecords;
                     return oPayload;
                 },
 
                 _doBeforeLoadData: function(oRequest, oResponse, oPayload) { 
-                    // Y.log('list::doBeforeLoadData');
+                    // Y.log('list::_doBeforeLoadData');
                     var meta = oResponse.meta; 
                     var meta_data = this._meta_data;
 
@@ -348,7 +373,7 @@ YUI.add(
                             })() || 
                             "id",
                         dir: meta.sortDir
-                    }; 
+                    };
 
                     this._has_data = true;
                     var new_state = {
@@ -437,8 +462,8 @@ YUI.add(
                             '<a id="' + guid + '">Try again?</a>', 
                         "yui-dt-error"
                     );
-                    Y.log('list::_sendDataTableRequest - ' +
-                          'data_source.sendRequest failure'); 
+                    // Y.log('list::_sendDataTableRequest - ' +
+                    //       'data_source.sendRequest failure'); 
                     var link = Y.one('#' + guid);
                     link.on('click', function () {
                         this._sendDataTableRequest(
@@ -449,28 +474,52 @@ YUI.add(
 
                 _sendDataTableRequest: function (state) {
                     // Y.log('list::_sendDataTableRequest');
-
+                    /*
                     this._data_table.showTableMessage(
                         "Loading...", "yui-dt-loading"
                     );
-
+                    */
                     // make sure the sort dir is in server format
-                    if (state.dir && state.dir.match(/^yui\-dt\-/)) {
-                        state.dir = state.dir.substring(7);
+                    var req_state = Y.merge(state);
+                    if (req_state.dir && req_state.dir.match(/^yui\-dt\-/)) {
+                        req_state.dir = req_state.dir.substring(7);
                     }
 
-                    this._data_source.sendRequest(Y.QueryString.stringify(state), {
-                        success: Y.bind(this._updateDataTableRecords, this),
-                        failure: Y.bind(this._onFailedRequest, this),
-                        scope: this._data_table,
-                        argument: {} // populated at runtime via doBeforeLoadData 
-                    });
+                    var new_req = Y.QueryString.stringify(req_state);
+                    // compare this request against the previous
+                    if (new_req !== this._prev_req) {
+                        this._prev_req = new_req;
+                        this._data_source.sendRequest(
+                            new_req, 
+                            {
+                                success: Y.bind(this._updateDataTableRecords, this),
+                                failure: Y.bind(this._onFailedRequest, this),
+                                scope: this._data_table,
+                                argument: {} // populated at runtime via doBeforeLoadData
+                            }
+                        );
+                    }
+                    else {
+                        // Y.log('list::_sendDataTableRequest - skipping - same ol req');
+                    }
                 },
 
                 _updateDataTableRecords: function (oRequest, oResponse, oPayload) {
-                    // Y.log('list::_updateDataTableRecords');
-                    this._data_table.onDataReturnSetRows(oRequest, oResponse, oPayload);
-                    this.selectRecordFromHistory();
+                    // Y.log('list::_updateDataTableRecords - request -> response');
+                    // Y.log(oRequest);
+                    // Y.log(oResponse);
+
+                    if (oResponse.results.length > 0) {
+                        this._data_table.onDataReturnSetRows(
+                            oRequest, oResponse, oPayload
+                        );
+                        this.selectRecordFromHistory();
+                    }
+                    else {
+                        this._data_table.showTableMessage(
+                            "Your search returned no results."
+                        );
+                    }
                 },
 
                 _afterStateChange: function (e) {

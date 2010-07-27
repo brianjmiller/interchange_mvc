@@ -76,7 +76,7 @@ YUI.add(
             _on_history_change: null,
 
             hide: function () {
-                // Y.log('widget::hide - prefix: ' + this.get('prefix'));
+                // Y.log('history_manager::hide - prefix: ' + this.get('prefix'));
                 var sp = this.STATE_PROPERTIES;
                 var keys = Y.Object.keys(this._addMyHistoryPrefix(sp));
                 this.clearHistoryOf(keys);
@@ -88,7 +88,7 @@ YUI.add(
             },
 
             show: function () {
-                // Y.log('widget::show - prefix: ' + this.get('prefix'));
+                // Y.log('history_manager::show - prefix: ' + this.get('prefix'));
                 if (!this._on_history_change) {
                     this._on_history_change = Y.on(
                         'history-lite:change', 
@@ -194,7 +194,6 @@ YUI.add(
                 if (Y.Lang.isString(keys)) {
                     keys = [keys];
                 }
-                var saved_state = Y.merge(this.get('state'));
                 var clear = {};
                 Y.each(keys, function (v, i, ary) {
                     clear[v] = null;
@@ -239,8 +238,9 @@ YUI.add(
             _notifyHistory: function () {
                 // Y.log('history_manager::_notifyHistory - prefix -> state');
                 // Y.log(this.get('prefix'));
-                // Y.log(this.get('state'));
+                // Y.log(Y.merge(this.get('state')));
                 if (!this.stateMatchesHistory()) {
+                    // Y.log('state does not match history');
                     try {
                         Y.IC.ManageHistory.updateHistory(this);
                     } catch (err) {
