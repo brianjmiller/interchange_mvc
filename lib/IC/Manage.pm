@@ -83,6 +83,7 @@ class_has '_list_kind_obj_key_method'        => ( is => 'ro', default => undef )
 class_has '_list_kind_obj_name_method'       => ( is => 'ro', default => undef );
 
 class_has '_properties_referrer_no_override' => ( is => 'ro', default => undef );
+class_has '_properties_form_adjustments'     => ( is => 'ro', default => undef );
 
 class_has '_detail_use_default_summary_tab'  => ( is => 'ro', default => 1 );
 class_has '_detail_other_mappings'           => ( is => 'ro', default => sub { {} } );
@@ -1247,6 +1248,7 @@ sub _common_list_data_obj {
 #*_common_list_display_all = \&IC::Manage::_common_list_data_obj;
 #*_common_list             = \&IC::Manage::_common_list_data_obj;
 #*_common_detail_view      = \&IC::Manage::_common_detail_data_obj;
+#*_common_properties       = \&IC::Manage::_common_properties_data_obj;
 
 sub _common_add {
     my $self = shift;
@@ -1477,6 +1479,323 @@ sub _common_properties {
     }
     else {
         IC::Exception->throw( "Unrecognized step: " . $self->_step );
+    }
+
+    return;
+}
+
+#
+#
+#
+sub _common_properties_data_obj {
+    my $self = shift;
+
+    my $params = $self->_controller->parameters;
+    $params->{_format} ||= 'json';
+
+    my $_model_class = $self->_model_class;
+    my $_object_name = $self->_model_display_name;
+    my @pk_fields    = @{ $_model_class->meta->primary_key_columns };
+    my @_pk_fields   = map { "_pk_$_" } @pk_fields;
+
+    my $struct;
+
+    #
+    # everything but 'add' should be working against an existing object,
+    # and to do so we need to be able to distinguish it using the existing
+    # PK, so get the fields for the PK and store the corresponding values,
+    # which we know to be passed in via the request and already stringified
+    #
+    my $object;
+    unless ($params->{_properties_mode} eq 'add') {
+        $object = $self->_common_implied_object;
+
+        for my $_pk_field (@_pk_fields) {
+            $struct->{pk_pairs}->{$_pk_field} = $params->{$_pk_field};
+        }
+    }
+
+    # TODO: make these a dispatch table?
+    if ($params->{_properties_mode} eq 'edit' or $params->{_properties_mode} eq 'add') {
+        #
+        # get the fields in the object, loop over them determining which fields need to be 
+        # or may have been included in the form
+        #
+        my @fields = @{ $_model_class->meta->columns };
+
+        #
+        # boilerplate fields by their nature are automatically handled, therefore they aren't
+        # editable
+        #
+        my @boilerplate_fields = keys %{ { $_model_class->boilerplate_columns } };
+
+        #
+        # get the structure used to override default behaviour for the fields,
+        # it is keyed by DB field name
+        #
+        my $form_adjustments = $self->_properties_form_adjustments || {};
+
+        #
+        # cache look up of field meta data objects by name of field for easy access
+        #
+        my $rdbo_fields_by_name = {};
+
+        #
+        # need to pre-process fields to build a sort order and remove any fields not intended 
+        # to be included, we'll just go with the sort order of what RDBO has for any non-specified 
+        # fields, therefore all specified fields will sort first, included fields also determines
+        # which fields we'll be allowed to set new values for
+        #
+        my @included_fields;
+
+        my $highest_provided_sort_order = 0;
+        for my $field (@fields) {
+            # skip the boilerplate fields
+            next if grep { $field eq $_ } @boilerplate_fields;
+
+            my $field_name = $field->name;
+            my $adjust     = $form_adjustments->{$field_name} || {};
+
+            # skip fields explicitly turned off, this is called 'included' because even things
+            # that are not editable and/or hidden should still be included in this list, these
+            # things that we aren't even going to have in the meta data. period.
+
+            next if (defined $adjust->{is_included} and not $adjust->{is_included});
+            next if ($params->{_properties_mode} eq 'edit' and defined $adjust->{is_included_in_edit} and not $adjust->{is_included_in_edit});
+            next if ($params->{_properties_mode} eq 'add' and defined $adjust->{is_included_in_add} and not $adjust->{is_included_in_add});
+
+            push @included_fields, $field_name;
+            $rdbo_fields_by_name->{ $field_name } = $field;
+
+            if (defined $adjust->{order} and $adjust->{order} > $highest_provided_sort_order) {
+                $highest_provided_sort_order = $adjust->{order} + 1;
+            }
+        }
+
+        #
+        # assign an order to all non-ordered fields starting with the value as determined above
+        #
+        for my $included_field (@included_fields) {
+            next if defined $form_adjustments->{$included_field}->{order};
+
+            $form_adjustments->{$included_field}->{order} = $highest_provided_sort_order;
+            ++$highest_provided_sort_order;
+        }
+
+        if ($params->{_mode} eq 'config') {
+            my @form_fields;
+            for my $field (sort { $form_adjustments->{$a}->{order} <=> $form_adjustments->{$b}->{order} } @included_fields) {
+                my $adjust = $form_adjustments->{$field};
+
+                my $label;
+                if (defined $adjust->{label}) {
+                    $label = $adjust->{label};
+                }
+                else {
+                    $label = join ' ', map { $_ eq 'id' ? 'ID' : ucfirst } split /_/, $field;
+                }
+
+                my $field_ref = {
+                    _method => $field,
+                    label   => $label,
+                };
+
+                #
+                # a value in 'field_type' for the field_ref is what determines whether we consider
+                # the field "editable" (even if it is going to be hidden), otherwise it won't
+                # appear in the form as an input and therefore won't exist in the store request,
+                # in that case it is just being displayed for reference purposes
+                #
+                unless (defined $adjust->{field_type}) {
+                    # TODO: give date, time, datetime, timestamp multiple fields, or can be done with
+                    #       one field type that is rendered using multiple client side fields?
+
+                    #
+                    # by default we make single field PKs that are integers with the name 'id'
+                    # not be editable, this can be overridden by specifying an is_editable adjustment
+                    #
+                    if (not defined $adjust->{is_editable} 
+                        and $field eq 'id' 
+                        and @pk_fields == 1 
+                        and $rdbo_fields_by_name->{$field}->type eq 'serial'
+                    ) {
+                        $adjust->{is_editable} = 0;
+                    }
+
+                    #
+                    # set a default field type unless the value isn't editable in which case
+                    # we should just display the current value as a reference (otherwise it 
+                    # can be turned off by using is_included above)
+                    #
+                    unless (defined $adjust->{is_editable} and not $adjust->{is_editable}) {
+                        # TODO: add auto handling of FK relationships when it is trivial to handle them
+
+                        if ($rdbo_fields_by_name->{$field}->type eq 'text') {
+                            $adjust->{field_type} = 'TextareaField';
+                        }
+                        elsif ($rdbo_fields_by_name->{$field}->type eq 'boolean') {
+                            $adjust->{field_type} = 'RadioField';
+                        }
+                        elsif ($rdbo_fields_by_name->{$field}->type eq 'date') {
+                            $adjust->{has_validator} = 'date';
+                        }
+                        elsif ($rdbo_fields_by_name->{$field}->type eq 'time') {
+                            $adjust->{has_validator} = 'time';
+                        }
+                        else {
+                            $adjust->{field_type} = 'TextField';
+                        }
+                    }
+                }
+
+                #
+                # if the field type is specified then we expect there to be a control in the form
+                # to match this field so set its name and do anything else the particular type requires
+                #
+                if (defined $adjust->{field_type}) {
+                    $field_ref->{type} = $adjust->{field_type};
+                    $field_ref->{name} = $field;
+
+                    # this is irritating, and necessary because IC eats "id" parameters
+                    if ($field eq 'id') {
+                        $field_ref->{name} = '_work_around_ic_id';
+                    }
+
+                    # see if a value already exists in our request, if so, maintain it
+                    if (defined $params->{$field_ref->{name}}) {
+                        $field_ref->{value} = $params->{$field_ref->{name}};
+                    }
+
+                    if (grep { $field_ref->{type} eq $_ } qw( CheckboxField RadioField SelectField )) {
+                        if (defined $adjust->{get_choices}) {
+                            $field_ref->{choices} = $adjust->{get_choices}->($self);
+                        }
+                        elsif ($field_ref->{type} eq 'RadioField' and $rdbo_fields_by_name->{$field}->type eq 'boolean') {
+                            $field_ref->{choices} = [
+                                {
+                                    value => 1,
+                                    label => 'Yes',
+                                },
+                                {
+                                    value => 0,
+                                    label => 'No',
+                                },
+                            ];
+                        }
+                        else {
+                            $field_ref->{choices} = [];
+                        }
+                    }
+                }
+                if (defined $adjust->{has_validator}) {
+                    $field_ref->{validator} = $adjust->{has_validator};
+                }
+
+                push @form_fields, $field_ref;
+            }
+            $struct->{form_fields} = \@form_fields;
+
+            my $button_field = {
+                type  => 'submit',
+                label => 'Submit',
+            };
+            $struct->{button_field} = $button_field;
+
+            my $title;
+            if ($params->{_properties_mode} eq 'edit') {
+                $title = "Edit $_object_name Properties : " . $object->manage_description;
+                $button_field->{label} = 'Save Changes';
+
+                for my $field_ref (@form_fields) {
+                    next if defined $field_ref->{value};
+
+                    my $method = $field_ref->{_method};
+                    if (defined $object->$method) {
+                        $field_ref->{value} = $object->$method . '';
+                    }
+                }
+            }
+            else {
+                $title = "Add $_object_name";
+            }
+
+            $struct->{title} = $title;
+
+            if ($self->can('_properties_edit_config_hook')) {
+                $self->_properties_edit_config_hook($struct, $object);
+            }
+        }
+        elsif ($params->{_mode} eq 'store') {
+            #
+            # catch all exceptions so that we can respond with an exception
+            # to be displayed in the form
+            #
+            eval {
+                #
+                # TODO: add back in pre-hook processing
+                #
+
+                #
+                # TODO: if we use individual hooks that can be set in each field
+                #       can we remove the need for generic hooks, see 'undef_on_add'
+                #       and/or example of server side validation on field basis
+                #
+
+                if ($params->{_properties_mode} eq 'edit') {
+                    for my $field (sort { $form_adjustments->{$a}->{order} <=> $form_adjustments->{$b}->{order} } @included_fields) {
+                        my $param_name = $field;
+                        if ($field eq 'id') {
+                            $param_name = '_work_around_ic_id';
+                        }
+
+                        #
+                        # TODO: restore handling of switching date/numeric fields to undef, etc.
+                        #
+
+                        $object->$field($params->{$param_name});
+                    }
+                }
+                else {
+                    # TODO: instantiate object
+                    # TODO: implement calling undef_on_add dispatch for setting "default" values
+                }
+                $object->save;
+
+                #
+                # TODO: add back in post-hook processing
+                #
+            };
+            if ($@) {
+                $struct->{response_code} = 0;
+                $struct->{exception} = $@;
+            }
+            else {
+                $struct->{response_code} = 1;
+            }
+        }
+        else {
+            IC::Exception->throw("Unrecognized _mode for '$params->{_properties_mode}' _properties_mode: $params->{_mode}");
+        }
+    }
+    elsif ($params->{_properties_mode} eq 'upload') {
+    }
+    elsif ($params->{_properties_mode} eq 'unlink') {
+    }
+    else {
+        IC::Exception->throw("Unrecognized _properties_mode: $params->{_properties_mode}");
+    }
+
+    if ($params->{_format} eq 'json') {
+        my $response = $self->_controller->response;
+        $response->headers->status('200 OK');
+        $response->headers->content_type('text/plain');
+        #$response->headers->content_type('application/json');
+        $response->buffer( JSON::Syck::Dump( $struct ));
+
+        $self->_response(1);
+    }
+    else {
+        IC::Exception->throw("Unrecognized _format: $params->{_format}");
     }
 
     return;
