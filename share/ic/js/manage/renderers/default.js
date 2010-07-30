@@ -30,9 +30,61 @@ YUI.add(
             ManageDefaultRenderer,
             Y.Base,
             {
-                getContent: function (data, node) {
-                    var view_content = this._buildContentString(data);
-                    node.setContent(view_content);
+                _actions: null,
+                _json: null,
+
+                getContent: function (json, node) {
+                    this._json = json;
+                    var tabs = [];
+                    var data = json.data || json;
+                    tabs.push({
+                        label: 'View',
+                        content: this._buildContentString(data)
+                    });
+
+                    // Y.log('default::getContent - json');
+                    // Y.log(json);
+                    // if there is a forms.edit, add an edit tab
+                    if (json.forms && json.forms.edit) {
+                        var form_url = '/manage/function/' +
+                            json.forms.edit.func + 
+                            '?_mode=config&_properties_mode=edit' +
+                            json.forms.edit.pk;
+                        Y.io(form_url, {
+                            sync: false,
+                            on: {
+                                success: Y.bind(this._parseJSONForm, this),
+                                failure: function (txn_id, response) {
+                                    Y.log('Failed to get form data.', 'error');
+                                }
+                            }
+                        });
+                        tabs.push({
+                            label: 'Edit',
+                            content: 'Loading'
+                        });
+                    }
+
+                    var num_tabs = Y.Object.size(tabs);
+                    if (tabs.length > 1) {
+                        // build an inner tab set (aka Detail Actions)
+                        this._actions = new Y.IC.ManageDetailActions(
+                            {
+                                prefix: 'inner',
+                                children: tabs
+                            }
+                        );
+                        this._actions.render(node);
+                    }
+                    else {
+                        var tab = tabs.pop();
+                        if (tab.content) {
+                            node.setContent(tab.content);
+                        }
+                        else {
+                            node.setContent('[empty]');
+                        }
+                    }
                     return node;
                 },
 
@@ -44,7 +96,7 @@ YUI.add(
                             content.push('<dt>' + k + ': </dt>' +
                                          '<dd>' + v + '&nbsp;</dd>');
                         }
-                        else if (k === 'action_log') {
+                        else if (k === 'action_log' || k === 'renderer') {
                             // skip these for now...
                         }
                         else if (Y.Lang.isArray(v) && 
@@ -61,6 +113,61 @@ YUI.add(
                     }, this);
                     content.push('</dl>');
                     return content.join('');
+                },
+
+                _buildEditTabForm: function (data) {
+                    var tab = this._actions.getTab('Edit');
+                    var node = tab.get('panelNode');
+                    node.setContent('');
+
+                    if (data.title) {
+                        tab.set('label', data.title);
+                    }
+
+                    var pk_params = '';
+                    Y.each(data.pk_pairs, function (v, k) {
+                        pk_params += '&' + k + '=' + v;
+                    });
+
+                    // for now, remove any fields without a name
+                    var fields = [];
+                    Y.each(data.form_fields, function (v, i, o) {
+                        if (!Y.Lang.isUndefined(v.name)) {
+                            fields.push(v);
+                        }
+                    });
+
+                    var action = '/manage/function/' +
+                        data.func + 
+                        '?_mode=store&_properties_mode=edit' +
+                        pk_params;
+                    fields.push(data.button_field);
+                    var f = new Y.Form({
+                        action: action,
+                        method: 'post',
+                        fields: fields,
+                        skipValidationBeforeSubmit: true
+                    });
+
+                    f.subscribe('success', function (args) {
+                        Y.log('Form submission successful');
+                    });
+                    f.subscribe('failure', function (args) {
+                        Y.log('Form submission failed');
+                    });
+                    
+                    f.render(node);
+                },
+
+                _parseJSONForm: function (txn_id, response) {
+                    var data;
+                    try {
+                        data = Y.JSON.parse(response.responseText);
+                    }
+                    catch (err) {
+                        data = "Error parsing the JSON form data: " + err;
+                    }
+                    this._buildEditTabForm(data);
                 }
             }
         );

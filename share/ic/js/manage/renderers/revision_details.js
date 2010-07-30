@@ -68,11 +68,9 @@ YUI.add(
                             content.push('<dt>' + k + ': </dt>' +
                                          '<dd>' + v + '&nbsp;</dd>');
                         }
-                        else if (k === 'renderer') {
+                        else if (k === 'action_log' || k === 'renderer') {
                             // skip these for now...
-                        }
-                        else if (k === 'action_log') {
-                            // skip these for now...
+                            // they shouldn't even be in the 'content' property
                         }
                         else if (Y.Lang.isArray(v) && 
                                  Y.Lang.isObject(v[0]) && 
