@@ -141,7 +141,8 @@ YUI.add(
     {
         requires: [
             "widget",
-            "event-custom"
+            "event-custom",
+            "json-parse"
         ]
     }
 );

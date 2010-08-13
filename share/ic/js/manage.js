@@ -18,11 +18,26 @@
 
 YUI(
     {
-        gallery: 'gallery-2010.07.14-19-50',
+        gallery: 'gallery-2010.08.04-19-46',
         filter: 'raw',
         combine: false,
         insertBefore: 'styleoverrides',
         groups: {
+            calendar: {
+                combine: false,
+                base:'/ic/js/static/',
+                charset:'utf-8',
+                modules:{
+                    'calendar-skin':{// default skin
+                        path:'skin.css',
+                        type:'css'
+                    },
+                    'gallery-calendar':{
+                        path:'gallery-calendar.js',
+                        requires:['calendar-skin','node']
+                    }
+                } 
+            },
             icjs: {
                 combine: false,
                 base: "/ic/js/",
@@ -57,6 +72,18 @@ YUI(
                             "widget"
                         ]
                     },
+                    "ic-manage-plugin-editable": {
+                        path: "manage/plugins/editable.js",
+                        requires: [
+                            "ic-manage-plugin-editable-css",
+                            "ic-manage-editinplaceform",
+                            "ic-manage-formfield-date",
+                            "ic-manage-formfield-radio",
+                            "plugin",
+                            "io",
+                            "json-parse"
+                        ]
+                    },
                     "ic-manage-plugin-treeview": {
                         path: "manage/plugins/treeview.js",
                         requires: [
@@ -77,6 +104,8 @@ YUI(
                     "ic-manage-renderers-default": {
                         path: "manage/renderers/default.js",
                         requires: [
+                            "ic-manage-plugin-editable",
+                            "ic-manage-form",
                             "base-base"
                         ]
                     },
@@ -85,7 +114,7 @@ YUI(
                         requires: [
                             "base-base",
                             "ic-manage-widget-detailactions",
-                            "gallery-form"
+                            "ic-manage-form"
                         ]
                     },
                     "ic-manage-widget-tabview": {
@@ -176,9 +205,36 @@ YUI(
                             "widget",
                             "gallery-accordion-css",
                             "gallery-accordion",
-                            "gallery-form",
+                            "ic-manage-form",
                             "gallery-form-values",
                             "gallery-storage-lite"
+                        ]
+                    },
+                    "ic-manage-formfield-date": {
+                        path: "manage/form_fields/date.js",
+                        requires: [
+                            "ic-manage-formfield-date-css",
+                            "gallery-form",
+                            "gallery-calendar"
+                        ]
+                    },
+                    "ic-manage-formfield-radio": {
+                        path: "manage/form_fields/radio.js",
+                        requires: [
+                            "ic-manage-formfield-radio-css",
+                            "gallery-form"
+                        ]
+                    },
+                    "ic-manage-form": {
+                        path: "manage/form.js",
+                        requires: [
+                            "gallery-form"
+                        ]
+                    },
+                    "ic-manage-editinplaceform": {
+                        path: "manage/edit_in_place_form.js",
+                        requires: [
+                            "ic-manage-form"
                         ]
                     },
                     "ic-manage-window": {
@@ -236,6 +292,18 @@ YUI(
                         path: "manage/plugins/treeview.css",
                         type: "css"
                     },
+                    "ic-manage-plugin-editable-css": {
+                        path: "manage/plugins/editable.css",
+                        type: "css"
+                    },
+                    "ic-manage-formfield-date-css": {
+                        path: "manage/formfields/date.css",
+                        type: "css"
+                    },
+                    "ic-manage-formfield-radio-css": {
+                        path: "manage/formfields/radio.css",
+                        type: "css"
+                    },
                     "ic-manage-window-css": {
                         path: "manage/window.css",
                         type: "css"
@@ -250,8 +318,6 @@ YUI(
                         type: "css"
                     }
                 }
-            },
-            yui2css: {
             }
         }
     }
@@ -322,7 +388,7 @@ YUI(
 
                 // Y.log("setting up manage window");
                 var mw = Y.IC.ManageWindow();
-                
+
                 // hide our loading screen
                 Y.on('contentready', function () {
                     Y.one('#application-loading').addClass('hide');

@@ -37,9 +37,10 @@ YUI.add(
                     this._json = json;
                     var tabs = [];
                     var data = json.data || json;
+
                     tabs.push({
                         label: 'View',
-                        content: this._buildContentString(data)
+                        content: "Loading..."
                     });
 
                     // Y.log('default::getContent - json');
@@ -61,7 +62,7 @@ YUI.add(
                         });
                         tabs.push({
                             label: 'Edit',
-                            content: 'Loading'
+                            content: 'Loading...'
                         });
                     }
 
@@ -75,15 +76,10 @@ YUI.add(
                             }
                         );
                         this._actions.render(node);
+                        this._buildViewTab(data);
                     }
                     else {
-                        var tab = tabs.pop();
-                        if (tab.content) {
-                            node.setContent(tab.content);
-                        }
-                        else {
-                            node.setContent('[empty]');
-                        }
+                        node.setContent(this._buildContentString(data));
                     }
                     return node;
                 },
@@ -94,7 +90,8 @@ YUI.add(
                     Y.each(data, function (v, k) {
                         if (Y.Lang.isString(v) || Y.Lang.isNumber(v)) {
                             content.push('<dt>' + k + ': </dt>' +
-                                         '<dd>' + v + '&nbsp;</dd>');
+                                         '<dd field="' + k + '">' + 
+                                         v + '&nbsp;</dd>');
                         }
                         else if (k === 'action_log' || k === 'renderer') {
                             // skip these for now...
@@ -115,6 +112,13 @@ YUI.add(
                     return content.join('');
                 },
 
+                _buildViewTab: function (data) {
+                    var node = this._actions.getPanel('View');
+                    node.setContent('');
+                    var content_str = this._buildContentString(data);
+                    node.setContent(content_str);
+                },
+
                 _buildEditTabForm: function (data) {
                     var tab = this._actions.getTab('Edit');
                     var node = tab.get('panelNode');
@@ -124,25 +128,57 @@ YUI.add(
                         tab.set('label', data.title);
                     }
 
+                    var fields = [];
                     var pk_params = '';
                     Y.each(data.pk_pairs, function (v, k) {
                         pk_params += '&' + k + '=' + v;
+                        fields.push({
+                            name: k,
+                            value: v,
+                            type: 'hidden'
+                        });
                     });
 
-                    // for now, remove any fields without a name
-                    var fields = [];
-                    Y.each(data.form_fields, function (v, i, o) {
+                    Y.log('data:');
+                    Y.log(data);
+
+                    // var hidden = [];
+                    Y.each(data.form_fields, function (v) {
                         if (!Y.Lang.isUndefined(v.name)) {
                             fields.push(v);
                         }
+                        /*
+                        else if (Y.Lang.isValue(v._method)) {
+                            hidden.push({name: v._method,
+                                         value: v.value,
+                                         type: 'hidden'});
+                        }
+                        */
                     });
+                    fields.push({
+                        name: '_mode',
+                        value: 'store',
+                        type: 'hidden'
+                    });
+                    fields.push({
+                        name: '_properties_mode',
+                        value: 'edit',
+                        type: 'hidden'
+                    });
+
+                    // 'hidden' fields should be shown but not editable
+                    // fields = fields.concat(hidden);
 
                     var action = '/manage/function/' +
                         data.func + 
                         '?_mode=store&_properties_mode=edit' +
                         pk_params;
                     fields.push(data.button_field);
-                    var f = new Y.Form({
+                    
+                    Y.log('fields:');
+                    Y.log(Y.merge(fields));
+                    
+                    var f = new Y.IC.ManageForm({
                         action: action,
                         method: 'post',
                         fields: fields,
@@ -157,6 +193,7 @@ YUI.add(
                     });
                     
                     f.render(node);
+                    this._addEditableFields(data);
                 },
 
                 _parseJSONForm: function (txn_id, response) {
@@ -168,6 +205,70 @@ YUI.add(
                         data = "Error parsing the JSON form data: " + err;
                     }
                     this._buildEditTabForm(data);
+                },
+
+                _addEditableFields: function (data) {
+                    // Y.log('default::_addEditableFields');
+                    var node, key, i, name, value, pk_fields, type, choices, 
+                        multiple, udo, field;
+                    node = this._actions.getPanel('View');
+                    node.all('dd').each(function (v) {
+                        key = v.getAttribute('field');
+                        if (data.form_fields) {
+                            for (var i = 0; i < data.form_fields.length; ++i) {
+                                field = data.form_fields[i];
+                                name = field.name || null;
+                                value = field.value || null;
+                                if (name === key) {
+                                    pk_fields = [];
+                                    Y.each(data.pk_pairs, function (v, k) {
+                                        pk_fields.push({
+                                            name: k.substr(4),
+                                            value: v,
+                                            type: 'hidden'
+                                        });
+                                        pk_fields.push({
+                                            name: k,
+                                            value: v,
+                                            type: 'hidden'
+                                        });
+                                    });
+                                    type = field.type || 'text';
+                                    choices = field.choices || null;
+                                    multiple = field.multiple || null;
+                                    udo = field.useDefaultOption || null;
+                                    v.plug(Y.IC.ManageEditable, {
+                                        func_code: data.func,
+                                        mode: 'store',
+                                        properties_mode: 'edit',
+                                        pk_fields: pk_fields,
+                                        value: value,
+                                        multiple: multiple,
+                                        useDefaultOption: udo,
+                                        choices: choices,
+                                        field_name: name,
+                                        field_type: type
+                                    });
+                                    /*
+                                      // hard code vals for debugging...
+                                    v.plug(Y.IC.ManageEditable, {
+                                        func_code: data.func,
+                                        mode: 'store',
+                                        properties_mode: 'edit',
+                                        pk: pk,
+                                        pk_fields: pk_fields,
+                                        value: value,
+                                        // multiple: true,
+                                        // useDefaultOption: false,
+                                        choices: choices,
+                                        field_name: name,
+                                        field_type: type
+                                    });
+                                    */
+                                }
+                            }
+                        }
+                    });
                 }
             }
         );
@@ -178,7 +279,9 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
-            "base-base"
+            "base-base",
+            "ic-manage-widget-detailactions",
+            "ic-manage-form"
         ]
     }
 );

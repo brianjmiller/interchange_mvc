@@ -204,7 +204,7 @@ YUI.add(
             }
         }
         fields[1] = {type: 'button', label: 'Submit'};
-        var form1 = new Y.Form({
+        var form1 = new Y.IC.ManageForm({
             method: 'get',
             fields: fields
         });
@@ -240,7 +240,7 @@ YUI.add(
             }
         }
         fields[1] = {type: 'button', label: 'Search'};
-        var form2 = new Y.Form({
+        var form2 = new Y.IC.ManageForm({
             method: 'get',
             fields: fields
         });
@@ -366,10 +366,10 @@ YUI.add(
     {
         requires: [
             "ic-manage-widget-quicklinks-css", 
+            "ic-manage-form",
             "widget",
             "gallery-accordion-css",
             "gallery-accordion",
-            "gallery-form",
             "gallery-form-values",
             "gallery-storage-lite"
         ]

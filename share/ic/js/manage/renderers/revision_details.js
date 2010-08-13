@@ -136,7 +136,7 @@ YUI.add(
                         fields[++i] = {type : 'reset', label : 'Reset'};
                     }
 
-                    var f = new Y.Form({
+                    var f = new Y.IC.ManageForm({
                         action : '/manage/index', // should be a nice long load...
                         method : 'post',
                         fields : fields
@@ -163,7 +163,7 @@ YUI.add(
     {
         requires: [
             "ic-manage-widget-detailactions",
-            "gallery-form"
+            "ic-manage-form"
         ]
     }
 );
