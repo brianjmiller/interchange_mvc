@@ -39,6 +39,7 @@ class_has '_role_class'                => ( is => 'ro', default => 'IC::M::Role'
 class_has '_file_class'                => ( is => 'ro', default => 'IC::M::File' );
 class_has '_file_resource_class'       => ( is => 'ro', default => 'IC::M::FileResource' );
 class_has '_file_resource_class_mgr'   => ( is => 'ro', default => 'IC::M::FileResource::Manager' );
+class_has '_field_adjustments'         => ( is => 'ro', default => undef );
 
 class_has '_list_paging_provider'      => ( is => 'ro', default => 'server' );
 class_has '_list_page_count'           => ( is => 'ro', default => 25 );
@@ -83,7 +84,6 @@ class_has '_list_kind_obj_key_method'        => ( is => 'ro', default => undef )
 class_has '_list_kind_obj_name_method'       => ( is => 'ro', default => undef );
 
 class_has '_properties_referrer_no_override' => ( is => 'ro', default => undef );
-class_has '_properties_form_adjustments'     => ( is => 'ro', default => undef );
 
 class_has '_detail_use_default_summary_tab'  => ( is => 'ro', default => 1 );
 class_has '_detail_other_mappings'           => ( is => 'ro', default => sub { {} } );
@@ -1003,7 +1003,49 @@ sub _common_list_data_obj {
                 paging_provider   => $self->_list_paging_provider,
                 page_count        => $self->_list_page_count,
                 row_actions       => [],
+                actions           => [],
             };
+
+            if ($self->check_priv($self->_func_prefix . 'Add')) {
+                my $add_action = {
+                    label  => 'Add',
+                };
+                push @{ $struct->{actions} }, $add_action;
+
+                my $form_def = $add_action->{form} = {
+                    action => $self->_func_prefix . 'Add',
+                };
+
+                #
+                # cache look up of field meta data objects by name of field for easy access
+                #
+                my $rdbo_fields_by_name = {
+                    map { $_->name => $_ } @{ $_model_class->meta->columns }
+                };
+
+                #
+                # using all the columns in the object get the form defs,
+                # this will leave out any fields not used in an add form
+                #
+                my $form_defs = $self->_fields_to_field_form_defs(
+                    fields => scalar $_model_class->meta->columns,
+                );
+                $form_def->{fields_present} = [ keys %$form_defs ];
+
+                #
+                # based on the fields present in the form defs get the
+                # kv pairs so that we have access to the label
+                #
+                my $kv_defs = $self->_fields_to_kv_defs(
+                    fields => [ map { $rdbo_fields_by_name->{$_} } keys %$form_defs ],
+                );
+
+                while (my ($name, $ref) = each %$form_defs) {
+                    $ref->{label} = $kv_defs->{$name}->{label};
+
+                    push @{ $form_def->{field_defs} }, $ref;
+                }
+            }
 
             my $_list_cols = $self->_list_cols;
             for my $col (@$_list_cols) {
@@ -1249,6 +1291,7 @@ sub _common_list_data_obj {
 #*_common_list             = \&IC::Manage::_common_list_data_obj;
 #*_common_detail_view      = \&IC::Manage::_common_detail_data_obj;
 #*_common_properties       = \&IC::Manage::_common_properties_data_obj;
+#*_common_drop             = \&IC::Manage::_common_drop_data_obj;
 
 sub _common_add {
     my $self = shift;
@@ -1484,305 +1527,240 @@ sub _common_properties {
     return;
 }
 
-#
-#
-#
 sub _common_properties_data_obj {
     my $self = shift;
 
     my $params = $self->_controller->parameters;
     $params->{_format} ||= 'json';
 
-    my $_model_class = $self->_model_class;
-    my $_object_name = $self->_model_display_name;
-    my @pk_fields    = @{ $_model_class->meta->primary_key_columns };
-    my @_pk_fields   = map { "_pk_$_" } @pk_fields;
-
     my $struct;
 
-    #
-    # everything but 'add' should be working against an existing object,
-    # and to do so we need to be able to distinguish it using the existing
-    # PK, so get the fields for the PK and store the corresponding values,
-    # which we know to be passed in via the request and already stringified
-    #
-    my $object;
-    unless ($params->{_properties_mode} eq 'add') {
-        $object = $self->_common_implied_object;
-
-        for my $_pk_field (@_pk_fields) {
-            $struct->{pk_pairs}->{$_pk_field} = $params->{$_pk_field};
-        }
-    }
-
-    # TODO: make these a dispatch table?
-    if ($params->{_properties_mode} eq 'edit' or $params->{_properties_mode} eq 'add') {
-        #
-        # get the fields in the object, loop over them determining which fields need to be 
-        # or may have been included in the form
-        #
-        my @fields = @{ $_model_class->meta->columns };
-
-        #
-        # boilerplate fields by their nature are automatically handled, therefore they aren't
-        # editable
-        #
-        my @boilerplate_fields = keys %{ { $_model_class->boilerplate_columns } };
-
-        #
-        # get the structure used to override default behaviour for the fields,
-        # it is keyed by DB field name
-        #
-        my $form_adjustments = $self->_properties_form_adjustments || {};
-
-        #
-        # cache look up of field meta data objects by name of field for easy access
-        #
-        my $rdbo_fields_by_name = {};
-
-        #
-        # need to pre-process fields to build a sort order and remove any fields not intended 
-        # to be included, we'll just go with the sort order of what RDBO has for any non-specified 
-        # fields, therefore all specified fields will sort first, included fields also determines
-        # which fields we'll be allowed to set new values for
-        #
-        my @included_fields;
-
-        my $highest_provided_sort_order = 0;
-        for my $field (@fields) {
-            # skip the boilerplate fields
-            next if grep { $field eq $_ } @boilerplate_fields;
-
-            my $field_name = $field->name;
-            my $adjust     = $form_adjustments->{$field_name} || {};
-
-            # skip fields explicitly turned off, this is called 'included' because even things
-            # that are not editable and/or hidden should still be included in this list, these
-            # things that we aren't even going to have in the meta data. period.
-
-            next if (defined $adjust->{is_included} and not $adjust->{is_included});
-            next if ($params->{_properties_mode} eq 'edit' and defined $adjust->{is_included_in_edit} and not $adjust->{is_included_in_edit});
-            next if ($params->{_properties_mode} eq 'add' and defined $adjust->{is_included_in_add} and not $adjust->{is_included_in_add});
-
-            push @included_fields, $field_name;
-            $rdbo_fields_by_name->{ $field_name } = $field;
-
-            if (defined $adjust->{order} and $adjust->{order} > $highest_provided_sort_order) {
-                $highest_provided_sort_order = $adjust->{order} + 1;
+    eval {
+        if ($params->{_properties_mode} eq 'basic') {
+            unless (defined $params->{fields_present} and @{ $params->{fields_present} }) {
+                IC::Exception->throw('Missing required argument: fields_present[]');
             }
-        }
 
-        #
-        # assign an order to all non-ordered fields starting with the value as determined above
-        #
-        for my $included_field (@included_fields) {
-            next if defined $form_adjustments->{$included_field}->{order};
+            my $_model_class    = $self->_model_class;
+            my @fields          = $_model_class->meta->columns;
+            my @pk_fields       = @{ $_model_class->meta->primary_key_columns };
+            my @_pk_field_names = map { '_pk_' . $_->name } @pk_fields;
 
-            $form_adjustments->{$included_field}->{order} = $highest_provided_sort_order;
-            ++$highest_provided_sort_order;
-        }
-
-        if ($params->{_mode} eq 'config') {
-            my @form_fields;
-            for my $field (sort { $form_adjustments->{$a}->{order} <=> $form_adjustments->{$b}->{order} } @included_fields) {
-                my $adjust = $form_adjustments->{$field};
-
-                my $label;
-                if (defined $adjust->{label}) {
-                    $label = $adjust->{label};
-                }
-                else {
-                    $label = join ' ', map { $_ eq 'id' ? 'ID' : ucfirst } split /_/, $field;
-                }
-
-                my $field_ref = {
-                    _method => $field,
-                    label   => $label,
-                };
-
-                #
-                # a value in 'field_type' for the field_ref is what determines whether we consider
-                # the field "editable" (even if it is going to be hidden), otherwise it won't
-                # appear in the form as an input and therefore won't exist in the store request,
-                # in that case it is just being displayed for reference purposes
-                #
-                unless (defined $adjust->{field_type}) {
-                    # TODO: give date, time, datetime, timestamp multiple fields, or can be done with
-                    #       one field type that is rendered using multiple client side fields?
-
-                    #
-                    # by default we make single field PKs that are integers with the name 'id'
-                    # not be editable, this can be overridden by specifying an is_editable adjustment
-                    #
-                    if (not defined $adjust->{is_editable} 
-                        and $field eq 'id' 
-                        and @pk_fields == 1 
-                        and $rdbo_fields_by_name->{$field}->type eq 'serial'
-                    ) {
-                        $adjust->{is_editable} = 0;
-                    }
-
-                    #
-                    # set a default field type unless the value isn't editable in which case
-                    # we should just display the current value as a reference (otherwise it 
-                    # can be turned off by using is_included above)
-                    #
-                    unless (defined $adjust->{is_editable} and not $adjust->{is_editable}) {
-                        # TODO: add auto handling of FK relationships when it is trivial to handle them
-
-                        if ($rdbo_fields_by_name->{$field}->type eq 'text') {
-                            $adjust->{field_type} = 'TextareaField';
-                        }
-                        elsif ($rdbo_fields_by_name->{$field}->type eq 'boolean') {
-                            $adjust->{field_type} = 'RadioField';
-                        }
-                        elsif ($rdbo_fields_by_name->{$field}->type eq 'date') {
-                            $adjust->{has_validator} = 'date';
-                        }
-                        elsif ($rdbo_fields_by_name->{$field}->type eq 'time') {
-                            $adjust->{has_validator} = 'time';
-                        }
-                        else {
-                            $adjust->{field_type} = 'TextField';
-                        }
-                    }
-                }
-
-                #
-                # if the field type is specified then we expect there to be a control in the form
-                # to match this field so set its name and do anything else the particular type requires
-                #
-                if (defined $adjust->{field_type}) {
-                    $field_ref->{type} = $adjust->{field_type};
-                    $field_ref->{name} = $field;
-
-                    # this is irritating, and necessary because IC eats "id" parameters
-                    if ($field eq 'id') {
-                        $field_ref->{name} = '_work_around_ic_id';
-                    }
-
-                    # see if a value already exists in our request, if so, maintain it
-                    if (defined $params->{$field_ref->{name}}) {
-                        $field_ref->{value} = $params->{$field_ref->{name}};
-                    }
-
-                    if (grep { $field_ref->{type} eq $_ } qw( CheckboxField RadioField SelectField )) {
-                        if (defined $adjust->{get_choices}) {
-                            $field_ref->{choices} = $adjust->{get_choices}->($self);
-                        }
-                        elsif ($field_ref->{type} eq 'RadioField' and $rdbo_fields_by_name->{$field}->type eq 'boolean') {
-                            $field_ref->{choices} = [
-                                {
-                                    value => 1,
-                                    label => 'Yes',
-                                },
-                                {
-                                    value => 0,
-                                    label => 'No',
-                                },
-                            ];
-                        }
-                        else {
-                            $field_ref->{choices} = [];
-                        }
-                    }
-                }
-                if (defined $adjust->{has_validator}) {
-                    $field_ref->{validator} = $adjust->{has_validator};
-                }
-
-                push @form_fields, $field_ref;
-            }
-            $struct->{form_fields} = \@form_fields;
-
-            my $button_field = {
-                type  => 'submit',
-                label => 'Submit',
+            #
+            # cache look up of field meta data objects by name of field for easy access
+            #
+            my $rdbo_fields_by_name = {
+                map { $_->name => $_ } @{ $_model_class->meta->columns }
             };
-            $struct->{button_field} = $button_field;
 
-            my $title;
-            if ($params->{_properties_mode} eq 'edit') {
-                $title = "Edit $_object_name Properties : " . $object->manage_description;
-                $button_field->{label} = 'Save Changes';
+            #
+            # get the structure used to override default behaviour for the fields,
+            # it is keyed by DB field name
+            #
+            my $adjustments = $self->_field_adjustments || {};
 
-                for my $field_ref (@form_fields) {
-                    next if defined $field_ref->{value};
+            #
+            # we distinguish an add from an edit by checking for the existence of
+            # the _pk_* fields in the request, when they exist we should be able
+            # to retrieve an object, this means that a checkbox or an unset radio
+            # group couldn't be used for a PK...I think that is reasonable
+            #
+            my $is_edit = grep { defined $params->{$_} } @_pk_field_names;
 
-                    my $method = $field_ref->{_method};
-                    if (defined $object->$method) {
-                        $field_ref->{value} = $object->$method . '';
-                    }
-                }
+            my $object;
+            if ($is_edit) {
+                $object = $self->_common_implied_object;
             }
             else {
-                $title = "Add $_object_name";
+                $object = $_model_class->new;
             }
 
-            $struct->{title} = $title;
+            my $field_form_defs = $self->_fields_to_field_form_defs( @{ $params->{fields_present} } );
 
-            if ($self->can('_properties_edit_config_hook')) {
-                $self->_properties_edit_config_hook($struct, $object);
+            my %pk_fields_to_update;
+            my %fields_present_by_name;
+            my $alo_non_pk = 0;
+            for my $field_name (@{ $params->{fields_present} }) {
+                $fields_present_by_name{$field_name} = 1;
+
+                #
+                # ultimately we expect a single value for a given field to stuff
+                # into the object (read: db column), unless the field is marked
+                # as allowing nulls in which case this may be specifically used
+                # to clear a value
+                #
+                my $value;
+
+                my $adjustment = $adjustments->{$field_name} || {};
+
+                my $allow_undef = 1;
+                if (defined $adjustment->{allow_undef}) {
+                    $allow_undef = $adjustment->{allow_undef};
+                }
+                else {
+                    if ($rdbo_fields_by_name->{$field_name}->not_null) {
+                        $allow_undef = 0;
+                    }
+                }
+
+                #
+                # see if there is an adjustment for determining the field value, if so,
+                # call it and use that
+                #
+                if (defined $adjustment->{value_builder}) {
+                    #
+                    # TODO: should value_builder only get passed values for the controls known about
+                    #       for this field?
+                    #
+                    $value = $adjustment->{value_builder}->($self);
+                }
+
+                #
+                # if this is add, and the field is undefined then see if there is an
+                # adjustment to handle that case, and call it to get the value
+                #
+                if (not defined $value and not $is_edit and defined $adjustment->{undef_on_add}) {
+                    $value = $adjustment->{undef_on_add}->($self);
+                }
+
+                #
+                # if there is more than one control we can't handle things automagically
+                # as we have no way to determine which should be used to set the value
+                # in the DB itself, and one of the adjustments listed above should have
+                # provided us with a value if we are requiring one
+                #
+                if (not defined $value and @{ $field_form_defs->{ $field_name }->{controls} } == 1) {
+                    #
+                    # determine the control name used, check for definedness in the form
+                    # which may be field type dependent
+                    #
+                    my $control = (@{ $field_form_defs->{ $field_name }->{controls} })[0];
+
+                    $value = $params->{ $control->{name} };
+                }
+
+                unless (defined $value or $allow_undef) {
+                    IC::Exception->throw("Unable to determine value for not null field: $field_name");
+                }
+
+                #
+                # run a validator check, presumably this is done client side first, but
+                # we all know we can't trust the client to get things right
+                #
+                if (defined $adjustment->{has_validator}) {
+                    if ($adjustment->{has_validator} eq 'server') {
+                        $adjustment->{validator}->($value);
+                    }
+                    else {
+                        IC::Exception->throw("Unrecognized field validator: $adjustment->{has_validator}");
+                    }
+                }
+
+                #
+                # need to handle PKs differently in the case of edits, they need to be done
+                # through an "update" statement because it is a known limitation in RDBO,
+                # IOW a ->save can't update a PK field, but with adds the PK is required to
+                # be set (at least one non-NULL field) when doing ->save
+                #
+                # technically I suppose we should be doing a check on the type of object
+                # and whether it requires such handling since RDBO is only one possible
+                # ORM in play, but we'll leave that for when we actually have a second since
+                # there are other things in here that are likely RDBO specific
+                #
+                if ($is_edit and $rdbo_fields_by_name->{$field_name}->is_primary_key_member) {
+                    $pk_fields_to_update{$field_name} = $value;
+                }
+                else {
+                    $object->$field_name($value);
+                    $alo_non_pk = 1;
+                }
             }
-        }
-        elsif ($params->{_mode} eq 'store') {
+
             #
-            # catch all exceptions so that we can respond with an exception
-            # to be displayed in the form
+            # for adds we want to check after the fact to see whether any additional fields
+            # exist, aka that weren't considered present in the form and see if they have
+            # default handler when undef
             #
+            for my $field (@fields) {
+                my $field_name = $field->name;
+                next if exists $fields_present_by_name{$field_name};
+
+                if (defined $adjustments->{$field_name} and defined $adjustments->{$field_name}->{undef_on_add}) {
+                    $object->$field_name( $adjustments->{$field_name}->{undef_on_add}->($self) );
+                }
+            }
+
+            my $db = $object->db;
+            $db->begin_work;
+
             eval {
-                #
-                # TODO: add back in pre-hook processing
-                #
-
                 #
                 # TODO: if we use individual hooks that can be set in each field
                 #       can we remove the need for generic hooks, see 'undef_on_add'
                 #       and/or example of server side validation on field basis
                 #
 
-                if ($params->{_properties_mode} eq 'edit') {
-                    for my $field (sort { $form_adjustments->{$a}->{order} <=> $form_adjustments->{$b}->{order} } @included_fields) {
-                        my $param_name = $field;
-                        if ($field eq 'id') {
-                            $param_name = '_work_around_ic_id';
-                        }
+                #
+                # TODO: add back in pre update hook?
+                #
 
-                        #
-                        # TODO: restore handling of switching date/numeric fields to undef, etc.
-                        #
+                if ($alo_non_pk) {
+                    $object->save;
+                }
 
-                        $object->$field($params->{$param_name});
+                if (keys %pk_fields_to_update) {
+                    my $num_rows_updated = $self->_model_class_mgr->update_objects(
+                        db    => $db,
+                        set   => { %pk_fields_to_update },
+                        where => [
+                            map {
+                                my $name = $_->name;
+                                $name => $object->$name;
+                            } @pk_fields,
+                        ],
+                    );
+                    unless ($num_rows_updated > 0) {
+                        IC::Exception->throw('Unable to update record based on PK values.');
                     }
+                    if ($num_rows_updated > 1) {
+                        IC::Exception->throw('Multiple rows updated when single primary key should match. SPEAK TO DEVELOPER!');
+                    }
+
+                    $object = $_model_class->new(
+                        db => $db,
+                        %pk_fields_to_update,
+                    )->load;
                 }
-                else {
-                    # TODO: instantiate object
-                    # TODO: implement calling undef_on_add dispatch for setting "default" values
-                }
-                $object->save;
 
                 #
-                # TODO: add back in post-hook processing
+                # TODO: add back in post update hook?
                 #
             };
-            if ($@) {
-                $struct->{response_code} = 0;
-                $struct->{exception} = $@;
+            my $e;
+            if ($e = Exception::Class->caught) {
+               eval { $db->rollback; };
+
+               ref $e && $e->can('rethrow') ? $e->rethrow : die $e;
             }
-            else {
-                $struct->{response_code} = 1;
-            }
+
+            $db->commit;
+        }
+        elsif ($params->{_properties_mode} eq 'upload') {
+            my $object = $self->_common_implied_object;
+        }
+        elsif ($params->{_properties_mode} eq 'unlink') {
+            my $object = $self->_common_implied_object;
         }
         else {
-            IC::Exception->throw("Unrecognized _mode for '$params->{_properties_mode}' _properties_mode: $params->{_mode}");
+            IC::Exception->throw("Unrecognized _properties_mode: $params->{_properties_mode}");
         }
-    }
-    elsif ($params->{_properties_mode} eq 'upload') {
-    }
-    elsif ($params->{_properties_mode} eq 'unlink') {
+    };
+    if ($@) {
+        $struct->{response_code} = 0;
+        $struct->{exception}     = $@;
     }
     else {
-        IC::Exception->throw("Unrecognized _properties_mode: $params->{_properties_mode}");
+        $struct->{response_code} = 1;
     }
 
     if ($params->{_format} eq 'json') {
@@ -2218,6 +2196,51 @@ sub _common_drop {
     return;
 }
 
+#
+# TODO: add handling of file resources to drop files if the mixin is present
+#
+sub _common_drop_data_obj {
+    my $self = shift;
+    
+    my $params = $self->_controller->parameters;
+    $params->{_format} ||= 'json';
+
+    my $struct;
+
+    eval {
+        my $object = $self->_common_implied_object;
+
+        if ($self->can('_drop_action_hook')) {
+            $self->_drop_action_hook($object);
+        }
+
+        unless ($object->delete) {
+            IC::Exception->('Failed to delete object: ' . $object->error);
+        }
+
+        $struct->{response_code} = 1;
+    };
+    if ($@) {
+        $struct->{response_code} = 0;
+        $struct->{exception}     = $@;
+    }
+
+    if ($params->{_format} eq 'json') {
+        my $response = $self->_controller->response;
+        $response->headers->status('200 OK');
+        $response->headers->content_type('text/plain');
+        #$response->headers->content_type('application/json');
+        $response->buffer( JSON::Syck::Dump( $struct ));
+
+        $self->_response(1);
+    }
+    else {
+        IC::Exception->throw("Unrecognized _format: $params->{_format}");
+    }
+
+    return;
+}
+
 sub _common_detail_view {
     my $self = shift;
 
@@ -2624,6 +2647,14 @@ sub _common_detail_data_obj {
 
     my $_model_class = $self->_model_class;
     my @pk_fields    = @{ $_model_class->meta->primary_key_columns };
+    my @fields       = @{ $_model_class->meta->columns };
+
+    #
+    # cache look up of field meta data objects by name of field for easy access
+    #
+    my $rdbo_fields_by_name = {
+        map { $_->name => $_ } @fields
+    };
 
     my $object  = $self->_common_implied_object;
 
@@ -2631,80 +2662,120 @@ sub _common_detail_data_obj {
         object_name => $self->_model_display_name,
         header_desc => $object->manage_description,
         tabs        => [],
+        actions     => [],
     };
+    if ($self->check_priv($self->_func_prefix . 'Drop')) {
+        push @{ $struct->{actions} }, {
+            label  => 'Drop',
+            action =>  $self->_func_prefix . 'Drop',
+        };
+    }
 
-    # TODO: test to see if we still need to do stringification
-    
+    #
+    # the pk_settings are used to build the _pk_* pairs for driving _common_implied_object
+    # on the store side of actions
+    #
+    my @pk_field_names;
     my $pk_settings = [];
     for my $pk_field (@pk_fields) {
+        push @pk_field_names, $pk_field->name;
         push @$pk_settings, { 
-            # the following forces stringification
-            # which was necessary to prevent an issue
-            # where viewing the detail page caused 
-            # the user to get logged out
-            field => "$pk_field", 
-            value => $object->$pk_field,
+            field => $pk_field->name, 
+            value => $object->$pk_field . '',
         };
     }
     $struct->{pk_settings} = $pk_settings;
 
     if ($self->_detail_use_default_summary_tab) {
+        my $field_kv_defs = $self->_fields_to_kv_defs(
+            fields => \@fields,
+            object => $object,
+        );
+
+        my $can_edit    = $self->check_priv($self->_func_prefix . 'Properties');
+        my $edit_action = $self->_func_prefix . 'Properties';
+        my $field_form_defs;
+        if ($can_edit) {
+            $field_form_defs = $self->_fields_to_field_form_defs(
+                fields => \@fields,
+                object => $object,
+            );
+        }
+
         my $summary_tab = {
-            label => 'Summary',
+            label        => 'Summary',
+            content_type => 'grid',
         };
         push @{ $struct->{tabs} }, $summary_tab;
 
-        my @pk_fields = @{ $_model_class->meta->primary_key_columns };
-        for my $pk_field (@pk_fields) {
-            $summary_tab->{content}->{"$pk_field"} =  $object->$pk_field;
+        my @auto_field_names = keys %{ { $_model_class->boilerplate_columns } };
+        my @auto_fields      = map { $rdbo_fields_by_name->{$_} } @auto_field_names;
+
+        my @other_fields;
+        for my $field (@fields) {
+            next if grep { $field->name eq $_ } (@pk_field_names, @auto_field_names);
+
+            push @other_fields, $field;
         }
 
-        my $other_setting_value_mappings = $self->_detail_other_mappings;
+        #
+        # TODO: add back in the ability to custom sort fields
+        #
 
-        my @auto_fields = qw(date_created last_modified created_by modified_by);
-        my @fields      = @{ $_model_class->meta->columns };
-        for my $field (@fields) {
-            next if grep { $field eq $_ } @pk_fields, @auto_fields;
+        my $content_to_build = [
+            {
+                row    => 0,
+                col    => 0,
+                type   => 'key_value',
+                label  => 'Primary Key Fields and Values',
+                # TODO: should these just be names?
+                fields => \@pk_fields,
+            },
+            {
+                row    => 0,
+                col    => 1,
+                type   => 'key_value',
+                label  => 'Auto Fields and Values',
+                fields => \@auto_fields,
+            },
+            {
+                row    => 1,
+                col    => 0,
+                type   => 'key_value',
+                label  => 'Other Fields and Values',
+                fields => \@other_fields,
+            },
+        ];
 
-            my $value = $object->$field || '';
-            if (defined $other_setting_value_mappings->{$field}) {
-                if (defined $other_setting_value_mappings->{$field}->{alternate_label}) {
-                    $field = $other_setting_value_mappings->{$field}->{alternate_label};
+        for my $ref (@$content_to_build) {
+            my $grid_ref = $summary_tab->{content}->[$ref->{row}]->[$ref->{col}] = {
+                type  => $ref->{type},
+                label => $ref->{label},
+            };
+            for my $field (@{ $ref->{fields} }) {
+                my $data_ref = $field_kv_defs->{$field->name};
+                if (defined $field_form_defs->{$field->name}) {
+                    $data_ref->{form} = {
+                        action         => $edit_action,
+                        fields_present => [ $field->name ],
+                        field_defs     => [ $field_form_defs->{$field->name} ],
+                    };
                 }
-
-                my $alt_object = $object;
-                if (defined $other_setting_value_mappings->{$field}->{object_accessor}) {
-                    my $alt_object_method = $other_setting_value_mappings->{$field}->{object_accessor};
-                    $alt_object = $object->$alt_object_method;
-                }
-
-                if (defined $other_setting_value_mappings->{$field}->{value_accessor}) {
-                    my $sub_method = $other_setting_value_mappings->{$field}->{value_accessor};
-                    $value = $alt_object->$sub_method;
-                }
-                else {
-                    $value = $alt_object->manage_description;
-                }
+                push @{ $grid_ref->{data} }, $data_ref;
             }
-            else {
-                if ($field->type eq 'date') {
-                    $value = $object->$field( format => '%Y-%m-%d' );
-                }
-                else {
-                    $value = $object->$field;
-                }
-            }
-
-            $summary_tab->{content}->{"$field"} = "$value";
         }
     }
 
     if (UNIVERSAL::can($object, 'get_file')) {
         my $files_tab = {
-            label => 'Files',
+            label        => 'Files',
+            content_type => 'tree',
         };
         push @{ $struct->{tabs} }, $files_tab;
 
+        #
+        # TODO: switch to use check_priv
+        #
         my $has_privs = 0;
 
         my $function_obj = IC::M::ManageFunction->new( code => $self->_func_prefix . 'Properties' );
@@ -2716,6 +2787,11 @@ sub _common_detail_data_obj {
 
         my $file_resource_refs = $files_tab->{related} = [];
 
+        #
+        # TODO: file resources are designed to be adjacency lists so we really
+        #       ought to be doing recursion here to build our tree structure
+        #
+
         my $file_resource_objs = $object->get_file_resource_objs;
         if (@$file_resource_objs) {
             my $count = 0;
@@ -2724,7 +2800,9 @@ sub _common_detail_data_obj {
                     order   => $count,
                     label   => $file_resource_obj->lookup_value,
                     content => {
-                        id => $file_resource_obj->id,
+                        data => {
+                            id => $file_resource_obj->id,
+                        },
                     },
                 };
                 $count++;
@@ -2768,7 +2846,7 @@ sub _common_detail_data_obj {
                     }
                 }
                 if (defined $attr_refs) {
-                    $file_resource_ref->{content}->{attrs} = $attr_refs;
+                    $file_resource_ref->{content}->{data}->{attrs} = $attr_refs;
                 }
 
                 my $link_text;
@@ -2780,20 +2858,20 @@ sub _common_detail_data_obj {
                         #
                         my ($use_width, $use_height, $use_alt) = $file->property_values( [ qw( width height alt ) ] );
 
-                        $file_resource_ref->{content}->{url} = qq{<img src="$url_path" width="$use_width" height="$use_height"};
+                        $file_resource_ref->{content}->{data}->{url} = qq{<img src="$url_path" width="$use_width" height="$use_height"};
                         if (defined $use_alt) {
-                            $file_resource_ref->{content}->{url} .= qq{ alt="$use_alt"};
+                            $file_resource_ref->{content}->{data}->{url} .= qq{ alt="$use_alt"};
                         }
-                        $file_resource_ref->{content}->{url} .= ' />';
+                        $file_resource_ref->{content}->{data}->{url} .= ' />';
                     }
                     else {
-                        $file_resource_ref->{content}->{url} = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
+                        $file_resource_ref->{content}->{data}->{url} = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
                     }
 
                     $link_text = 'Replace';
 
                     if ($has_privs) {
-                        $file_resource_ref->{content}->{drop_link} = $self->_object_manage_function_link(
+                        $file_resource_ref->{content}->{data}->{drop_link} = $self->_object_manage_function_link(
                             'Properties',
                             $object,
                             label     => 'Drop',
@@ -2809,7 +2887,7 @@ sub _common_detail_data_obj {
                 }
 
                 if ($has_privs) {
-                    $file_resource_ref->{content}->{link} = $self->_object_manage_function_link(
+                    $file_resource_ref->{content}->{data}->{link} = $self->_object_manage_function_link(
                         'Properties',
                         $object,
                         label     => $link_text,
@@ -2824,37 +2902,42 @@ sub _common_detail_data_obj {
             }
         }
         else {
-            $struct->{content} = 'No file resources configured.';
+            $struct->{content}->{data} = 'No file resources configured.';
         }
     }
 
     if (UNIVERSAL::can($object, 'log_actions')) {
         my $log_tab = {
-            label   => 'Log',
-            content => 'This happens to be the log.',
+            label        => 'Log',
+            content_type => 'table',
+            content      => {
+                description => 'This happens to be the log.',
+            },
         };
         push @{ $struct->{tabs} }, $log_tab;
 
         my $configuration = $self->_detail_action_log_configuration;
+        if (defined $configuration->{description}) {
+            $log_tab->{content}->{description} = $configuration->{description};
+        }
 
-        my $action_log = [];
+        $log_tab->{content}->{headers} = [
+            'Action',
+            'Performed By',
+            'Performed At',
+            'Details',
+            'Content',
+        ];
+
+        my $data = $log_tab->{content}->{data} = [];
 
         for my $entry (@{ $object->action_log }) {
-            my $date_created = $entry->date_created;
-
-            my $entry_ref = {
-                label        => $entry->action->display_label,
-                by_name      => $entry->created_by_name,
-                date_created => "$date_created",
-                content      => ($entry->content || ''),
-            };
-
             my $details = [];
-            my $seen    = [];
 
             #
-            # TODO: add mapping for from/to actions
+            # handle any customized details, marking those details as seen
             #
+            my $seen = [];
             if (exists $configuration->{action_code_handlers}->{$entry->action_code}) {
                 my $custom_sub = $configuration->{action_code_handlers}->{$entry->action_code};
                 my ($custom_details, $custom_seen) = $custom_sub->($entry, $self->_controller->role);
@@ -2880,18 +2963,23 @@ sub _common_detail_data_obj {
                 }
                 push @$details, "from '$from' to '$to'" if (defined $from or defined $to);
             }
+
+            #
+            # now loop through all details adding the ones that haven't been previously handled (seen)
+            #
             for my $detail (@{ $entry->details }) {
                 unless (grep { $detail->ref_code eq $_ } @$seen) {
                     push @$details, $detail->ref_code . ': ' . $detail->value;
                 }
             }
-            $entry_ref->{details} = $details;
 
-            push @$action_log, $entry_ref;
-        }
-
-        if (@$action_log) {
-            $log_tab->{action_log} = $action_log;
+            push @$data, [
+                $entry->action->display_label,
+                $entry->created_by_name,
+                $entry->date_created . '',
+                $details,
+                ($entry->content || ''),
+            ];
         }
     }
 
@@ -2919,6 +3007,262 @@ sub _common_detail_data_obj {
     }
 
     return;
+}
+
+#
+# given a manage function code (name) determine whether a given or derived role
+# has access rights to execute the function
+#
+sub check_priv {
+    my $self = shift;
+    my $check_func_name = shift;
+    my $args = { @_ };
+
+    my $check_role;
+    if (defined $args->{role} and UNIVERSAL::isa($args->{role}, $self->_role_class)) {
+        $check_role = $args->{role};
+    }
+    elsif (defined $self->_controller->role) {
+        $check_role = $self->_controller->role;
+    }
+    else {
+        my ($package, $filename, $line) = caller(1);
+        warn "$package called can_drop_object() but was unable to determine 'role' properties at line $line\n";
+        return '';
+    }
+
+    my $function_obj = IC::M::ManageFunction->new( code => $check_func_name );
+    unless ($function_obj->load( speculative => 1 )) {
+        my ($package, $filename, $line) = caller(1);
+        warn "Can't locate object for function: $args->{function} called at $package line $line\n";
+        return '';
+    }
+
+    return '' unless $check_role->check_right(
+        'execute', $function_obj,
+    );
+}
+
+#
+# takes a set of named args, specifically a list of fields that we want to display 
+# in a common key/value pair manner and the object used to derive the values
+#
+sub _fields_to_kv_defs {
+    my $self = shift;
+    my $args = { @_ };
+
+    #
+    # return a hash keyed on the field name passed in with a value
+    # that is the corresponding definition as a hashref
+    #
+    my $return = {};
+
+    #
+    # get the structure used to override default behaviour for the fields,
+    # it is keyed by DB field name
+    #
+    my $adjustments = $self->_field_adjustments || {};
+
+    for my $field (@{ $args->{fields} }) {
+        my $field_name = $field->name;
+        my $adjust     = $adjustments->{$field_name} || {};
+
+        my $ref = $return->{$field_name} = {};
+
+        my $label;
+        if (defined $adjust->{label}) {
+            $label = $adjust->{label};
+        }
+        else {
+            $label = join ' ', map { $_ eq 'id' ? 'ID' : ucfirst } split /_/, $field_name;
+        }
+        $ref->{label} = $label;
+
+        if (defined $args->{object}) {
+            my $value;
+
+            if (defined $adjust->{value_mapping}) {
+                my $alt_object = $args->{object};
+                if (defined $adjust->{value_mapping}->{object_accessor}) {
+                    my $alt_object_method = $adjust->{value_mapping}->{object_accessor};
+                    $alt_object = $args->{object}->$alt_object_method;
+                }
+
+                if (defined $adjust->{value_mapping}->{value_accessor}) {
+                    my $sub_method = $adjust->{value_mapping}->{value_accessor};
+                    $value = $alt_object->$sub_method;
+                }
+                else {
+                    $value = $alt_object->$field_name;
+                }
+            }
+            else {
+                if ($field->type eq 'date') {
+                    $value = $args->{object}->$field_name( format => '%Y-%m-%d' );
+                }
+                else {
+                    $value = $args->{object}->$field_name;
+                }
+            }
+
+            # force stringification with a concat
+            $ref->{value} = $value . '';
+        }
+        else {
+            # TODO: add ability to pull default value using an adjustment sub
+        }
+    }
+
+    return $return;
+}
+
+#
+# takes a set of named args, specifically a list of fields that we want form 
+# definitions for and an object that should be used for determining values
+#
+sub _fields_to_field_form_defs {
+    my $self = shift;
+    my $args = { @_ };
+
+    $args->{values} ||= {};
+
+    #
+    # return a hash keyed on the field name passed in with a value
+    # that is the corresponding form definition as a hashref
+    #
+    my $return = {};
+
+    #
+    # get the structure used to override default behaviour for the fields,
+    # it is keyed by DB field name
+    #
+    my $adjustments = $self->_field_adjustments || {};
+
+    for my $field (@{ $args->{fields} }) {
+        my $field_name = $field->name;
+        my $adjust     = $adjustments->{$field_name} || {};
+
+        #
+        # boilerplate fields by their nature are automatically handled, therefore they aren't
+        # editable, so skip them
+        #
+        next if grep { $field_name eq $_ } keys %{ { $self->_model_class->boilerplate_columns } };
+
+        #
+        # in the case of a passed in object we know it is edit, so skip fields
+        # that can't be edited, otherwise it is add and skip those that shouldn't
+        # be used in an add
+        #
+        if (defined $args->{object}) {
+            next if (defined $adjust->{is_editable} and not $adjust->{is_editable});
+        }
+        else {
+            next if (defined $adjust->{is_addable} and not $adjust->{is_addable});
+        }
+
+        #
+        # by default we make single field PKs that are integers with the name 'id'
+        # not be editable, this can be overridden by specifying an is_editable adjustment
+        #
+        next if (
+            $field_name eq 'id' 
+            and $field->is_primary_key_member
+            and $field->type eq 'serial'
+            and not defined $adjust->{can_edit} 
+        );
+
+        #
+        # fields is an array to allow for multiple fields to make up a single value
+        # for the database field, i.e. password resets are handled through two values
+        # 'new' and 'confirmed' even though it gets saved to the DB as a single value
+        #
+        my $def = {
+            controls => [],
+        };
+        $return->{$field_name} = $def;
+
+        if (defined $adjust->{controls}) {
+            $def->{controls} = $adjust->{controls};
+        }
+        else {
+            # TODO: give date, time, datetime, timestamp multiple controls, or can be done with
+            #       one field type that is rendered using multiple client side controls?
+
+            # TODO: add auto handling of FK relationships when it is trivial to handle them
+            my $name = $field_name;
+
+            # this is irritating, and necessary because IC eats "id" parameters
+            if ($field_name eq 'id') {
+                $name = '_work_around_ic_id';
+            }
+
+            my $control_ref = {
+                name => $name,
+            };
+            push @{ $def->{controls} }, $control_ref;
+
+            if (defined $adjust->{field_type}) {
+                $control_ref->{type} = $adjust->{field_type};
+            }
+            else {
+                if ($field->type eq 'text') {
+                    $control_ref->{type} = 'TextareaField';
+                }
+                elsif ($field->type eq 'boolean') {
+                    $control_ref->{type} = 'RadioField';
+                }
+                elsif ($field->type eq 'date') {
+                    # TODO: does this imply a validator?
+                    $control_ref->{type} = 'DateField';
+                }
+                elsif ($field->type eq 'time') {
+                    # TODO: does this imply a validator?
+                    $control_ref->{type} = 'TimeField';
+                }
+                elsif ($field->type eq 'timestamp') {
+                    # TODO: does this imply a validator?
+                    $control_ref->{type} = 'DateTimeField';
+                }
+                else {
+                    $control_ref->{type} = 'TextField';
+                }
+            }
+
+            # see if a value was provided, if so, maintain it
+            if (defined $args->{values}->{$name}) {
+                $control_ref->{value} = $args->{values}->{$name};
+            }
+            elsif (defined $args->{object}) {
+                $control_ref->{value} = $args->{object}->$field_name() . '';
+            }
+
+            if (grep { $control_ref->{type} eq $_ } qw( CheckboxField RadioField SelectField )) {
+                if (defined $adjust->{get_choices}) {
+                    $control_ref->{choices} = $adjust->{get_choices}->($self);
+                }
+                elsif ($control_ref->{type} eq 'RadioField' and $field->type eq 'boolean') {
+                    $control_ref->{choices} = [
+                        {
+                            value => 1,
+                            label => 'Yes',
+                        },
+                        {
+                            value => 0,
+                            label => 'No',
+                        },
+                    ];
+                }
+                else {
+                    $control_ref->{choices} = [];
+                }
+            }
+            if (defined $adjust->{has_validator}) {
+                $control_ref->{validator} = $adjust->{has_validator};
+            }
+        }
+    }
+
+    return $return;
 }
 
 1;
