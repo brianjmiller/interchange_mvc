@@ -1575,7 +1575,11 @@ sub _common_properties_data_obj {
                 $object = $_model_class->new;
             }
 
-            my $field_form_defs = $self->_fields_to_field_form_defs( @{ $params->{fields_present} } );
+            my $field_form_defs = $self->_fields_to_field_form_defs(
+                fields => [
+                    map { $rdbo_fields_by_name->{$_} } @{ $params->{fields_present} }
+                ],
+            );
 
             my %pk_fields_to_update;
             my %fields_present_by_name;
@@ -1757,7 +1761,7 @@ sub _common_properties_data_obj {
     };
     if ($@) {
         $struct->{response_code} = 0;
-        $struct->{exception}     = $@;
+        $struct->{exception}     = "$@";
     }
     else {
         $struct->{response_code} = 1;
@@ -2222,7 +2226,7 @@ sub _common_drop_data_obj {
     };
     if ($@) {
         $struct->{response_code} = 0;
-        $struct->{exception}     = $@;
+        $struct->{exception}     = "$@";
     }
 
     if ($params->{_format} eq 'json') {

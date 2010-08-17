@@ -46,7 +46,7 @@ YUI.add(
             },
 
             properties_mode: {
-                value: 'edit'
+                value: 'basic'
             },
 
             pk_fields: {
