@@ -78,6 +78,7 @@ YUI(
                             "ic-manage-plugin-editable-css",
                             "ic-manage-editinplaceform",
                             "ic-manage-formfield-date",
+                            "ic-manage-formfield-datetime",
                             "ic-manage-formfield-radio",
                             "plugin",
                             "io",
@@ -97,16 +98,28 @@ YUI(
                             "gallery-widget-io",
                             "widget-stdmod",
                             "ic-manage-renderers-default",
-                            "ic-manage-renderers-revisiondetails",
+                            "ic-manage-renderers-grid",
+                            "ic-manage-renderers-table",
                             "ic-manage-plugin-treeview"
                         ]
                     },
                     "ic-manage-renderers-default": {
                         path: "manage/renderers/default.js",
                         requires: [
-                            "ic-manage-plugin-editable",
-                            "ic-manage-form",
                             "base-base"
+                        ]
+                    },
+                    "ic-manage-renderers-grid": {
+                        path: "manage/renderers/grid.js",
+                        requires: [
+                            "ic-manage-renderers-default",
+                            "ic-manage-plugin-editable"
+                        ]
+                    },
+                    "ic-manage-renderers-table": {
+                        path: "manage/renderers/table.js",
+                        requires: [
+                            "ic-manage-renderers-default"
                         ]
                     },
                     "ic-manage-renderers-revisiondetails": {
@@ -216,6 +229,12 @@ YUI(
                             "ic-manage-formfield-date-css",
                             "gallery-form",
                             "gallery-calendar"
+                        ]
+                    },
+                    "ic-manage-formfield-datetime": {
+                        path: "manage/form_fields/datetime.js",
+                        requires: [
+                            "ic-manage-formfield-date"
                         ]
                     },
                     "ic-manage-formfield-radio": {

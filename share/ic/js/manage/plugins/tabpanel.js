@@ -26,10 +26,20 @@ YUI.add(
                 Y.WidgetStdMod
             ],
             {                        // prototype overrides/additions
-                _actions: null,
-                _default_renderer: {
-                    name: 'ManageDefaultRenderer',
-                    config: {}
+
+                _renderers: {
+                    default: {
+                        name: 'ManageDefaultRenderer',
+                        config: {}
+                    },
+                    grid: {
+                        name: 'ManageGridRenderer',
+                        config: {}
+                    },
+                    table: {
+                        name: 'ManageTableRenderer',
+                        config: {}
+                    }
                 },
 
                 initializer: function() {
@@ -108,19 +118,33 @@ YUI.add(
                 addContent: function (data) {
                     // Y.log('tabpanel::addContent - data');
                     // Y.log(data);
-                    var node = this._buildEmptyContentNode();
+
+                    var renderer, config, node = this._buildEmptyContentNode();
                     if (Y.Lang.isString(data)) {
                         node.setContent(data);
                     }
                     else if (Y.Lang.isObject(data)) {
-                        var renderer;
-                        if (Y.Lang.isValue(data.renderer)) {
-                            renderer = data.renderer;
+                        if (this.get('content_type')) {
+                            renderer = this._renderers[this.get('content_type')];
                         }
                         else {
-                            renderer = this._default_renderer;
+                            renderer = this._renderers['default'];
                         }
-                        renderer = new Y.IC[renderer.name](renderer.config);
+                        try {
+                            config = Y.merge(
+                                { pk_settings: this.get('pk_settings') }, 
+                                renderer.config
+                            );
+                            renderer = new Y.IC[renderer.name](config);
+                        }
+                        catch (err) {
+                            Y.log('tabpanel::addContent - err -> renderer');
+                            Y.log(err);
+                            Y.log(renderer);
+                            renderer = new Y.IC.ManageDefaultRenderer(
+                                { pk_settings: this.get('pk_settings') }
+                            );
+                        }
                         node = renderer.getContent(data, node);
                     }
                     this.set('bodyContent', node);
@@ -359,7 +383,13 @@ YUI.add(
                     content: {
                         value: null
                     },
+                    content_type: {
+                        value: null
+                    },
                     label: {
+                        value: null
+                    },
+                    pk_settings: {
                         value: null
                     }
                 },

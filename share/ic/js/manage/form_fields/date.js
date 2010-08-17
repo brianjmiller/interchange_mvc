@@ -32,12 +32,11 @@ YUI.add(
             {
 // recovering some whitespace...
 
-    _overlay: null,
     _calendar: null,
 
     renderUI: function() {
         DateField.superclass.renderUI.apply(this, arguments);
-        var overlay_node, calendar_node, cid;
+        var calendar_node, cid;
 
         calendar_node = Y.Node.create('<div></div>');
         cid = Y.guid();
@@ -45,36 +44,25 @@ YUI.add(
 
         this.get('contentBox').appendChild(calendar_node);
         var config = this._getConfigFromValue();
+        this._massageConfig(config);
         this._calendar = new Y.Calendar(cid, config);
-        if (config.withtime) {
-            this._calendar._time = config.date;
-            this._calendar.render();
-            this._calendar.on('timeselect', Y.bind(function (d) {
-                this._setValue(d);
-            }, this));
-        }
-        else {
-            this._calendar.on('dateselect', Y.bind(function (d) {
-                this._setValue(d);
-            }, this));
-        }
+    },
+
+    bindUI: function () {
+        this._calendar.on('select', Y.bind(function (d) {
+            this._setValue(d);
+        }, this));
         this._fieldNode.on('focus', Y.bind(function () {
             this._calendar.show();
         }, this));
     },
 
     _setValue: function (d) {
+        // Y.log('date::_setValue');
         var date_str;
-        if (this._calendar.withtime) {
-            date_str = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' +
-                d.getDate() + 'T' + d.getHours() + ':' + d.getMinutes() +
-                ':' + d.getSeconds();
-        } 
-        else {
-            date_str = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' +
-                d.getDate();
-        }
-        this.set('value', date_str);
+        date_str = d.getFullYear() + '-' + (d.getMonth() + 1) + 
+            '-' + d.getDate();
+        this._fieldNode.set('value', date_str);
         this._calendar.hide();
     },
 
@@ -85,15 +73,20 @@ YUI.add(
         var month = matches[2];
         var day = matches[3];
         var withtime = matches[4] ? true : false;
-        var hours = matches[5] || '00';
-        var mins = matches[6] || '00';
-        var secs = matches[7] || '00';
+        var hours = matches[5];
+        var mins = matches[6];
+        var secs = matches[7];
         /*
+        Y.log('withtime: ' + withtime);
         Y.log('year=' + year + ', month=' + month + ', day=' + day + ', hours=' +
               hours + ', mins=' + mins + ', secs=' + secs);
         */
         var date = new Date(year, month-1, day, hours, mins, secs);
         return { withtime: withtime, date: date }
+    },
+
+    _massageConfig: function (config) {
+        config.withtime = false;
     }
                 
 // ...whitespace returned

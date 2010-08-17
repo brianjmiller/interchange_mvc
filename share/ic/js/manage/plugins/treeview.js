@@ -1,17 +1,27 @@
-       /**
-        * Simple Treeview
-        *
-        * Copyright (c) 2010 Matt Parker, Lamplight Database Systems Ltd
-        * YUI BSD - http://developer.yahoo.com/yui/license.html
-        */
-       /**
-        * Really lightweight treeview plugin that can be attached to a Node via the plug method.
-        * It's just a listener and some css
-        * @class TreeviewLite
-        * @constructor
-        * @namespace Plugin
-        */
+/*
+    Copyright (C) 2008-2010 End Point Corporation, http://www.endpoint.com/
 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+       
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of 
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see: http://www.gnu.org/licenses/ 
+*/
+
+/**
+ * Adapted from:
+ * Simple Treeview
+ *
+ * Copyright (c) 2010 Matt Parker, Lamplight Database Systems Ltd
+ * YUI BSD - http://developer.yahoo.com/yui/license.html
+ */
 
 
 YUI.add(
@@ -233,6 +243,7 @@ YUI.add(
                     var show = Y.Node.create(
                         Y.IC.ManageTreeview.SHOW_MENUITEM_TEMPLATE
                     );
+                    show.one('a').on('click', function (e) { e.halt(); });
                     var show_ul = show.one('ul');
                     var prev_depth = 0;  // for adjusting the nest padding
                     var adjust = 0;      // for adjusting the nest padding
@@ -289,6 +300,7 @@ YUI.add(
 
             _gotoItem: function (e, id) {
                 // Y.log('treeview::_gotoItem id:' + id);
+                if (e.halt) e.halt();
                 var item = Y.one('#' + id);
 
                 // build a list of ancestors, and find the root

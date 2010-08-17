@@ -54,7 +54,6 @@ YUI.add(
                         this
                     );
 
-                    // xxx
                     this.set('state', this.getRelaventHistory());
                 },
 

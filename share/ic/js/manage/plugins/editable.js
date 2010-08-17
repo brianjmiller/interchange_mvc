@@ -26,61 +26,39 @@ YUI.add(
         Editable.NAME = 'ic_manage_plugin_editable';
         Editable.NS = 'editable';
         
+
+        // NA!!! refactor this - it now gets only pk_settings and form_data
         Editable.ATTRS = {
+            form_data: {
+                value: null
+            },
+
+            pk_settings: {
+                value: null
+            },
+
             func_code: {
                 value: null
             },
 
             mode: {
-                value: null
+                value: 'store'
             },
 
             properties_mode: {
-                value: null
+                value: 'edit'
             },
 
             pk_fields: {
-                value: null
+                value: []
             },
 
-            value: {
-                value: null
+            fields_present: {
+                value: []
             },
 
-            multiple: {
-                value: null
-            },
-
-            useDefaultOption: {
-                value: true
-            },
-
-            choices: {
-                value: null
-            },
-
-            field_name: {
-                value: null
-            },
-
-            field_type: {
-                value: null,
-                setter: function (type) {
-                    // Y.log('editable::field_type setter - type=' + type);
-                    var field_class;
-                    try {
-                        field_class = Y.IC[type] || Y[type];
-                        if (Y.Lang.isFunction(field_class)) {
-                            return field_class;
-                        }
-                        else {
-                            return type;
-                        }
-                    }
-                    catch (err) {
-                        return type;
-                    }
-                }                
+            controls: {
+                value: []
             }
         };
 
@@ -93,16 +71,18 @@ YUI.add(
 
     _orig_value: null,
     _handlers: null,
-    _field: null,
 
     initializer: function () {
         // Y.log('editable::initializer');
         // do general enhancement to the host element
-        var host = this.get('host');
-        host.set('title', 'Click to Edit');
-        //  add an icon and some hover effects indicating 'editable'
-        host.addClass('editable');
-        this._bindUI();
+        var host;
+        if (this._parseConfig()) {
+            host = this.get('host');
+            host.set('title', 'Click to Edit');
+            //  add an icon and some hover effects indicating 'editable'
+            host.addClass('editable');
+            this._bindUI();
+        }
     }, 
 
     destructor: function () {
@@ -120,7 +100,6 @@ YUI.add(
         // free any objects
         this._orig_value = null;
         this._handlers = null;
-        this._field = null;
     },
 
     _bindUI: function () {
@@ -147,14 +126,69 @@ YUI.add(
         this._handlers = [];
     },
 
-    _createForm: function (data) {
-        // Y.log('editable::_createForm');
-        var host, form, fields, action;
+    _parseConfig: function () {
+        // Y.log('editable::_parseConfig');
+        var pk_settings = this.get('pk_settings'), 
+            form_data = this.get('form_data'),
+            pk_fields = this.get('pk_fields'), 
+            controls = this.get('controls'),
+            fields_present = this.get('fields_present');
+
+        // parse the pk_settings into what used to be pk_fields
+        Y.each(pk_settings, function (v) {
+            if (Y.Lang.isValue(v.field) && Y.Lang.isValue(v.value)) {
+                pk_fields.push({
+                    name: '_pk_' + v.field,
+                    value: v.value,
+                    type: 'hidden'
+                });
+            }
+        });
+
+        // make an array of hidden fields for each 'present field'
+        Y.each(form_data.fields_present, function (v) {
+            fields_present.push({
+                name: 'fields_present[]',
+                value: v,
+                type: 'hidden'
+            });
+        });
+
+        // parse form_data into everything else
+        this.set('func_code', form_data.action);
+        Y.each(form_data.field_defs, function (v) {
+            Y.each(v.controls, function (control) {
+                var field_class;
+                try {
+                    field_class = Y.IC[control.type] || Y[control.type];
+                    if (Y.Lang.isFunction(field_class)) {
+                        control.type = field_class;
+                    }
+                }
+                catch (err) {
+                    // Y.log(err);
+                }
+                controls.push(control);
+            }, this);
+        }, this);
+
+        if (pk_fields.length && controls.length) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    },
+
+    _createForm: function () {
+        Y.log('editable::_createForm');
+        var host, form, fields, controls, hidden, buttons, action;
 
         this._clearError();
 
-        action = '/manage/function/' + this.get('func_code')
-        fields = [
+        action = '/manage/function/' + this.get('func_code');
+        controls = Y.clone(this.get('controls'));
+        hidden = [
             {
                 name: '_mode',
                 value: this.get('mode'),
@@ -164,15 +198,9 @@ YUI.add(
                 name: '_properties_mode',
                 value: this.get('properties_mode'),
                 type: 'hidden'
-            },
-            {
-                name: this.get('field_name'),
-                value: this.get('value') || '',
-                type: this.get('field_type') || 'text',
-                multiple: this.get('multiple'),
-                useDefaultOption: this.get('use_default_option'),
-                choices: Y.clone(this.get('choices'))
-            },
+            }
+        ];
+        buttons = [
             {
                 name: 'submit',
                 label: 'Submit',
@@ -184,8 +212,13 @@ YUI.add(
                 type: 'reset'
             }
         ];
-        
-        fields = this.get('pk_fields').concat(fields);
+
+        fields = [].concat(this.get('pk_fields'), this.get('fields_present'),
+                           hidden, controls, buttons);
+
+        Y.log('fields:');
+        Y.log(fields);
+
         form = new Y.IC.ManageEIPForm({
             action: action,
             method: 'post',
@@ -201,12 +234,6 @@ YUI.add(
         this._orig_value = host.get('innerHTML');
         host.setContent('');
         form.render(host);
-
-        Y.each(form.get('fields'), function (v) {
-            if (v.get('name') === this.get('field_name')) {
-                this._field = v;
-            }
-        }, this);
         this._beginEditting();
     },
 
@@ -248,7 +275,8 @@ YUI.add(
         }
         catch (err) {
             Y.log("Can't parse JSON: " + err, 'error');
-            this._handleFailure(e);
+            Y.log(e);
+            this._handleFailure("Can't parse JSON response: " + err);
             return;
         }
         try {
@@ -259,7 +287,7 @@ YUI.add(
         }
         if (response.response_code === 1) {
             host = this.get('host');
-            host.setContent(this._field.get('value'));
+            host.setContent(response.value);
             this._finishEditting();
         }
         else {
@@ -269,7 +297,7 @@ YUI.add(
 
     _handleFailure: function (e) {
         Y.log('editable::_handleFailure');
-        var err_node, hr, cr, err_width, host = this.get('host');
+        var err_node, err_msg, hr, cr, err_width, host = this.get('host');
         try {
             e.halt();
         }
@@ -277,11 +305,16 @@ YUI.add(
             // Y.log(err);
         }
         if (e.exception) {
+            Y.log('Editable Field Failure.  Exception:');
+            Y.log(e.exception);
+            err_msg = e.exception.message || e.exception;
             err_node = Y.Node.create(
-                '<div class="error_msg">' + e.exception + '</div>'
+                '<div class="error_msg">' + err_msg + '</div>'
             )
         }
         else {
+            Y.log('Editable Field Failure.  Error:');
+            Y.log(e);
             err_node = Y.Node.create(
                 '<div class="error_msg">' + e + '</div>'
             )
@@ -310,7 +343,6 @@ YUI.add(
         host.removeClass('editting');
         host.removeClass('hover');
         host.addClass('editable');
-        this._field = null;
         this._bindUI();
     },
 
