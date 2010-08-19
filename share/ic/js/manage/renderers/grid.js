@@ -34,8 +34,8 @@ YUI.add(
 // recovering some whitespace...
 
     getContent: function (json, node) {
-        Y.log('grid::getContent - json');
-        Y.log(json);
+        // Y.log('grid::getContent - json');
+        // Y.log(json);
 
         this._json = json;
         // look for a type (such as key value)

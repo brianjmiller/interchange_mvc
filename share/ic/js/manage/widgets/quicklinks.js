@@ -257,7 +257,7 @@ YUI.add(
             // still need to add the search_by[] and sku query params...
             var state = {
                 _dtargs: args, _lsresults: '50', _lsstartIndex: '0', 
-                _lssort: 'sku', _lsdir: 'asc'
+                _lssort: 'sku', _lsdir: 'yui-dt-desc'
             };
             this._loadProfile(profile, state);
             form2.reset();

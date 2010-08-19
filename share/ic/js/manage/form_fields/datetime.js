@@ -33,6 +33,12 @@ YUI.add(
 // recovering some whitespace...
 
     bindUI: function () {
+        /**
+         * Accessing the _time private var here is required (as of 2010-08-18)
+         * to pre-set a specific time in the calendar widget, even if the date
+         * object has hh:mm:ss.  This is a bug waiting to happen if the 
+         * gallery-calendar module gets refactored and added to the YUI CDN.
+         **/
         this._calendar._time = this._calendar.date;
         this._calendar.render();
         this._calendar.on('timeselect', Y.bind(function (d) {

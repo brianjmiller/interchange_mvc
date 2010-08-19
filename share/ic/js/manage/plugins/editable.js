@@ -71,6 +71,7 @@ YUI.add(
 
     _orig_value: null,
     _handlers: null,
+    _form: null,
 
     initializer: function () {
         // Y.log('editable::initializer');
@@ -100,6 +101,7 @@ YUI.add(
         // free any objects
         this._orig_value = null;
         this._handlers = null;
+        this._form.destroy(true);
     },
 
     _bindUI: function () {
@@ -216,9 +218,6 @@ YUI.add(
         fields = [].concat(this.get('pk_fields'), this.get('fields_present'),
                            hidden, controls, buttons);
 
-        Y.log('fields:');
-        Y.log(fields);
-
         form = new Y.IC.ManageEIPForm({
             action: action,
             method: 'post',
@@ -234,6 +233,7 @@ YUI.add(
         this._orig_value = host.get('innerHTML');
         host.setContent('');
         form.render(host);
+        this._form = form;
         this._beginEditting();
     },
 
@@ -335,6 +335,13 @@ YUI.add(
         host.removeClass('editable');
         host.removeClass('error');
         this._detachUI();
+        // focus the first non-hidden form control
+        Y.some(this._form.get('fields'), function (v) {
+            if (v.name !== 'hidden-field') {
+                v._fieldNode.focus();
+                return true;
+            }
+        });
     },
 
     _finishEditting: function () {

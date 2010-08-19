@@ -134,7 +134,7 @@ YUI.add(
             },
 
             setHistory: function (old_history, new_history) {
-                // Y.log('history:setHistory -  merged hqueue');
+                Y.log('history:setHistory -  merged hqueue');
                 if (!old_history) {
                     old_history = Y.HistoryLite.get();
                 }
@@ -150,6 +150,8 @@ YUI.add(
                     });
                     new_history = Y.merge(old_history, new_history);
                 }
+
+                Y.log(new_history);
 
                 // clear the queue
                 ManageHistory.hqueue = {};
