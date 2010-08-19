@@ -3,7 +3,7 @@
 <head>
     <title>IC: Management Area</title>
 
-    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/combo?3.1.1/build/cssreset/reset-min.css&3.1.1/build/cssfonts/fonts-min.css&3.1.1/build/cssgrids/grids-min.css&3.1.1/build/cssbase/base-min.css">
+    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/combo?<%= $yui_version %>/build/cssreset/reset-min.css&<%= $yui_version %>/build/cssfonts/fonts-min.css&<%= $yui_version %>/build/cssgrids/grids-min.css&<%= $yui_version %>/build/cssbase/base-min.css">
 
     <style id="styleoverrides">
         .yui-skin-sam .yui-dt table {
@@ -37,7 +37,7 @@
 </div>
 
 <!-- YUI Seed -->
-<script type="text/javascript" src="http://yui.yahooapis.com/3.1.1/build/yui/yui.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/<%= $yui_version %>/build/yui/yui.js"></script>
 <script type="text/javascript" src="/ic/js/manage.js"></script>
 
 </body>
