@@ -15,14 +15,15 @@
     along with this program. If not, see: http://www.gnu.org/licenses/ 
 */
 
+var _yui_gallery_version = 'gallery-2010.08.18-17-12';
 
 YUI(
     {
-        gallery: 'gallery-2010.08.04-19-46',
-        filter: 'raw',
-        combine: false,
+        gallery:       _yui_gallery_version,
+        filter:       'raw',
+        comboBase:    'http://yui.yahooapis.com/combo?',
         insertBefore: 'styleoverrides',
-        groups: {
+        groups:       {
             calendar: {
                 combine: false,
                 base:'/ic/js/static/',
@@ -330,7 +331,7 @@ YUI(
                 }
             },
             gallerycss: {
-                base: "http://yui.yahooapis.com/gallery-2010.04.21-21-51/build/",
+                base: "http://yui.yahooapis.com/" + _yui_gallery_version + "/build/",
                 modules: {
                     "gallery-accordion-css": {
                         path: "gallery-accordion/assets/skins/sam/gallery-accordion.css",
