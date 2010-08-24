@@ -1,0 +1,84 @@
+#!/usr/local/bin/perl
+use strict;
+use warnings;
+
+use File::Slurp qw();
+use File::Spec qw();
+
+use Interchange::Deployment;
+use IC::Config;
+
+my $type_map = {
+    js  => 'application/x-javascript',
+    css => 'text/css',
+};
+
+eval {
+    my @files = split '&', $ENV{QUERY_STRING};
+    unless (@files) {
+        die 'No files to combo';
+    }
+
+    my $htdocs_path = IC::Config->adhoc_htdocs_path;
+
+    my $content_type;
+    my @buffer;
+    for my $file (@files) {
+        if ($file =~ q{\A(.+\.)(js|css)\z}) {
+            my $name = $1;
+            my $type = $2;
+            my $path = File::Spec->catfile($htdocs_path, $name . $type);
+
+            push @buffer, File::Slurp::read_file($path);
+
+            if (! exists $type_map->{$type}) {
+                die "Unrecognized file type: $type\n";
+            }
+            elsif (defined $content_type and $content_type ne $type_map->{$type}) {
+                die "Combo can only load single type of file: $content_type ne $type_map->{$type}\n";
+            }
+
+            $content_type = $type_map->{$type};
+        }
+        else {
+            die "Unrecognized argument format (file): $file\n";
+        }
+    }
+
+    if (@buffer) {
+        print "Content-Type: $content_type\n\n";
+        print join '', @buffer;
+    }
+    else {
+        die 'Empty buffer';
+    }
+};
+if ($@) {
+    print "Status: 400 Bad Request\n";
+    print "Content-Type: text/html\n\n";
+
+    print "<html><body>$@</body></html>\n";
+}
+
+__END__
+
+=pod
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2008-2010 End Point Corporation, http://www.endpoint.com/
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see: http://www.gnu.org/licenses/ 
+
+=cut

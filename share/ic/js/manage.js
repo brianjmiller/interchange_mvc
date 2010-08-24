@@ -40,8 +40,10 @@ YUI(
                 } 
             },
             icjs: {
-                combine: false,
-                base: "/ic/js/",
+                combine:   true,
+                comboBase: '/combo?',
+                root:      'ic/js/',
+                //base: "/ic/js/",
                 modules: {
                     "ic-manage-widget-dashboard": {
                         path: "manage/widgets/dashboard.js",
@@ -274,7 +276,10 @@ YUI(
                 }
             },
             iccss: {
-                base: "/ic/styles/",
+                combine:   true,
+                comboBase: '/combo?',
+                root:      'ic/styles/',
+                //base: "/ic/styles/",
                 modules: {
                     "ic-manage-widget-dashboard-css": {
                         path: "manage/widgets/dashboard.css",
