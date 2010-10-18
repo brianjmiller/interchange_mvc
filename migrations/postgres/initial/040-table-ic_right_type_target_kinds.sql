@@ -49,7 +49,7 @@ CREATE TRIGGER ic_right_type_target_kinds_last_modified
 COPY ic_right_type_target_kinds (created_by, modified_by, code, display_label, model_class, relation_name) FROM STDIN;
 schema	schema	user	User	IC::M::User	users
 schema	schema	role	Role	IC::M::Role	roles
-schema	schema	site_mgmt_func	Site Mgmt Function	IC::M::ManageFunction	manage_functions
+schema	schema	site_mgmt_action	Site Mgmt Action	IC::M::ManageClass::Action	ic_manage_class_actions
 \.
 
 --ROLLBACK;

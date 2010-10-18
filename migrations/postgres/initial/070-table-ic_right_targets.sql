@@ -40,41 +40,29 @@ CREATE TRIGGER ic_right_targets_last_modified
     FOR EACH ROW
     EXECUTE PROCEDURE ic_update_last_modified();
 
-COPY ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) FROM STDIN;
-schema	schema	3	ManageFunctions__Sections_sectionAdd
-schema	schema	3	ManageFunctions__Sections_sectionProperties
-schema	schema	3	ManageFunctions__Sections_sectionDrop
-schema	schema	3	ManageFunctions__Sections_sectionList
-schema	schema	3	ManageFunctions_functionAdd
-schema	schema	3	ManageFunctions_functionProperties
-schema	schema	3	ManageFunctions_functionDrop
-schema	schema	3	ManageFunctions_functionList
-schema	schema	3	ManageFunctions_functionDetailView
-schema	schema	3	TimeZones_zoneAdd
-schema	schema	3	TimeZones_zoneProperties
-schema	schema	3	TimeZones_zoneDrop
-schema	schema	3	TimeZones_zoneList
-schema	schema	3	TimeZones_zoneDetailView
-schema	schema	3	RightTypes_typeAdd
-schema	schema	3	RightTypes_typeProperties
-schema	schema	3	RightTypes_typeDrop
-schema	schema	3	RightTypes_typeList
-schema	schema	3	RightTypes_typeDetailView
-schema	schema	4	Roles_roleAdd
-schema	schema	4	Roles_roleProperties
-schema	schema	4	Roles_roleDrop
-schema	schema	4	Roles_roleList
-schema	schema	4	Roles_roleDetailView
-schema	schema	4	Users_userAdd
-schema	schema	4	Users_userProperties
-schema	schema	4	Users_userDrop
-schema	schema	4	Users_userDetailView
-schema	schema	4	Users_userList
-schema	schema	4	Rights_rightAdd
-schema	schema	4	Rights_rightProperties
-schema	schema	4	Rights_rightDrop
-schema	schema	4	Rights_rightDetailView
-\.
+INSERT INTO ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) (
+    SELECT
+        'schema',
+        'schema',
+        3,
+        id
+    FROM
+        ic_manage_class_actions
+    WHERE
+        class_code IN ('RightTypes', 'TimeZones')
+);
+        
+INSERT INTO ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) (
+    SELECT
+        'schema',
+        'schema',
+        4,
+        id
+    FROM
+        ic_manage_class_actions
+    WHERE
+        class_code IN ('Roles', 'Users', 'Rights')
+);
 
 --ROLLBACK;
 COMMIT;

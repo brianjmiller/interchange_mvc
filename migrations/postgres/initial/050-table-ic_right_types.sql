@@ -65,7 +65,7 @@ schema	schema	2	access_site_mgmt	Access: Site Management	Determines access to th
 \.
 
 COPY ic_right_types (created_by, modified_by, id, code, display_label, target_kind_code, description) FROM STDIN;
-schema	schema	3	execute	Execute: Site Management Function	site_mgmt_func	Determines right to execute site mgmt function
+schema	schema	3	execute	Execute: Site Management Action	site_mgmt_action	Determines right to execute site mgmt action
 schema	schema	4	switch_user	Switch to Different User	user	Determines right to become a different user (bypassing login form)
 \.
 
