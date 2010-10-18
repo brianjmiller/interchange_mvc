@@ -17,23 +17,22 @@
 
 <body class="yui-skin-sam yui3-skin-sam">
 
-<div id="ic-manage-app-container" class="hide-while-loading">
+<div id="ic-manage-window" class="hide-while-loading">
     <div id="manage_header">
         <span>Management Area</span>
     </div>
-    <div id="manage_quick"></div>
-    <div id="manage_menu"></div>
-    <div id="manage_datatable"></div>
-    <div id="manage_detail"></div>
-    <div id="manage_dashboard"></div>
-    <div id="manage_subcontainer"></div>
+    <div id="manage_window_content_pane"></div>
+    <div id="manage_left_layout">
+        <div id="manage_tools_pane"></div>
+        <div id="manage_menu_pane"></div>
+    </div>
     <div id="manage_footer">
         Console: <button id="console_toggle" class="" type="button" value="0">show</button>
     </div>
 </div>
 
 <div id="application-loading">
-  Loading Site Management...
+    Loading Site Management...
 </div>
 
 <!-- YUI Seed -->

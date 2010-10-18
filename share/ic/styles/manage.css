@@ -1,53 +1,57 @@
-#ic-manage-app-container {
-  text-align: left;
-}
-
 .yui3-js-enabled .hide-while-loading {
-  display: none;
+    display: none;
 }
 
 .hide {
-  display: none;
+    display: none;
 }
 
 .clearfix:after {
-  visibility: hidden;
-  display: block;
-  font-size: 0;
-  content: " ";
-  clear: both;
-  height: 0;
-}
-
-#application-loading {
-  border: 1px dashed #d7d7d7;
-  width: 400px;
-  height: 100px;
-  line-height: 100px;
-  text-align: center;
-  vertical-align: middle;
-  margin: 4em auto;
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
 }
 
 .allow-overflow {
-  overflow: visible !important;
+    overflow: visible !important;
+}
+
+#ic-manage-window {
+    text-align: left;
+}
+
+#application-loading {
+    border: 1px dashed #d7d7d7;
+    width: 400px;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
+    vertical-align: middle;
+    margin: 4em auto;
+}
+
+#manage_header {
+    padding: 10px;
 }
 
 #manage_header span {
-  font-size: 138.5%; 
-  font-weight: bold;
+    font-size: 138.5%; 
+    font-weight: bold;
 }
 
 #manage_footer {
-  padding: 8px;
-  font-size: 85%;
+    padding: 5px;
+    font-size: 85%;
 }
 
 #yui-history-iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    height: 1px;
+    visibility: hidden;
 }

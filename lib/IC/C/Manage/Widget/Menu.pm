@@ -9,9 +9,9 @@ package IC::C::Manage::Widget::Menu;
 use strict;
 use warnings;
 
-use JSON::Syck ();
+use JSON ();
 
-use IC::M::ManageFunction;
+use IC::M::ManageMenuItem;
 use IC::M::Right;
 
 use Moose;
@@ -24,35 +24,64 @@ __PACKAGE__->registered_name('manage/widget/menu');
 sub config {
     my $self = shift;
 
-    # we have finer grained control over functions, so we are
-    # not calling the controller's check_right
-    my $authorized_functions = $self->role->check_right(
+    #
+    # build a structure that represents the menu items and sub items
+    # that can be recursively walked to build a menu
+    #
+    my $struct = [];
+
+    #
+    # all actions associated with a given menu item node will need to be
+    # checked for privilege so just get them all and check them all at
+    # once then when we walk the menu we can just reference the check
+    #
+    my $check_privileged = [
+        map {
+            $_->manage_class_action
+        } @{
+            IC::M::ManageMenuItem::Manager->get_objects(
+                query => [
+                    '!manage_class_action_id' => undef,
+                ],
+            ),
+        },
+    ];
+
+    #
+    # we have finer grained control over actions, so we are not calling 
+    # the controller's check_right
+    #
+    my $privileged = $self->role->check_right(
         'execute',
-        IC::M::ManageFunction::Manager->get_objects(
-            query => [
-                in_menu => 1,
-            ],
-        ),
+        $check_privileged,
     );
 
-    my $struct = {};
-    if (defined $authorized_functions) {
-        my $sections = {};
-        for my $function (sort { $a->sort_order <=> $b->sort_order } @$authorized_functions) {
-            unless (exists $sections->{$function->section_code}) {
-                $sections->{$function->section_code} = {
-                    code          => $function->section_code,
-                    display_label => $function->section->display_label,
-                };
-            }
+    my $branch_sort_map = {
+        map {
+            $_->id => $_->pos
+        } @{
+            IC::M::ManageMenuItemLeaf::Manager->get_objects();
+        },
+    };
 
-            push @{ $sections->{ $function->section_code }->{functions} }, {
-                code          => $function->code,
-                display_label => $function->display_label,
-            };
+    if (defined $privileged) {
+        my $privileged_by_id = {};
+
+        for my $action (@$privileged) {
+            $privileged_by_id->{$action->id} = 1;
         }
-        for my $section_code (sort keys %$sections) {
-            push @{ $struct->{sections} }, $sections->{$section_code};
+
+        #
+        # now walk the list of nodes identifying branches where
+        # *any* leaf has an action that is privileged, in the 
+        # case that it does it should be included in the menu
+        #
+        my $top_node = IC::M::ManageMenuItem->new( id => 1 )->load;
+        for my $node (sort { $branch_sort_map->{$a->id} <=> $branch_sort_map->{$b->id} } @{ $top_node->children }) {
+            my $config = _node_config($node, $privileged_by_id, $branch_sort_map);
+            next unless defined $config;
+
+            push @$struct, $config;
         }
     }
 
@@ -60,9 +89,53 @@ sub config {
     $response->headers->status('200 OK');
     $response->headers->content_type('text/plain');
     #$response->headers->content_type('application/json');
-    $response->buffer( JSON::Syck::Dump( $struct ));
+    $response->buffer( JSON::encode_json( $struct ));
 
     return;
+}
+
+sub _node_config {
+    my $node = shift;
+    my $privileged = shift;
+    my $sort_map = shift;
+
+    my $alo = 0;
+    if (defined $node->manage_class_action_id and $privileged->{ $node->manage_class_action_id }) {
+        $alo = 1;
+    }
+    else {
+        my $descendents = $node->get_all_descendents( as_object => 1 );
+
+        for my $descendent (@$descendents) {
+            next unless (defined $descendent->manage_class_action_id and $privileged->{ $descendent->manage_class_action_id });
+
+            $alo = 1;
+            last;
+        }
+    }
+
+    return unless $alo;
+
+    my $ref = {
+        label => $node->lookup_value,
+    };
+
+    if (defined $node->manage_class_action) {
+        $ref->{action} = {
+            baseclass => $node->manage_class_action->class_code,
+            subclass  => $node->manage_class_action->code,
+            args      => $node->manage_class_action_addtl_args,
+        };
+    }
+
+    for my $child (sort { $sort_map->{$a->id} <=> $sort_map->{$b->id} } @{ $node->children }) {
+        my $config = _node_config($child, $privileged);
+        next unless defined $config;
+
+        push @{ $ref->{branches} }, $config;
+    }
+
+    return $ref;
 }
 
 1;

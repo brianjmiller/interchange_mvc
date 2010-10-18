@@ -12,6 +12,8 @@ use IC::M::File;
 use IC::M::FileResourceLeaf;
 use IC::M::FileResource::Attr;
 
+use IC::M::_Tree_MixIn qw( :all );
+
 __PACKAGE__->meta->setup(
     table => 'ic_file_resources',
     columns => [
@@ -71,36 +73,6 @@ sub manage_description {
     my $self = shift;
     return ($self->lookup_value || $self->id || 'Unknown File Resource');
 }
-
-#
-# TODO: theoretically this works but we could use the view
-#       record to pull the parents all at once, and it might
-#       be better... though it might not, so it should be
-#       benchmarked
-#       
-sub get_all_parents {
-    my $self = shift;
-    my $args = { @_ };
-
-    $args->{as_object} ||= 0;
-    
-    my @parents;
-    
-    my $obj = $self;
-    while (my $parent = $obj->parent) {
-        if ($args->{as_object}) {
-            push @parents, $parent;
-        }
-        else {
-            push @parents, $parent->id;
-        }
-    
-        $obj = $obj->parent;
-    }
-
-    return wantarray ? @parents : \@parents;
-}   
-
 
 #
 # this is the portion of the path that does not include

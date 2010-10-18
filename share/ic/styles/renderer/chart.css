@@ -1,0 +1,27 @@
+.yui3-tooltip {
+    position: absolute;
+}
+
+.yui3-tooltip-content {
+    color: #000;
+    padding: 2px 5px;
+    border-color: #aeae9e;
+    border-width: 1px;
+    border-style: solid;
+    background-color: #edeeee;
+}
+
+.yui3-tooltip-hidden {
+    visibility: hidden;
+}
+
+.yui3-tooltip-content {
+    font-size: 9px;
+    font-weight: bold;
+}
+
+.yui3-tooltip-content strong {
+    font-size: 9px;
+    font-weight: bold;
+}
+

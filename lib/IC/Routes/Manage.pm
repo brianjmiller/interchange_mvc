@@ -29,9 +29,27 @@ IC::Controller::Route->route(
 );
 
 IC::Controller::Route->route(
+    pattern     => 'manage/:_class/action/:_subclass/:_method',
+    controller  => 'manage',
+    action      => 'run_action_method',
+);
+
+IC::Controller::Route->route(
+    pattern     => 'manage/:_class/:_method',
+    controller  => 'manage',
+    action      => 'run_action_method',
+);
+
+IC::Controller::Route->route(
     pattern     => 'manage/widget/menu/config',
     controller  => 'manage/widget/menu',
     action      => 'config',
+);
+
+IC::Controller::Route->route(
+    pattern     => 'manage/widget/dashboard/data',
+    controller  => 'manage/widget/dashboard',
+    action      => 'data',
 );
 
 1;

@@ -1,0 +1,3 @@
+div.yui-dt div.yui-dt-paginator:first-child {
+    display: none;
+}

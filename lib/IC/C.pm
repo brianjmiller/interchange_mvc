@@ -151,11 +151,15 @@ sub handle_exception {
     my $logger = ref $self ? $self->logger : IC::Log->logger;
     $logger->error('Exception handler invoked for error: %s', Data::Dumper::Dumper($exception));
     if (UNIVERSAL::isa($exception->error, 'IC::Exception::LoginRequired')) {
+        $self->session->{_login_form_redirect} = $ENV{REQUEST_URI};
         $self->redirect(
             controller  => 'user',
             action      => 'login_form',
             method      => 'get',
             secure      => 1,
+            get         => {
+                redirect => 1,
+            },
         );
         return $self->response;
     }
@@ -276,6 +280,8 @@ sub forbid {
     return;
 }
 
+# TODO: is this deprecated by the anonymous action stuff?
+#
 # this is less than ideal cause it is going to force
 # a call to be coded into every action that needs to
 # check just to prevent it from being called when
@@ -293,7 +299,6 @@ sub check_login {
         $self->redirect(
             controller => 'user',
             action     => 'login',
-            #href        => 'user/login',
             secure     => 1,
         );
         return 1;

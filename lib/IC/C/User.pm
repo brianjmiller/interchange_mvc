@@ -247,6 +247,8 @@ sub account_maintenance_save {
 sub _login_form {
     my ($self, $exception) = @_;
 
+    my $params = $self->parameters;
+
     $self->html_header_component->body_args('onload="document.getElementById(\'user_login_form\').username.focus();"');
     $self->content_title('Login Form');
     $self->content_subtitle('Unauthorized Use Prohibited - Access Logged');
@@ -258,7 +260,15 @@ sub _login_form {
         path => $view . '.css',
     );
 
-    $self->render( view => $view );
+    my $context = {};
+    if (defined $params->{redirect} && $params->{redirect} && defined $self->session->{_login_form_redirect}) {
+        $context->{referer} = $self->session->{_login_form_redirect};
+    }
+
+    $self->render(
+        view    => $view,
+        context => $context,
+    );
     $self->response->headers->status('403 Forbidden') if $exception;
 
     return;
@@ -268,15 +278,20 @@ sub _post_login_redirect {
     my $self = shift;
     my $params = $self->parameters;
 
-    #
-    # TODO: need to handle this better
-    #
-
-    $self->redirect(
-        controller => 'user',
-        action     => 'menu',
-        secure     => 1,
-    );
+    if (defined $params->{redirect}) {
+        $self->response->headers->content_type( $self->content_type || $self->default_content_type )
+            if ! defined $self->response->headers->content_type
+        ;
+        $self->response->headers->status( defined($params->{status}) ? delete $params->{status} : '301 moved' );
+        $self->response->headers->location( $params->{redirect} );
+    }
+    else {
+        $self->redirect(
+            controller => 'user',
+            action     => 'menu',
+            secure     => 1,
+        );
+    }
 
     return; 
 }

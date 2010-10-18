@@ -1,12 +1,12 @@
 div.yui-layout-clip {
-  text-align: right;
+    text-align: right;
 }
 
 span.clip-header {
-  padding-right: 28px;
-  line-height: 22px;
+    padding-right: 28px;
+    line-height: 22px;
 }
 
 .yui-skin-sam .yui-layout .yui-layout-unit div.yui-layout-hd h2 {
-  font-size: 100%;
+    font-size: 100%;
 }

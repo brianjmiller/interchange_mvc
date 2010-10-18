@@ -226,7 +226,7 @@ The B<IC::Model::Rose::Object> base class provides a method that should be sensi
 
 =back
 
-For example implementations, see B<IC::M::Right::Role> and B<IC::M::Right::SiteMgmtFunc>.
+For example implementations, see B<IC::M::Right::Role> and B<IC::M::Right::SiteMgmtAction>.
 
 =back
 

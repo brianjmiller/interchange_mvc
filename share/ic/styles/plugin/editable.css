@@ -1,0 +1,51 @@
+.editable {
+    position: relative;
+    background-image: url('/ic/images/icons/pencil.png');
+    background-position: right 1px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+.editable.hover {
+    background-color: #ffffff;
+}
+
+.editable.error {
+    background-color: #ffcccc;
+}
+
+.editting {
+    background-image: none;
+}
+
+.editting form {
+    position: relative;
+}
+
+.editting input[type="text"],
+.editting input[type="password"],
+.editting select,
+.editting textarea {
+    width: 14em;
+}
+
+.editting .yui3-button {
+    position: absolute;
+    top: 0px;
+    left: 15.5em;
+}
+
+.editting form .yui3-button:last-child {
+    position: absolute;
+    top: 0px;
+    left: 21em;
+}
+
+.editable .error_msg {
+    position: absolute;
+    top: 0px;
+    left: 16.5em;
+    background-color: #ffffff;
+    border: 1px solid #ff6666;
+    padding: 2px 4px;
+}

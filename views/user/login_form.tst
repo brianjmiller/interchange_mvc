@@ -12,6 +12,9 @@
         );
     %>"
 >
+    <% if (defined $referer) { %>
+        <input type="hidden" name="redirect" value="<%= $referer %>" />
+    <% } %>
     <table id="login_form_table">
         <tr>
             <td class="login_form_table_label_cell">Username: </td>

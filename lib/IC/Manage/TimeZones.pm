@@ -9,40 +9,42 @@ use Moose;
 use MooseX::ClassAttribute;
 extends 'IC::Manage';
 
+class_has '+_class'                     => ( default => 'TimeZones' );
 class_has '+_model_class'               => ( default => __PACKAGE__->_root_model_class().'::TimeZone' );
 class_has '+_model_class_mgr'           => ( default => __PACKAGE__->_root_model_class().'::TimeZone::Manager' );
 class_has '+_model_display_name'        => ( default => 'Time Zone' );
 class_has '+_model_display_name_plural' => ( default => 'Time Zones' );
-class_has '+_sub_prefix'                => ( default => 'zone' );
-class_has '+_func_prefix'               => ( default => 'TimeZones_zone' );
+
+augment 'ui_meta_struct' => sub {
+    #warn "IC::Manage::TimeZones::ui_meta_struct";
+    my $self = shift;
+
+    my $struct = $self->_ui_meta_struct;
+
+    $struct->{+__PACKAGE__} = 1;
+
+    my $inner_result = inner();
+
+    return defined $inner_result ? $inner_result : $struct;
+};
+
+augment 'object_ui_meta_struct' => sub {
+    warn "IC::Manage::TimeZones::ui_meta_struct";
+    warn "IC::Manage::TimeZones::ui_meta_struct - @_";
+    my $self = shift;
+
+    my $struct       = $self->_object_ui_meta_struct;
+    my $model_object = $self->_model_object;
+
+    $struct->{+__PACKAGE__} = 1;
+
+    my $inner_result = inner();
+
+    return defined $inner_result ? $inner_result : $struct;
+};
 
 no Moose;
 no MooseX::ClassAttribute;
-
-sub zoneList {
-    my $self = shift;
-    return $self->_common_list_display_all(@_);
-}
-
-sub zoneAdd {
-    my $self = shift;
-    return $self->_common_add(@_);
-}
-
-sub zoneProperties {
-    my $self = shift;
-    return $self->_common_properties(@_);
-}
-
-sub zoneDrop {
-    my $self = shift;
-    return $self->_common_drop(@_);
-}
-
-sub zoneDetailView {
-    my $self = shift;
-    return $self->_common_detail_view(@_);
-}
 
 1;
 

@@ -1,0 +1,45 @@
+div.yui3-ic_renderer_treeble-content td.treeble-nub {
+    border-right-color: transparent;
+}
+
+div.yui3-ic_renderer_treeble-content .row-toggle a.treeble-collapse-nub {
+    padding: 0 8px;
+    height:  14px;
+    margin-left: 2px;
+    *display: inline-block;
+}
+
+div.yui3-ic_renderer_treeble-content .row-closed a.treeble-collapse-nub {
+    background:url(/ic/images/icons/closed.png) no-repeat;
+}
+
+div.yui3-ic_renderer_treeble-content .row-open a.treeble-collapse-nub {
+    background:url(/ic/images/icons/open.png) no-repeat;
+}
+
+div.yui3-ic_renderer_treeble-content td .treeble-depth-1 {
+    padding-left: 15px;
+}
+div.yui3-ic_renderer_treeble-content td .treeble-depth-2 {
+    padding-left: 30px;
+}
+div.yui3-ic_renderer_treeble-content td .treeble-depth-3 {
+    padding-left: 45px;
+}
+
+div.yui3-ic_renderer_treeble-content table {
+    border: 1px solid #7F7F7F;
+}
+div.yui3-ic_renderer_treeble-content th {
+    border-color: #BBBBBB;
+    background-color: #D8D8DA;
+}
+div.yui3-ic_renderer_treeble-content td {
+    border-color: #CBCBCB;
+    border-top-width : 0;
+    border-bottom-width : 0;
+}
+div.yui3-ic_renderer_treeble-content tr.odd {
+    background-color: #EDF5FF;
+}
+

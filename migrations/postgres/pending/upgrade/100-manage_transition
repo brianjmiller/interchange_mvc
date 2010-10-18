@@ -1,0 +1,138 @@
+#!/usr/local/bin/perl
+use warnings;
+use strict;
+
+$| = 0;
+
+use Interchange::Deployment;
+use IC::M::ManageClass;
+use IC::M::ManageClass::Action;
+use IC::M::ManageMenuItem;
+use IC::M::RightType;
+use IC::C::Manage;
+
+my $db = IC::M::ManageClass->init_db;
+$db->begin_work;
+
+my $modified_by = 'schema';
+
+my %common_params = (
+    created_by  => $modified_by,
+    modified_by => $modified_by,
+);
+
+eval {
+    my $class_objects      = {};
+    my $section_labels     = {};
+    my $section_menu_nodes = {};
+
+    my $function_section_st = 'SELECT * FROM ic_manage_function_sections ORDER BY display_label';
+    my $function_section_sth = $db->dbh->prepare($function_section_st);
+    $function_section_sth->execute;
+
+    while (my $section = $function_section_sth->fetchrow_hashref) {
+        $section_labels->{$section->{code}} = $section->{display_label};
+    }
+
+    my $function_st = q{SELECT * FROM ic_manage_functions WHERE code NOT LIKE 'ManageFunctions%' ORDER BY code};
+    my $function_sth = $db->dbh->prepare($function_st);
+    $function_sth->execute;
+
+    while (my $function = $function_sth->fetchrow_hashref) {
+        my $code = $function->{code};
+
+        if ($code =~ /(.+)_(.+)\z/) {
+            my $class_id  = $1;
+            my $method    = $2;
+
+            unless (exists $class_objects->{$class_id}) {
+                my $class_obj = IC::M::ManageClass->new(
+                    db   => $db,
+                    code => $class_id,
+                    %common_params,
+                );
+                $class_obj->save;
+
+                $class_objects->{$class_id} = $class_obj;
+            }
+
+            my $action_class;
+            if ($method =~ /\A[^A-Z]+(.+)\z/) {
+                $action_class = $1;
+            }
+            else {
+                die "Unrecognized method format: $method\n";
+            }
+
+            my $is_primary = 0;
+            if ($method =~ /Add\z/ or ($method =~ /List\z/ and $function->{in_menu})) {
+                $is_primary = 1;
+            }
+
+            my $action = IC::M::ManageClass::Action->new(
+                db            => $db,
+                class_code    => $class_id,
+                code          => $action_class,
+                date_created  => $function->{date_created},
+                created_by    => $function->{created_by},
+                display_label => $function->{display_label},
+                is_primary    => $is_primary,
+            );
+            $action->save;
+
+            IC::M::RightTarget::Manager->update_objects(
+                db    => $db,
+                set   => {
+                    ref_obj_pk => $action->id,
+                },
+                where => [
+                    ref_obj_pk => $function->{code},
+                ],
+            );
+
+            if ($function->{in_menu}) {
+                unless (exists $section_menu_nodes->{$function->{section_code}}) {
+                    my $section_node = IC::M::ManageMenuItem->new(
+                        db           => $db,
+                        parent_id    => 1,
+                        lookup_value => $section_labels->{$function->{section_code}},
+                        branch_order => ($function->{section_code} eq '_development' ? 1 : 0),
+                        %common_params,
+                    );
+
+                    $section_node->save;
+
+                    $section_menu_nodes->{$function->{section_code}} = $section_node;
+                }
+
+                my $action_node = IC::M::ManageMenuItem->new(
+                    db                             => $db,
+                    parent_id                      => $section_menu_nodes->{$function->{section_code}}->id,
+                    lookup_value                   => $function->{display_label},
+                    manage_class_action_id         => $action->id,
+                    manage_class_action_addtl_args => '',
+                );
+                $action_node->save;
+            }
+        }
+    }
+
+    my $right_targets_delete_st = q{DELETE FROM ic_right_targets WHERE ref_obj_pk LIKE 'ManageFunctions%'};
+    $db->dbh->do($right_targets_delete_st);
+
+    my $function_delete_st = 'DELETE FROM ic_manage_functions';
+    $db->dbh->do($function_delete_st);
+
+    my $function_section_delete_st = 'DELETE FROM ic_manage_function_sections';
+    $db->dbh->do($function_section_delete_st);
+};
+if ($@) {
+    my $error = $@;
+    $db->rollback;
+    die "Failure: $error\n";
+}
+
+$db->commit;
+
+print "Done.\n";
+

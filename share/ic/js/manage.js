@@ -15,43 +15,240 @@
     along with this program. If not, see: http://www.gnu.org/licenses/ 
 */
 
-var _yui_gallery_version = 'gallery-2010.08.18-17-12';
+//var _yui_gallery_version = 'gallery-2010.09.29-18-36';
+var _yui_gallery_version = 'gallery-2010.10.06-18-55';
 
 YUI(
     {
-        gallery:       _yui_gallery_version,
-        filter:       'raw',
-        comboBase:    'http://yui.yahooapis.com/combo?',
-        insertBefore: 'styleoverrides',
+        gallery:      _yui_gallery_version,
+        filter:       "raw",
+        //filter:       "debug",
+        comboBase:    "http://yui.yahooapis.com/combo?",
+        //combine:      false,
+        insertBefore: "styleoverrides",
         groups:       {
-            calendar: {
+            // this is for modules not on the CDN, for now,
+            // eventually we'll want to come up with something
+            // better as far as handling them
+            localgallery: {
                 combine: false,
-                base:'/ic/js/static/',
-                charset:'utf-8',
-                modules:{
-                    'calendar-skin':{// default skin
-                        path:'skin.css',
-                        type:'css'
+                //comboBase: "/combo?",
+                //root:    "ic/js/static/",
+                base:    "/ic/js/static/",
+                charset: "utf-8",
+                modules: {
+                    // TODO: local copy of gallery-form to adjust button namespace
+                    //       so as not to collide with gallery-button
+                    "gallery-form": {
+                        path: "gallery-form.js",
+                        requires: [
+                            "node",
+                            "widget-base",
+                            "widget-htmlparser",
+                            "io-form"
+                        ]
                     },
-                    'gallery-calendar':{
-                        path:'gallery-calendar.js',
-                        requires:['calendar-skin','node']
+
+                    // default skin
+                    "calendar-skin":{
+                        path: "skin.css",
+                        type: "css"
+                    },
+                    "gallery-calendar": {
+                        path: "gallery-calendar.js",
+                        requires: [
+                            "calendar-skin",
+                            "widget",
+                            "node"
+                        ]
                     }
                 } 
             },
             icjs: {
                 combine:   true,
-                comboBase: '/combo?',
-                root:      'ic/js/',
-                //base: "/ic/js/",
-                modules: {
-                    "ic-manage-widget-dashboard": {
-                        path: "manage/widgets/dashboard.js",
+                comboBase: "/combo?",
+                root:      "ic/js/",
+                base:      "/ic/js/",
+                modules:   {
+                    //
+                    // our top level application "controller", it sets up the 
+                    // outer most layout and controls the various pieces (panes)
+                    //
+                    "ic-manage-window": {
+                        path: "manage/window.js",
                         requires: [
-                            "ic-manage-widget-dashboard-css",
-                            "ic-manage-widget"
+                            "ic-manage-window-css",
+                            "base-base",
+                            "yui2-layout",
+                            "yui2-resize",
+                            "ic-history-manager",
+                            "ic-manage-window-menu",
+                            "ic-manage-window-tools",
+                            "ic-manage-window-content",
+
+                            // for debugging
+                            "dump"
                         ]
                     },
+
+                    //
+                    // set of widgets constructed by window and loaded into
+                    // its layout units representing the top level of the 
+                    // application interface (the panes)
+                    //
+                    "ic-manage-window-menu": {
+                        path: "manage/window/menu.js",
+                        requires: [ 
+                            "ic-manage-window-menu-css", 
+                            "widget",
+                            "node-menunav", 
+                            "io", 
+                            "json-parse", 
+                            "substitute"
+                        ]
+                    },
+                    "ic-manage-window-tools": {
+                        path: "manage/window/tools.js",
+                        requires: [ 
+                            "ic-manage-window-tools-css", 
+                            "anim",
+                            "widget",
+                            "gallery-accordion-css",
+                            "gallery-accordion",
+                            "gallery-storage-lite",
+                            "gallery-form-values",
+                            "ic-form"
+                        ]
+                    },
+                    "ic-manage-window-content": {
+                        path: "manage/window/content.js",
+                        requires: [ 
+                            "ic-manage-window-content-css", 
+                            "widget",
+                            "gallery-button-group",
+                            "gallery-button",
+                            "gallery-button-toggle",
+                            "ic-manage-window-content-layout-full",
+                            "ic-manage-window-content-layout-h_divided",
+                            "ic-manage-window-content-dashboard",
+                            "ic-manage-window-content-function"
+                        ]
+                    },
+
+                    //
+                    // layout widgets to be used for displaying content in the content pane
+                    //
+                    "ic-manage-window-content-layout-base": {
+                        path: "manage/window/content/layout/base.js",
+                        requires: [ 
+                            "ic-manage-window-content-layout-base-css",
+                            "widget"
+                        ]
+                    },
+                    "ic-manage-window-content-layout-full": {
+                        path: "manage/window/content/layout/full.js",
+                        requires: [ 
+                            "ic-manage-window-content-layout-full-css",
+                            "ic-manage-window-content-layout-base",
+                            "yui2-layout",
+                            "yui2-resize"
+                        ]
+                    },
+                    "ic-manage-window-content-layout-h_divided": {
+                        path: "manage/window/content/layout/h_divided.js",
+                        requires: [ 
+                            "ic-manage-window-content-layout-h_divided-css",
+                            "ic-manage-window-content-layout-base",
+                            "yui2-layout",
+                            "yui2-resize"
+                        ]
+                    },
+
+                    //
+                    // kinds of content widgets that will load their info into the layouts
+                    // provided by the content pane
+                    //
+                    "ic-manage-window-content-base": {
+                        path: "manage/window/content/base.js",
+                        requires: [ 
+                            "base-base"
+                        ]
+                    },
+                    "ic-manage-window-content-dashboard": {
+                        path: "manage/window/content/dashboard.js",
+                        requires: [ 
+                            "ic-manage-window-content-dashboard-css",
+                            "ic-manage-window-content-base"
+                        ]
+                    },
+                    "ic-manage-window-content-function": {
+                        path: "manage/window/content/function.js",
+                        requires: [ 
+                            "ic-manage-window-content-base",
+                            "ic-manage-window-content-function-action-basic",
+                            "ic-manage-window-content-function-action-list"
+                        ]
+                    },
+
+                    "ic-manage-window-content-function-action-base": {
+                        path: "manage/window/content/function/action/base.js",
+                        requires: [ 
+                            "base-base"
+                        ]
+                    },
+                    "ic-manage-window-content-function-action-basic": {
+                        path: "manage/window/content/function/action/basic.js",
+                        requires: [ 
+                            "ic-manage-window-content-function-action-base"
+                        ]
+                    },
+                    "ic-manage-window-content-function-action-list": {
+                        path: "manage/window/content/function/action/list.js",
+                        requires: [ 
+                            "ic-manage-window-content-function-action-list-css",
+                            "ic-manage-window-content-function-action-base",
+                            "ic-plugin-tablefilter",
+                            "node",
+                            "querystring",
+                            "ic-manage-window-content-function-action-list-table",
+                            "ic-manage-window-content-function-action-list-record"
+                        ]
+                    },
+
+                    "ic-manage-window-content-function-action-list-table": {
+                        path: "manage/window/content/function/action/list/table.js",
+                        requires: [ 
+                            "base",
+                            "ic-util",
+                            "datasource",
+                            "event-custom",
+                            "pluginhost",
+                            "gallery-datasource-wrapper",
+                            "yui2-paginator",
+                            "yui2-datatable",
+                            "querystring"
+                        ]
+                    },
+                    "ic-manage-window-content-function-action-list-record": {
+                        path: "manage/window/content/function/action/list/record.js",
+                        requires: [ 
+                            "ic-manage-window-content-function-action-list-record-css",
+                            "widget",
+                            "querystring",
+                            "gallery-button-group",
+                            "gallery-button",
+                            "gallery-button-toggle",
+                            "ic-renderer"
+                        ]
+                    },
+
+                    //
+                    // interface to the gallery-history-lite module - it makes sure 
+                    // history doesn't change until a history profile has been achieved, 
+                    // to eliminate "history fragmentation", implemented as a singleton
+                    //
+                    // history is about browser-level (app-level) state management
+                    //
                     "ic-manage-history": {
                         path: "manage/history.js",
                         requires: [
@@ -60,6 +257,13 @@ YUI(
                             "event-custom"
                         ]
                     },
+
+                    //
+                    // an abstract class that provides state management tools,
+                    // it is mixed in by widgets to extend them
+                    //
+                    // history_manager is about module-level state management
+                    //
                     "ic-history-manager": {
                         path: "manage/history_manager.js",
                         requires: [
@@ -67,279 +271,261 @@ YUI(
                             "ic-manage-history"
                         ]
                     },
-                    "ic-manage-widget": {
-                        path: "manage/widget.js",
+
+                    // plugins to add to various instances
+                    "ic-plugin-editable": {
+                        path: "plugin/editable.js",
                         requires: [
-                            "ic-history-manager",
-                            "base-base",
-                            "widget"
-                        ]
-                    },
-                    "ic-manage-plugin-editable": {
-                        path: "manage/plugins/editable.js",
-                        requires: [
-                            "ic-manage-plugin-editable-css",
-                            "ic-manage-editinplaceform",
-                            "ic-manage-formfield-date",
-                            "ic-manage-formfield-datetime",
-                            "ic-manage-formfield-radio",
+                            "ic-plugin-editable-css",
                             "plugin",
-                            "io",
-                            "json-parse"
-                        ]
-                    },
-                    "ic-manage-plugin-treeview": {
-                        path: "manage/plugins/treeview.js",
-                        requires: [
-                            "ic-manage-plugin-treeview-css"
-                        ]
-                    },
-                    "ic-manage-plugin-tabpanel": {
-                        path: "manage/plugins/tabpanel.js",
-                        requires: [
-                            "ic-manage-plugin-tabpanel-css",
-                            "gallery-widget-io",
-                            "widget-stdmod",
-                            "ic-manage-renderers-default",
-                            "ic-manage-renderers-grid",
-                            "ic-manage-renderers-table",
-                            "ic-manage-plugin-treeview"
-                        ]
-                    },
-                    "ic-manage-renderers-default": {
-                        path: "manage/renderers/default.js",
-                        requires: [
-                            "base-base"
-                        ]
-                    },
-                    "ic-manage-renderers-grid": {
-                        path: "manage/renderers/grid.js",
-                        requires: [
-                            "ic-manage-renderers-default",
-                            "ic-manage-plugin-editable"
-                        ]
-                    },
-                    "ic-manage-renderers-table": {
-                        path: "manage/renderers/table.js",
-                        requires: [
-                            "ic-manage-renderers-default"
-                        ]
-                    },
-                    "ic-manage-renderers-revisiondetails": {
-                        path: "manage/renderers/revision_details.js",
-                        requires: [
-                            "base-base",
-                            "ic-manage-widget-detailactions",
-                            "ic-manage-form"
-                        ]
-                    },
-                    "ic-manage-widget-tabview": {
-                        path: "manage/widgets/tabview.js",
-                        requires: [
-                            "tabview",
-                            "ic-history-manager"
-                        ]
-                    },
-                    "ic-manage-widget-detailactions": {
-                        path: "manage/widgets/detail_actions.js",
-                        requires: [
-                            "ic-manage-widget-tabview"
-                        ]
-                    },
-                    "ic-manage-widget-function": {
-                        path: "manage/widgets/function.js",
-                        requires: [
-                            "ic-manage-widget"
-                        ]
-                    },
-                    "ic-manage-widget-function-list": {
-                        path: "manage/widgets/functions/list.js",
-                        requires: [
-                            "ic-manage-widget-function-list-css",
-                            "querystring",
-                            "ic-manage-widget-function",
-                            "datasource",
-                            "gallery-datasource-wrapper",
-                            // TODO: can we load these later?
-                            "yui2-datatable",
-                            "yui2-paginator"
+                            "json-parse",
+                            "ic-form"
                         ],
-                        ignore: [
-                            "yui2-datasource"
-                        ]
                     },
-                    "rowexpansion": {
-                        path: "manage/widgets/functions/rowexpansion.js",
+                    "ic-plugin-editable-in_place": {
+                        path: "plugin/editable/in_place.js",
                         requires: [
-                            "yui2-datatable"
-                        ]
+                            "ic-plugin-editable"
+                        ],
                     },
-                    "ic-manage-widget-function-expandable-list": {
-                        path: "manage/widgets/functions/expandable_list.js",
+                    "ic-plugin-tablefilter": {
+                        path: "plugin/tablefilter.js",
                         requires: [
-                            "ic-manage-widget-function-expandable-list-css",
-                            "ic-manage-widget-function-list",
-                            "widget-parent",
-                            "rowexpansion"
-                        ]
+                            "ic-plugin-tablefilter-css",
+                            "plugin",
+                            "event-key"
+                        ],
                     },
-                    "ic-manage-widget-function-detail": {
-                        path: "manage/widgets/functions/detail.js",
+
+                    //
+                    // this is a wrapper class for now, it wraps 
+                    // (unsurprisingly) gallery-form, it provides
+                    // implementation to set form control type
+                    // to our customized fields where necessary,
+                    // a custom reset action, and makes the form
+                    // pluggable
+                    //
+                    "ic-form": {
+                        path: "form.js",
                         requires: [
-                            "ic-manage-widget-function-detail-css",
-                            "ic-manage-widget-function",
-                            "ic-manage-widget-tabview",
-                            "ic-manage-plugin-tabpanel"
+                            "pluginhost",
+                            "gallery-form",
+                            "ic-formfield",
                         ]
                     },
-                    "ic-manage-widget-container": {
-                        path: "manage/widgets/container.js",
+
+                    // helper class used to load custom form fields
+                    "ic-formfield": {
+                        path: "form_field.js",
                         requires: [
-                            "querystring",
-                            "ic-manage-widget-container-css",
-                            "ic-manage-widget-function-list",
-                            "ic-manage-widget-function-expandable-list",
-                            "ic-manage-widget-function-detail",
-                            "ic-manage-widget"
-                        ]
+                            "ic-formfield-calendar",
+                            "ic-formfield-calendar_with_time",
+                            "ic-formfield-radio"
+                        ],
                     },
-                    "ic-manage-widget-menu": {
-                        path: "manage/widgets/menu.js",
-                        requires: [ 
-                            "ic-manage-widget-menu-css", 
-                            "widget",
-                            "node-menunav", 
-                            "io", 
-                            "json-parse", 
-                            "substitute"
-                        ]
-                    },
-                    "ic-manage-widget-quicklinks": {
-                        path: "manage/widgets/quicklinks.js",
-                        requires: [ 
-                            "ic-manage-widget-quicklinks-css", 
-                            "widget",
-                            "gallery-accordion-css",
-                            "gallery-accordion",
-                            "ic-manage-form",
-                            "gallery-form-values",
-                            "gallery-storage-lite"
-                        ]
-                    },
-                    "ic-manage-formfield-date": {
-                        path: "manage/form_fields/date.js",
+
+                    // custom form fields
+                    "ic-formfield-calendar": {
+                        path: "form_field/calendar.js",
                         requires: [
-                            "ic-manage-formfield-date-css",
                             "gallery-form",
                             "gallery-calendar"
-                        ]
+                        ],
                     },
-                    "ic-manage-formfield-datetime": {
-                        path: "manage/form_fields/datetime.js",
+                    "ic-formfield-calendar_with_time": {
+                        path: "form_field/calendar_with_time.js",
                         requires: [
-                            "ic-manage-formfield-date"
-                        ]
+                            "ic-formfield-calendar"
+                        ],
                     },
-                    "ic-manage-formfield-radio": {
-                        path: "manage/form_fields/radio.js",
-                        requires: [
-                            "ic-manage-formfield-radio-css",
-                            "gallery-form"
-                        ]
-                    },
-                    "ic-manage-form": {
-                        path: "manage/form.js",
+                    "ic-formfield-radio": {
+                        path: "form_field/radio.js",
                         requires: [
                             "gallery-form"
+                        ],
+                    },
+
+                    // helper class used to request a kind of renderer
+                    "ic-renderer": {
+                        path: "renderer.js",
+                        requires: [
+                            "ic-renderer-basic",
+                            "ic-renderer-grid",
+                            "ic-renderer-form",
+                            "ic-renderer-tabs",
+                            "ic-renderer-tree",
+                            "ic-renderer-table",
+                            "ic-renderer-treeble",
+                            "ic-renderer-keyvalue",
+                            "ic-renderer-chart"
+                        ],
+                    },
+
+                    // renderers
+                    "ic-renderer-base": {
+                        path: "renderer/base.js",
+                        requires: [
+                            "widget"
+                        ],
+                    },
+                    "ic-renderer-basic": {
+                        path: "renderer/basic.js",
+                        requires: [
+                            "ic-renderer-basic-css",
+                            "ic-renderer-base"
                         ]
                     },
-                    "ic-manage-editinplaceform": {
-                        path: "manage/edit_in_place_form.js",
+                    "ic-renderer-grid": {
+                        path: "renderer/grid.js",
                         requires: [
-                            "ic-manage-form"
+                            "ic-renderer-base"
                         ]
                     },
-                    "ic-manage-window": {
-                        path: "manage/window.js",
+                    "ic-renderer-form": {
+                        path: "renderer/form.js",
                         requires: [
-                            "ic-manage-window-css",
-                            "base-base",
-                            "ic-manage-widget-container",
-                            "ic-manage-widget-menu",
-                            "ic-manage-widget-quicklinks",
-                            "ic-manage-widget-dashboard",
-                            "ic-history-manager",
-                            "yui2-layout",
-                            "yui2-resize"
+                            "ic-renderer-base"
                         ]
+                    },
+                    "ic-renderer-tabs": {
+                        path: "renderer/tabs.js",
+                        requires: [
+                            "ic-renderer-base",
+                            "tabview"
+                        ]
+                    },
+                    "ic-renderer-tree": {
+                        path: "renderer/tree.js",
+                        requires: [
+                            "ic-renderer-base"
+                        ]
+                    },
+                    "ic-renderer-table": {
+                        path: "renderer/table.js",
+                        requires: [
+                            "ic-renderer-base",
+                            "gallery-simple-datatable",
+                            "gallery-simple-datatable-css"
+                        ]
+                    },
+                    "ic-renderer-treeble": {
+                        path: "renderer/treeble.js",
+                        requires: [
+                            "ic-renderer-treeble-css",
+                            "ic-renderer-base",
+                            //"gallery-simple-datatable"
+                            "gallery-treeble",
+                            "gallery-paginator"
+                        ]
+                    },
+                    "ic-renderer-keyvalue": {
+                        path: "renderer/keyvalue.js",
+                        requires: [
+                            "ic-renderer-keyvalue-css",
+                            "ic-renderer-base",
+                            "ic-plugin-editable-in_place"
+                        ]
+                    },
+                    "ic-renderer-chart": {
+                        path: "renderer/chart.js",
+                        requires: [
+                            "ic-renderer-chart-css",
+                            "ic-renderer-base",
+                            "gallery-charts"
+                        ]
+                    },
+
+                    // utility functions
+                    "ic-util": {
+                        path: "util.js",
                     }
                 }
             },
             iccss: {
                 combine:   true,
-                comboBase: '/combo?',
-                root:      'ic/styles/',
-                //base: "/ic/styles/",
+                comboBase: "/combo?",
+                root:      "ic/styles/",
+                base:      "/ic/styles/",
                 modules: {
-                    "ic-manage-widget-dashboard-css": {
-                        path: "manage/widgets/dashboard.css",
+                    "ic-plugin-editable-css": {
+                        path: "plugin/editable.css",
                         type: "css"
                     },
-                    "ic-manage-widget-function-list-css": {
-                        path: "manage/widgets/functions/list.css",
+                    "ic-plugin-tablefilter-css": {
+                        path: "plugin/tablefilter.css",
                         type: "css"
                     },
-                    "ic-manage-widget-function-expandable-list-css": {
-                        path: "manage/widgets/functions/expandable_list.css",
+                    "ic-renderer-basic-css": {
+                        path: "renderer/basic.css",
                         type: "css"
                     },
-                    "ic-manage-widget-function-detail-css": {
-                        path: "manage/widgets/functions/detail.css",
+                    "ic-renderer-treeble-css": {
+                        path: "renderer/treeble.css",
                         type: "css"
                     },
-                    "ic-manage-widget-container-css": {
-                        path: "manage/widgets/container.css",
+                    "ic-renderer-keyvalue-css": {
+                        path: "renderer/keyvalue.css",
                         type: "css"
                     },
-                    "ic-manage-widget-menu-css": {
-                        path: "manage/widgets/menu.css",
-                        type: "css"
-                    },
-                    "ic-manage-widget-quicklinks-css": {
-                        path: "manage/widgets/quicklinks.css",
-                        type: "css"
-                    },
-                    "ic-manage-plugin-tabpanel-css": {
-                        path: "manage/plugins/tabpanel.css",
-                        type: "css"
-                    },
-                    "ic-manage-plugin-treeview-css": {
-                        path: "manage/plugins/treeview.css",
-                        type: "css"
-                    },
-                    "ic-manage-plugin-editable-css": {
-                        path: "manage/plugins/editable.css",
-                        type: "css"
-                    },
-                    "ic-manage-formfield-date-css": {
-                        path: "manage/formfields/date.css",
-                        type: "css"
-                    },
-                    "ic-manage-formfield-radio-css": {
-                        path: "manage/formfields/radio.css",
+                    "ic-renderer-chart-css": {
+                        path: "renderer/chart.css",
                         type: "css"
                     },
                     "ic-manage-window-css": {
                         path: "manage/window.css",
                         type: "css"
+                    },
+                    "ic-manage-window-menu-css": {
+                        path: "manage/window/menu.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-tools-css": {
+                        path: "manage/window/tools.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-content-css": {
+                        path: "manage/window/content.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-content-dashboard-css": {
+                        path: "manage/window/content/dashboard.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-content-layout-base-css": {
+                        path: "manage/window/content/layout/base.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-content-layout-full-css": {
+                        path: "manage/window/content/layout/full.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-content-layout-h_divided-css": {
+                        path: "manage/window/content/layout/h_divided.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-content-function-action-list-css": {
+                        path: "manage/window/content/function/action/list.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-content-function-action-list-record-css": {
+                        path: "manage/window/content/function/action/list/record.css",
+                        type: "css"
                     }
                 }
             },
+            //
+            // Don't know why this is needed but it was confirmed as of 2010/08/23 with 3.2.0pr1
+            // and caused an odd error with Y.Lang when not included
+            //
             gallerycss: {
                 base: "http://yui.yahooapis.com/" + _yui_gallery_version + "/build/",
                 modules: {
                     "gallery-accordion-css": {
                         path: "gallery-accordion/assets/skins/sam/gallery-accordion.css",
+                        type: "css"
+                    },
+                    "gallery-simple-datatable-css": {
+                        path: "gallery-simple-datatable/assets/skins/gallery-simple-datatable.css",
                         type: "css"
                     }
                 }
@@ -347,10 +533,15 @@ YUI(
         }
     }
 ).use(
-    "console",
+    // TODO: can't load console because Treeble has an infinite loop bug
+    //       when it is enabled, it has been filed here: 
+    //       http://github.com/jafl/yui3-gallery/issues#issue/1
+    //
+    //"console",
     "ic-manage-window",
     function (Y) {
-
+        // TODO: if these are restored they should move into our util class
+        /*
         Y.Node.prototype.ancestors = function (selector) {
             var ancestors = [];
             var ancestor = this.ancestor(selector);
@@ -365,59 +556,69 @@ YUI(
             }
             return Y.all(ancestors);
         };
+        */
 
+        /*
         Y.Node.prototype.scrollToTop = function (container) {
             var container_top = container.get('region').top;
             var node_top = this.get('region').top;
             var scroll_top = node_top - container_top;
             Y.Node.getDOMNode(container).scrollTop = scroll_top;
         };
+        */
 
         Y.on(
             "domready",
             function () {
                 // Y.log("firing dom ready event");
-                var console = new Y.Console(
-                    {
-                        logSource: Y.Global,
-                        newestOnTop: 0,
-                        height: "98%"
-                    }
-                );
-                console.render();
-                console.hide();
+                if (Y.Console) {
+                    var console = new Y.Console(
+                        {
+                            logSource:   Y.Global,
+                            newestOnTop: 0,
+                            height:      "98%"
+                        }
+                    );
+                    console.render();
+                    console.hide();
 
-                var console_toggle = Y.one("#console_toggle");
-                Y.on(
-                    "click",
-                    function (e, console) {
-                        //Y.log("toggle: " + this);
-                        //Y.log("value: " + this.get("value"));
-                        if (this.get("value") === "1") {
-                            //Y.log("hide console: " + console);
-                            console.hide();
-                            this.set("value", 0);
-                            this.set("innerHTML", "show");
-                        }
-                        else {
-                            //Y.log("show console: " + console);
-                            console.show();
-                            this.set("value", 1);
-                            this.set("innerHTML", "hide");
-                        }
-                    },
-                    console_toggle,
-                    console_toggle,
-                    console
-                );
+                    // TODO: move this to a render into the manage window footer
+                    var console_toggle = Y.one("#console_toggle");
+                    Y.on(
+                        "click",
+                        function (e, console) {
+                            //Y.log("toggle: " + this);
+                            //Y.log("value: " + this.get("value"));
+                            if (this.get("value") === "1") {
+                                //Y.log("hide console: " + console);
+                                console.hide();
+                                this.set("value", 0);
+                                this.set("innerHTML", "show");
+                            }
+                            else {
+                                //Y.log("show console: " + console);
+                                console.show();
+                                this.set("value", 1);
+                                this.set("innerHTML", "hide");
+                            }
+                        },
+                        console_toggle,
+                        console_toggle,
+                        console
+                    );
+                }
 
                 // Y.log("setting up manage window");
                 var mw = Y.IC.ManageWindow();
 
                 // hide our loading screen
-                Y.on('contentready', function () {
-                    Y.one('#application-loading').addClass('hide');
-                }, '#manage_menu');
+                Y.on(
+                    'contentready',
+                    function () {
+                        Y.one('#application-loading').addClass('hide');
+                    },
+                    '#manage_menu'
+                );
             }
         );
     }
