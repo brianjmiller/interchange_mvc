@@ -47,7 +47,7 @@ div.yui3-ic_renderer_keyvalue-content dt:first-child {
     border-top: none;
 }
 
-div.yui3-ic_renderer_keyvalue-content dd:first-child {
+div.yui3-ic_renderer_keyvalue-content dl dt:first-child + dd {
     border-top: none;
 }
 
