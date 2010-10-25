@@ -1,0 +1,96 @@
+package IC::ManageRole::ObjectAdjuster::Simple;
+
+use Moose::Role;
+
+# must be overridden by the subclass
+has '_object_adjust_simple_subclass' => (
+    is => 'rw',
+);
+has '_object_adjust_simple_label' => (
+    is      => 'rw',
+    default => 'Simple',
+);
+
+has '_save_method' => (
+    is      => 'rw',
+    default => 'save',
+);
+
+around 'ui_meta_struct' => sub {
+    warn "IC::ManageRole::ObjectAdjuster::Simple::ui_meta_struct";
+    my $orig = shift;
+    my $self = shift;
+
+    my $params = $self->_controller->parameters;
+
+    my $object = $self->_model_object;
+    unless (defined $object) {
+        $object = $self->object_from_pk_params($params);
+        $self->_model_object($object);
+    }
+
+    my $_model_class = $self->_model_class;
+    my @pk_fields    = @{ $_model_class->meta->primary_key_columns };
+
+    my $_pk_settings;
+    for my $pk_field (@pk_fields) {
+        push @$_pk_settings, { 
+            field => '_pk_' . $pk_field->name, 
+            value => $object->$pk_field . '',
+        };
+    }
+
+    my $struct = $self->_ui_meta_struct;
+    $struct->{+__PACKAGE__} = 1;
+    $struct->{label}        = $self->_object_adjust_simple_label;
+
+    if ($self->_prototype eq 'Form') {
+        $struct->{_prototype_config} = {
+            form_config => {
+                pk     => $_pk_settings,
+                action => $self->_controller->url(
+                    controller => 'manage',
+                    action     => 'run_action_method',
+                    parameters => {
+                        _class    => $self->_class,
+                        _subclass => $self->_object_adjust_simple_subclass,
+                        _method   => ($self->_save_method || 'save'),
+                    },
+                    secure     => 1,
+                ),
+            },
+        };
+    }
+
+    # provide a hook into the subclass to let it override what it needs to
+    $self->_simple_object_adjust_ui_meta_struct($struct, $object);
+
+    return $self->$orig(@_);
+};
+
+no Moose;
+
+1;
+
+__END__
+
+=pod
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2008-2010 End Point Corporation, http://www.endpoint.com/
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see: http://www.gnu.org/licenses/ 
+
+=cut
