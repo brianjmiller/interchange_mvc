@@ -55,7 +55,7 @@ YUI.add(
                         Y.log("manage_window_content_function_action_basic::initializer - renderer.type: " + renderer_meta.type);
                         var _constructor = Y.IC.Renderer.getConstructor(renderer_meta.type);
 
-                        var _constructor_config = renderer_meta.config;
+                        var _constructor_config = renderer_meta.config || {};
                         _constructor_config._caller = this;
 
                         var renderer = new _constructor ( _constructor_config );

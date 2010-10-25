@@ -226,7 +226,7 @@ YUI.add(
                         Y.log("manage_window_content_function_action_list_record::_afterActionChange - prototype: " + action_meta._prototype);
                         var _constructor = Y.IC.Renderer.getConstructor(action_meta._prototype);
 
-                        var _constructor_config = action_meta._prototype_config;
+                        var _constructor_config = action_meta._prototype_config || {};
                         _constructor_config._caller = this;
 
                         var renderer = new _constructor ( _constructor_config );

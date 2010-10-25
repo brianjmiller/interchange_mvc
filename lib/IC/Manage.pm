@@ -135,21 +135,46 @@ sub object_ui_meta_struct {
     $struct->{+__PACKAGE__} = 1;
     $struct->{description}  = $model_object->manage_description;
 
-    for my $common_action_code qw( DetailView Drop ) {
-        my ($action_class, $action_model) = $class->load_class( $class->_class, $common_action_code );
-
-        my $action = $action_class->new(
-            _controller   => $args->{_controller},
-        );
-
-        $struct->{actions}->{$common_action_code} = {
-            label => $action_model->display_label,
-            meta  => $action->ui_meta_struct,
-        };
-    }
-
     my $inner_result = inner();
     $struct = $inner_result if defined $inner_result;
+
+    #
+    # post process the list of actions provided by the sub class,
+    # tack on Drop and DetailView as defaults, in the case they 
+    # aren't needed they just won't be found
+    #
+    # post processing will set the label and meta information in
+    # the case that they aren't already defined
+    #
+    my @actions = qw( DetailView Drop );
+
+    if (defined $struct->{actions}) {
+        push @actions, keys %{ $struct->{actions} };
+    }
+
+    my $class_model_obj = $class->get_class_model_obj;
+
+    my $action_models = $class_model_obj->find_actions(
+        query => [
+            is_primary => 0,
+            code       => \@actions,
+        ],
+    );
+
+    for my $action_model (@$action_models) {
+        my $action_class = $action_model->load_lib;
+        my $action       = $action_class->new(
+            _controller => $args->{_controller},
+        );
+
+        my $action_ref = $struct->{actions}->{ $action_model->code } ||= {};
+        unless (defined $action_ref->{label}) {
+            $action_ref->{label} = $action_model->display_label; 
+        }
+        unless (defined $action_ref->{meta}) {
+            $action_ref->{meta} = $action->ui_meta_struct; 
+        }
+    }
 
     my $formatted = $struct;
     if (! defined $args->{format}) {

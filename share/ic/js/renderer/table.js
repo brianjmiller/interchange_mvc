@@ -48,7 +48,7 @@ YUI.add(
                         headers: config.headers,
                         rows:    config.rows
                     };
-                    if (config.caption) {
+                    if (Y.Lang.isValue(config.caption)) {
                         table_args.caption = config.caption;
                     }
 
@@ -57,7 +57,7 @@ YUI.add(
 
                 renderUI: function () {
                     Y.log("renderer_table::renderUI");
-                    Y.log("renderer_table::renderUI - contentBox: " + this.get("contentBox"));
+                    //Y.log("renderer_table::renderUI - contentBox: " + this.get("contentBox"));
 
                     this._table.render(this.get("contentBox"));
                 },
