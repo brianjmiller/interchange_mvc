@@ -46,7 +46,7 @@ YUI.add(
                     // message content to display in pane's header message area
                     //
                     message: {
-                        value: null
+                        value: ""
                     },
 
                     //
@@ -54,7 +54,7 @@ YUI.add(
                     // header
                     //
                     actions: {
-                        value: null
+                        value: []
                     },
 
                     // currently selected layout that we want displaying our pieces
