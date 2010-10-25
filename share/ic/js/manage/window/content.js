@@ -326,7 +326,6 @@ YUI.add(
                                 var add_class;
                                 if (Y.Lang.isValue(v.add_class)) {
                                     add_class = v.add_class;
-                                    delete v.add_class;
                                 }
 
                                 var button = new Y.Button (v);

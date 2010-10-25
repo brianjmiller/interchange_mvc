@@ -61,10 +61,11 @@ YUI.add(
             ManageWindowContentDashboard,
             Y.IC.ManageWindowContentBase,
             {
-                _last_updated: null,
-                _last_tried:   null,
-                _timer:        null,
-                _data_url:     null,
+                _last_updated:       null,
+                _last_tried:         null,
+                _timer:              null,
+                _data_url:           null,
+                _active_when_hidden: null,
 
                 initializer: function (config) {
                     Y.log("manage_window_content_dashboard::initializer");
@@ -121,7 +122,6 @@ YUI.add(
 
                 _setInitialContent: function () {
                     Y.log("manage_window_content_dashboard::_setInitialContent");
-                    //this._pieces.full_center_body.setContent("Loading data from server");
                     this.get("contentBox").setContent("Loading data from server");
                 },
 
@@ -141,11 +141,15 @@ YUI.add(
                     //Y.log("manage_window_content_dashboard::_onShow");
                     //Y.log("manage_window_content_dashboard::_onShow - e: " + Y.dump(e));
 
-                    this.set("is_active", true);
-
-                    this.fire("update_data");
+                    if (Y.Lang.isValue(this._active_when_hidden) && this._active_when_hidden) {
+                        if (! this.get("is_active")) {
+                            this.toggleActive();
+                        }
+                    }
 
                     if (this.get("is_active") && this.get("update_interval")) {
+                        this.fire("update_data");
+
                         this._initTimer();
                     }
 
@@ -169,10 +173,10 @@ YUI.add(
                     //Y.log("manage_window_content_dashboard::_onHide");
                     //Y.log("manage_window_content_dashboard::_onHide - e: " + Y.dump(e));
 
-                    this.set("is_active", false);
-
-                    // TODO: set this to be done by the is_active attribute handler
-                    this._timer.cancel();
+                    this._active_when_hidden = this.get("is_active");
+                    if (this.get("is_active")) {
+                        this.toggleActive();
+                    }
 
                     Y.IC.ManageWindowContentDashboard.superclass._onHide.apply(this, arguments);
                 },
@@ -268,6 +272,11 @@ YUI.add(
                         button_label = BUTTON_IS_ACTIVE_TOGGLE_ON;
                         this._initTimer();
                     }
+
+                    // this is a hack because of how the actions are handled, rather than being
+                    // cached and re-shown, they are re-built so we need to set the state in
+                    // the action itself
+                    this.get("actions")[1].label = button_label;
 
                     if (button && button_label !== "") {
                         button.setContent(button_label);
