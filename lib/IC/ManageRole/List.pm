@@ -54,8 +54,6 @@ around 'ui_meta_struct' => sub {
 
     my $struct = $self->_ui_meta_struct;
 
-    # TODO: add in filter meta config
-
     $struct->{+__PACKAGE__}    = 1;
     $struct->{label}           = 'List';
     $struct->{_prototype}      = 'List';
@@ -115,23 +113,8 @@ around 'ui_meta_struct' => sub {
     # TODO: this should be determined based off of column definitions
     $struct->{data_table_is_filterable} = 1;
 
-    # TODO: restore ACL
-    if (1) {
-        #
-        # ideally we could post process the row actions getting a meta data struct
-        # for handling them, then just make a call to get the necessary data for 
-        # the record to be used by the row actions, unfortunately that would require
-        # even more refactoring so holding off on that now
-        #
-        push @{ $struct->{row_actions} }, {
-            code  => 'DetailView',
-            label => 'Detail',
-        };
-        push @{ $struct->{row_actions} }, {
-            code  => 'Drop',
-            label => 'Drop',
-        };
-    }
+    # TODO: provide a way to deactivate the options handling
+    $struct->{data_table_include_options} = 1;
 
     return $self->$orig(@_);
 };
@@ -269,14 +252,17 @@ sub data {
         $struct->{dir}                = $add_desc ? 'desc' : 'asc';
     }
 
-    ## TODO: this could be done on the client side via a formatter
-    #my $prefix = $self->_func_prefix;
-    #my $functions = [ 
-        #{
-            #code    => $prefix.'DetailView',
-            #display => 'Detail',
-        #},
-    #];
+    my $class_model_obj = $self->get_class_model_obj;
+
+    # TODO: restore access control check
+    my $action_models = $class_model_obj->find_actions(
+        query => [
+            is_primary => 0,
+        ],
+    );
+    my %action_labels_by_code = (
+        map { $_->code => $_->display_label } @$action_models,
+    );
 
     my @pk_fields = @{ $_model_class->meta->primary_key_columns };
     for my $object (@{ $_model_class_mgr->get_objects( %$get_objects_config ) }) {
@@ -296,14 +282,13 @@ sub data {
             $details->{ $method } = "$value";
         }
 
-        #my $_options = '';
-        #for my $func (@$functions) {
-            ## TODO: add privilege check, etc.
-            #my $object_pk = join '&', map { "_pk_$_=" . $object->$_ } @{ $object->meta->primary_key_columns };
-            #my $link = qq|<a id="manage_menu_item-function-detail-$func->{code}-$object_pk" class="manage_function_link">$func->{display}</a> |;
-            #$_options .= $link;
-        #}
-        #$details->{_options} = $_options;
+        my $_options = $details->{_options} = [];
+        for my $action ($self->_record_actions($object)) {
+            push @$_options, {
+                code  => $action,
+                label => $action_labels_by_code{$action},
+            };
+        }
 
         push @{ $struct->{rows} }, $details;
     }

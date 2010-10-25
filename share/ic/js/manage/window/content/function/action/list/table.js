@@ -99,8 +99,7 @@ YUI.add(
 
                     var source_fields = this.get("meta").data_source_fields;
 
-                    var row_actions   = this.get("meta").row_actions;
-                    if (row_actions) {
+                    if (this.get("meta").data_table_include_options) {
                         source_fields.push(
                             {
                                 key:    "_options",
@@ -109,10 +108,11 @@ YUI.add(
                                 //       a "review" link to orders pending review, etc.
                                 parser: Y.bind(
                                     function (data) {
+                                        //Y.log("_options::parser: " + Y.dump(data));
                                         var return_data = "";
 
                                         Y.each(
-                                            this.get("meta").row_actions,
+                                            data,
                                             function (v, i, a) {
                                                 if (return_data !== "") return_data += " | ";
                                                 return_data += '<a id="' + v.code + '-' + Y.guid() + '" class="row_action_link">' + v.label + '</a>';
@@ -217,8 +217,7 @@ YUI.add(
 
                     var column_defs = this.get("meta").data_table_column_defs;
 
-                    var row_actions = this.get("meta").row_actions;
-                    if (row_actions) {
+                    if (this.get("meta").data_table_include_options) {
                         column_defs.push(
                             {
                                 key:       "_options",
@@ -298,7 +297,7 @@ YUI.add(
                         "rowSelectEvent", 
                         Y.bind(this._onRowSelectEvent, this)
                     );
-                    if (this.get("meta").row_actions) {
+                    if (this.get("meta").data_table_include_options) {
                         //Y.log("manage_window_content_function_action_list_table::_bindEvents - installing row action click handler");
                         Y.delegate(
                             "click",

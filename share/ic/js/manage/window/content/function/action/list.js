@@ -68,13 +68,13 @@ YUI.add(
                             _caller:   this,
                             render_to: this._data_table_node._node,
                             meta:      {
-                                row_actions:             this.get("meta").row_actions,
-                                data_source_fields:      this.get("meta").data_source_fields,
-                                data_table_column_defs:  this.get("meta").data_table_column_defs,
-                                data_table_initial_sort: this.get("meta").data_table_initial_sort,
-                                paging_provider:         this.get("meta").paging_provider,
-                                page_count:              this.get("meta").page_count,
-                                total_objects:           this.get("meta").total_objects
+                                data_source_fields:         this.get("meta").data_source_fields,
+                                data_table_column_defs:     this.get("meta").data_table_column_defs,
+                                data_table_include_options: this.get("meta").data_table_include_options,
+                                data_table_initial_sort:    this.get("meta").data_table_initial_sort,
+                                paging_provider:            this.get("meta").paging_provider,
+                                page_count:                 this.get("meta").page_count,
+                                total_objects:              this.get("meta").total_objects
                             }
                         }
                     );

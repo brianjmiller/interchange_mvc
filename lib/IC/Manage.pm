@@ -20,6 +20,7 @@ class_has '_model_display_name'        => ( is => 'ro', default => undef );
 class_has '_model_display_name_plural' => ( is => 'ro', default => undef );
 class_has '_field_adjustments'         => ( is => 'ro', default => undef );
 class_has '_role_class'                => ( is => 'ro', default => 'IC::M::Role' );
+class_has '_default_record_actions'    => ( is => 'ro', default => sub { [ qw( DetailView Drop ) ] } );
 
 has '_controller'            => ( is => 'rw', required => 1 );
 has '_ui_meta_struct'        => ( is => 'rw', default => sub { {} } );
@@ -135,19 +136,20 @@ sub object_ui_meta_struct {
     $struct->{+__PACKAGE__} = 1;
     $struct->{description}  = $model_object->manage_description;
 
+    my @actions = $class->_record_actions($model_object);
+    for my $action (@actions) {
+        $struct->{actions}->{$action} = {};
+    }
+
     my $inner_result = inner();
     $struct = $inner_result if defined $inner_result;
 
     #
-    # post process the list of actions provided by the sub class,
-    # tack on Drop and DetailView as defaults, in the case they 
-    # aren't needed they just won't be found
+    # post process the list of actions provided by the sub class
     #
     # post processing will set the label and meta information in
     # the case that they aren't already defined
     #
-    my @actions = qw( DetailView Drop );
-
     if (defined $struct->{actions}) {
         push @actions, keys %{ $struct->{actions} };
     }
@@ -541,6 +543,18 @@ sub _fields_to_field_form_defs {
 
     return $return;
 }
+
+sub _record_actions {
+    my $self = shift;
+    my $object = shift;
+
+    return (
+        @{ $self->_default_record_actions },
+        @{ $self->_custom_record_actions($object) },
+    );
+}
+
+sub _custom_record_actions { [] }
 
 1;
 
