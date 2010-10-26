@@ -59,8 +59,12 @@ YUI.add(
                 // where to put our filter table
                 _prepend_to: null,
 
+                // cache of records that have been removed by a set of filters, these need to be added
+                // back in for reconsideration upon resubmitting a filter
+                _local_filtered_records: null,
+
                 initializer: function (config) {
-                    Y.log('plugin_tablefilter::initializer');
+                    //Y.log('plugin_tablefilter::initializer');
                     if (config.prepend_to) {
                         this._prepend_to = config.prepend_to;
                     }
@@ -143,6 +147,8 @@ YUI.add(
                         );
                     }
                     else {
+                        this._local_filtered_records = [];
+
                         this.get("host")._data_source.on(
                             "response",
                             Y.bind(
@@ -158,7 +164,7 @@ YUI.add(
                 },
 
                 getActiveFilters: function () {
-                    Y.log("plugin_tablefilter::getActiveFilters");
+                    //Y.log("plugin_tablefilter::getActiveFilters");
 
                     var columns = this._reference_data_table.getColumnSet().flat;
 
@@ -168,6 +174,7 @@ YUI.add(
                     Y.each(
                         columns,
                         function (column, i, a) {
+                            //Y.log(column.field + ' filter is "' + this._filters[column.field]._controls[0].get('value') + '"');
                             if (! column.hidden) {
                                 active_filters.push( this._filters[column.field] );
                             }
@@ -176,6 +183,21 @@ YUI.add(
                     );
 
                     return active_filters;
+                },
+
+                getNonEmptyFilters: function() {
+                    var nonempty_filters = [];
+                    Y.each(
+                         this.getActiveFilters(),
+                         function (filter, i, a) {
+                             if (filter._controls[0].get('value').length > 0) {
+                                 nonempty_filters.push(filter);
+                             }
+                         },
+                         this
+                    );
+
+                    return nonempty_filters;
                 },
 
                 _submitFilter: function (e) {
@@ -188,42 +210,49 @@ YUI.add(
                         Y.log('plugin_tablefilter::_submitFilter - clearing records');
                         var record_set  = this._reference_data_table.getRecordSet();
 
-                        var active_filters = this.getActiveFilters();
+                        var usable_filters = this.getNonEmptyFilters();
+                        //Y.log('# usable filters: ' + usable_filters.length);
 
-                        var cur_records = record_set.getRecords();
+                        var cur_records = [].concat(
+                            record_set.getRecords(),
+                            this._local_filtered_records
+                        );
+
                         var new_records = [];
+                        this._local_filtered_records.length = 0;
 
-                        // loop over all of the current records testing against the set of active filters,
+                        // loop over all of the current records testing against the set of usable filters,
                         // as soon as one indicates that the record should be kept then stop the check and
                         // add the record to the list of those to keep
                         Y.each(
                             cur_records,
                             function (record, i, a) {
-                                Y.log("testing row: " + i);
+                                //Y.log("testing row: " + i + " - record: " + Y.dump(record));
 
                                 var filter_result = Y.some(
-                                    active_filters,
+                                    usable_filters,
                                     function (filter, ii, ia) {
-                                        Y.log("against filter: " + ii + " - " + filter._reference_column.field);
-
                                         if (filter.keep(record._oData)) {
-                                            Y.log("record kept (ending inner loop)");
+                                            //Y.log("record kept (ending inner loop)");
                                             return true;
                                         }
                                         return false;
                                     },
-                                    this
+                                    new_records
                                 );
-                                if (filter_result) {
-                                    Y.log("adding record to new_records: " + i);
-                                    this.push(record._oData);
+                                if (filter_result || usable_filters.length == 0) {
+                                    //Y.log("adding record to new_records: " + i);
+                                    new_records.push(record._oData);
+                                }
+                                else {
+                                    this._local_filtered_records.push(record);
                                 }
                             },
-                            new_records
+                            this
                         );
                         record_set.replaceRecords(new_records);
 
-                        Y.log("setting new records length: " + new_records.length);
+                        //Y.log("setting new records length: " + new_records.length);
                         this.get("host")._data_pager.setState(
                             {
                                 totalRecords: new_records.length
@@ -255,7 +284,7 @@ YUI.add(
                     Y.each(
                         raw_results,
                         function (row, i, a) {
-                            Y.log("testing row " + i + " against filter");
+                            //Y.log("testing row " + i + " against filter");
 
                             this.push(row);
                         },
@@ -275,7 +304,7 @@ YUI.add(
                     Y.log("plugin_tablefilter::filterDynamicData");
 
                     var new_return = this.get("host")._tmp_dynamic_data_request;
-                    Y.log("plugin_tablefilter::filterDynamicData - starting uri string: " + new_return);
+                    //Y.log("plugin_tablefilter::filterDynamicData - starting uri string: " + new_return);
 
                     //
                     // run through each field in the tablefilter form
@@ -296,11 +325,11 @@ YUI.add(
                     // only adjust the return if there was something to add
                     if (args.length) {
                         var addition = "&filter_mode=search" + "&" + args.join("&");
-                        Y.log("plugin_tablefilter::_buildFilterArgs - addition: " + addition);
+                        //Y.log("plugin_tablefilter::_buildFilterArgs - addition: " + addition);
 
                         new_return += addition;
 
-                        Y.log("plugin_tablefilter::filterDynamicData - ending uri string: " + new_return);
+                        //Y.log("plugin_tablefilter::filterDynamicData - ending uri string: " + new_return);
                         return new Y.Do.AlterReturn ('', new_return);
                     }
 
@@ -351,7 +380,7 @@ YUI.add(
                     this._td = Y.Node.create('<td style="padding: 0 7px"></td>');
 
                     var name  = this._reference_column.field + '_filter';
-                    Y.log("name: " + name);
+                    //Y.log("name: " + name);
 
                     this._controls = [];
 
@@ -382,9 +411,43 @@ YUI.add(
 
                 // this method is used for non-dynamicData conditions (when the client should do the filtering)
                 keep: function (record) {
-                    Y.log("plugin_tablefilter_columnfilter::keep");
+                    filter_value = this._controls[0].get('value');
+                    if (filter_value == null || filter_value == '') return true;
 
-                    return true;
+                    //Y.log("plugin_tablefilter_columnfilter::keep for " + filter_value);
+
+                    var parsed_value = this._parseControlValue(filter_value, 'javascript');
+                    //Y.log("plugin_tablefilter_columnfilter::keep - parsed_value: " + Y.dump(parsed_value));
+                    if (parsed_value.values.length == 0) return true;
+
+                    var result = true;
+                    var key = this._reference_column.field;
+                    if (key.match(/^_/)) return false;
+                    //Y.log('plugin_tablefilter_columnfilter::keep - examining ' + key + ': "' + record[key] + '"');
+
+                    for (var i = 0; i < parsed_value.values.length; i++) {
+                        var col_value = record[key].toString();
+                        var value = parsed_value.values[i];
+                        var op    = parsed_value.ops[i];
+                        var this_result;
+
+                        if (op == 'like') {
+                            this_result = (null != col_value.match(new RegExp(value)));
+                        }
+                        else if (op == 'ilike') {
+                            this_result = (null != col_value.match(new RegExp(value,'i')));
+                        }
+                        else {
+                            col_value = col_value.replace(/\"/g,'\\"');
+                            //Y.log('plugin_tablefilter_columnfilter::keep - col_value = "' + col_value + '"');
+                            var stmt = 'this_result= "' + col_value + '" ' + op + ' "' + value + '"';
+                            //Y.log('plugin_tablefilter_columnfilter::keep - ' + stmt);
+                            eval(stmt);
+                        }
+                        result = result && this_result;
+                    }
+
+                    return result;
                 },
 
                 // this method is used for dynamicData conditions (when the server will do the filtering)
@@ -395,13 +458,13 @@ YUI.add(
                     Y.each(
                         this._controls,
                         function (control, i, controls) {
-                            Y.log("plugin_tablefilter_columnfilter::getURISnippet - control: " + i);
+                            //Y.log("plugin_tablefilter_columnfilter::getURISnippet - control: " + i);
 
                             var parsed_value = this._parseControlValue( control.get('value') );
-                            Y.log("plugin_tablefilter_columnfilter::getURISnippet - parsed_value: " + Y.dump(parsed_value));
+                            //Y.log("plugin_tablefilter_columnfilter::getURISnippet - parsed_value: " + Y.dump(parsed_value));
 
                             if (parsed_value.values && parsed_value.values.length > 0) {
-                                Y.log("plugin_tablefilter_columnfilter::getURISnippet - parsed_value.values.length: " + parsed_value.values.length);
+                                //Y.log("plugin_tablefilter_columnfilter::getURISnippet - parsed_value.values.length: " + parsed_value.values.length);
                                 parsed_value.value = parsed_value.values.join(',');
                                 parsed_value.op    = parsed_value.ops.join('-');
 
@@ -425,7 +488,7 @@ YUI.add(
                     return string;
                 },
 
-                _parseControlValue: function (filter) {
+                _parseControlValue: function (filter, language) {
                     Y.log("plugin_tablefilter_columnfilter::_parseControlValue");
 
                     //
@@ -464,7 +527,9 @@ YUI.add(
 
                             if (results !== null && results.length === 3) {
                                 ops.push(
-                                    op_map[ results[1] ]
+                                         language == 'javascript'
+                                         ? results[1]
+                                         : op_map[ results[1] ]
                                 );
                                 values.push( results[2] );
                             }
