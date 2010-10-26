@@ -78,7 +78,7 @@ YUI.add(
                                     // items in a single grid unit
                                     var content_items = [];
 
-                                    if (Y.Lang.isArray(col.content)) {
+                                    if (Y.Lang.isValue(col.has_multi_content) && col.has_multi_content) {
                                         content_items = col.content;
                                     }
                                     else {
