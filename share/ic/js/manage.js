@@ -218,11 +218,12 @@ YUI(
                     "ic-manage-window-content-function-action-list-table": {
                         path: "manage/window/content/function/action/list/table.js",
                         requires: [ 
+                            "ic-manage-window-content-function-action-list-table-css",
                             "base",
                             "ic-util",
                             "datasource",
-                            "event-custom",
                             "pluginhost",
+                            "overlay",
                             "gallery-datasource-wrapper",
                             "yui2-paginator",
                             "yui2-datatable",
@@ -507,6 +508,10 @@ YUI(
                         path: "manage/window/content/function/action/list.css",
                         type: "css"
                     },
+                    "ic-manage-window-content-function-action-list-table-css": {
+                        path: "manage/window/content/function/action/list/table.css",
+                        type: "css"
+                    },
                     "ic-manage-window-content-function-action-list-record-css": {
                         path: "manage/window/content/function/action/list/record.css",
                         type: "css"
@@ -611,13 +616,13 @@ YUI(
                 // Y.log("setting up manage window");
                 var mw = Y.IC.ManageWindow();
 
-                // hide our loading screen
+                // remove our loading screen
                 Y.on(
                     'contentready',
                     function () {
-                        Y.one('#application-loading').addClass('hide');
+                        Y.one('#application-loading').remove();
                     },
-                    '#manage_menu'
+                    '#manage_window_content_pane'
                 );
             }
         );

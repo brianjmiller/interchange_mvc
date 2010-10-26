@@ -6,8 +6,14 @@
     <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/combo?<%= $yui_version %>/build/cssreset/reset-min.css&<%= $yui_version %>/build/cssfonts/fonts-min.css&<%= $yui_version %>/build/cssgrids/grids-min.css&<%= $yui_version %>/build/cssbase/base-min.css">
 
     <style id="styleoverrides">
+        /* ideally these would go in a CSS module but I couldn't get it loaded after the ones provided by the core */
         .yui-skin-sam .yui-dt table {
             font-family: inherit;
+        }
+        .yui-skin-sam .yui-dt-liner {
+            padding-top:    1px;
+            padding-bottom: 1px;
+            line-height:    1.15;
         }
     </style>
 

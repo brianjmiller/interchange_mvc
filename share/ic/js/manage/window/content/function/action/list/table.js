@@ -250,10 +250,11 @@ YUI.add(
                     }
 
                     var unit_height = container.get("height");
+                    // TODO: do we need to include scroll bar height? can we even determine that?
                     var magic       = 58; // table header (24) + 1 paginator (34) height
                     magic += 21;
                     var total_recs  = this.get("meta").total_objects;
-                    var row_height  = 24;
+                    var row_height  = 14;
 
                     // how many rows will fit in my unit?
                     var num_rows = Math.floor(
