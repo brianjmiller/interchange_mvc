@@ -228,7 +228,7 @@ YUI.add(
                         );
                     }
 
-                    this._data_table = new Y.YUI2.widget.ScrollingDataTable(
+                    this._data_table = new Y.YUI2.widget.DataTable(
                         render_to,
                         column_defs,
                         this._wrapped_data_source,
@@ -395,13 +395,15 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
+            "ic-manage-window-content-function-action-list-table-css",
             "base",
+            "ic-util",
             "datasource",
             "pluginhost",
+            "overlay",
             "gallery-datasource-wrapper",
             "yui2-paginator",
             "yui2-datatable",
-            "yui2-datasource",
             "querystring"
         ]
     }
