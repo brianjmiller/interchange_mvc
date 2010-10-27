@@ -284,7 +284,7 @@ YUI.add(
                                 // build a list of menu items based on the _options data in the record
                                 var menu_items = "";
                                 Y.each(
-                                    record._oData._options,
+                                    record.getData("_options"),
                                     function (option, i, a) {
                                         menu_items += '<li class="yui3-menuitem"><span class="yui3-menuitem-content" id="' + option.code + '-' + Y.guid() + '">' + option.label + '</span></li>';
                                     }
@@ -382,23 +382,37 @@ YUI.add(
                     Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent");
                     var record = this._data_table.getRecord( this._data_table.getLastSelectedRecord() );
 
-                    var selected_option;
-                    Y.some(
-                        record._oData._options,
-                        function (option, i, a) {
-                            if (Y.Lang.isValue(option.is_default) && option.is_default) {
-                                selected_option = option;
-                                return true;
+                    var _record_cache_key = this._caller.getRecordCacheKey(record);
+                    //Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent - _record_cache_key: " + _record_cache_key);
+
+                    var action_code;
+                    if (this._caller._record_cache[_record_cache_key]) {
+                        action_code = this._caller._record_cache[_record_cache_key].get("action");
+                        //Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent - cached action: " + action_code);
+                    }
+                    else {
+                        var selected_option;
+                        Y.some(
+                            record.getData("_options"),
+                            function (option, i, a) {
+                                if (Y.Lang.isValue(option.is_default) && option.is_default) {
+                                    selected_option = option;
+                                    return true;
+                                }
                             }
+                        );
+                        if (! selected_option) {
+                            selected_option = record.getData("_options")[0];
                         }
-                    );
-                    if (! selected_option) {
-                        selected_option = record._oData._options[0];
+
+                        action_code = selected_option.code;
                     }
 
+                    //Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent - action_code: " + action_code);
+                    //Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent - record: " + record);
                     this._caller.setCurrentRecordWithAction(
                         record,
-                        selected_option.code
+                        action_code
                     );
                 },
 

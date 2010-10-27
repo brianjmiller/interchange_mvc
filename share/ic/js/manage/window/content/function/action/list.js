@@ -145,17 +145,8 @@ YUI.add(
                         this._record.set("disabled", "true");
                     }
 
-                    var pk = {};
-
-                    Y.each(
-                        this.get("current_record").getData("_pk_settings"),
-                        function (v, i, a) {
-                            pk[v.field] = v.value;
-                        }
-                    );
-
                     //Y.log("manage_window_content_function_action_list::_afterCurrentRecordChange - loading new record: " + Y.dump(pk));
-                    this._loadRecord(pk);
+                    this._loadRecord(this.get("current_record"));
 
                     //Y.log("manage_window_content_function_action_list::_afterCurrentRecordChange - enabling new record");
                     this._record.set("disabled", false);
@@ -172,18 +163,44 @@ YUI.add(
                     //Y.log("manage_window_content_function_action_list::displayRecord - done");
                 },
 
-                _loadRecord: function (pk) {
-                    //Y.log("manage_window_content_function_action_list::_onLoadRecord");
-                    //Y.log("manage_window_content_function_action_list::_onLoadRecord + pk: " + Y.dump(pk));
+                getRecordCacheKey: function (record) {
+                    //Y.log("manage_window_content_function_action_list::getRecordCacheKey");
+                    var cache_key;
 
-                    var _record_cache_key = Y.QueryString.stringify(pk);
+                    var pk = {};
+                    Y.each(
+                        record.getData("_pk_settings"),
+                        function (v, i, a) {
+                            pk[v.field] = v.value;
+                        }
+                    );
+
+                    cache_key = Y.QueryString.stringify(pk);
+
+                    return cache_key;
+                },
+
+                _loadRecord: function (record) {
+                    Y.log("manage_window_content_function_action_list::_loadRecord");
+                    //Y.log("manage_window_content_function_action_list::_loadRecord + record: " + Y.dump(record));
+
+                    var _record_cache_key = this.getRecordCacheKey(record);
 
                     if (this._record_cache[_record_cache_key]) {
-                        //Y.log("manage_window_content_function_action_list::_onLoadRecord - using cached record");
+                        //Y.log("manage_window_content_function_action_list::_loadRecord - using cached record");
                         this._record = this._record_cache[_record_cache_key];
                     }
                     else {
-                        //Y.log("manage_window_content_function_action_list::_onLoadRecord - building new record");
+                        var pk = {};
+
+                        Y.each(
+                            this.get("current_record").getData("_pk_settings"),
+                            function (v, i, a) {
+                                pk[v.field] = v.value;
+                            }
+                        );
+
+                        //Y.log("manage_window_content_function_action_list::_loadRecord - building new record");
                         this._record = new Y.IC.ManageWindowContentFunctionActionListRecord (
                             {
                                 _caller: this,
