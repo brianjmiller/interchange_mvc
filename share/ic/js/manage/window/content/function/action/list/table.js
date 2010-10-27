@@ -380,11 +380,26 @@ YUI.add(
 
                 _onRowSelectEvent: function (e) {
                     Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent");
-                    // TODO: make this get the default action and load it
-                    //this._caller.setCurrentRecordWithAction(
-                        //this._data_table.getRecord( this._data_table.getLastSelectedRecord() ),
-                        //selected_action
-                    //);
+                    var record = this._data_table.getRecord( this._data_table.getLastSelectedRecord() );
+
+                    var selected_option;
+                    Y.some(
+                        record._oData._options,
+                        function (option, i, a) {
+                            if (Y.Lang.isValue(option.is_default) && option.is_default) {
+                                selected_option = option;
+                                return true;
+                            }
+                        }
+                    );
+                    if (! selected_option) {
+                        selected_option = record._oData._options[0];
+                    }
+
+                    this._caller.setCurrentRecordWithAction(
+                        record,
+                        selected_option.code
+                    );
                 },
 
                 updateAddtlArgs: function (addtl_args) {

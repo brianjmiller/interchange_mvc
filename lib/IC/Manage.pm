@@ -20,6 +20,10 @@ class_has '_model_display_name'        => ( is => 'ro', default => undef );
 class_has '_model_display_name_plural' => ( is => 'ro', default => undef );
 class_has '_field_adjustments'         => ( is => 'ro', default => undef );
 class_has '_role_class'                => ( is => 'ro', default => 'IC::M::Role' );
+
+# order matters here, by making "DetailView" the first in this list
+# it then becomes the default unless an override of _record_actions
+# happens
 class_has '_default_record_actions'    => ( is => 'ro', default => sub { [ qw( DetailView Drop ) ] } );
 
 has '_controller'            => ( is => 'rw', required => 1 );
