@@ -11,6 +11,7 @@
             font-family: inherit;
         }
         .yui-skin-sam .yui-dt-liner {
+            white-space:    nowrap;
             padding-top:    1px;
             padding-bottom: 1px;
             line-height:    1.15;

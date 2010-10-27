@@ -3,9 +3,23 @@
 See styleoverrides...
 
 .yui-skin-sam .yui-dt-liner {
+    white-space:    nowrap;
     padding-top:    1px;
     padding-bottom: 1px;
     line-height:    1.15;
 }
 
 */
+
+div.context-menu div.yui3-widget-hd {
+    background-color: white;
+    font-weight: bold;
+    padding-left: 4px;
+    border-top: 1px solid #808080;
+    border-left: 1px solid #808080;
+    border-right: 1px solid #808080;
+}
+
+div.context-menu div.yui3-widget-bd div.yui3-menu-content {
+    border-top: none;
+}

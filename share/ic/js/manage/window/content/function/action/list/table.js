@@ -103,26 +103,6 @@ YUI.add(
                         source_fields.push(
                             {
                                 key:    "_options",
-
-                                // TODO: we could make this handle per row options, for example adding
-                                //       a "review" link to orders pending review, etc.
-                                parser: Y.bind(
-                                    function (data) {
-                                        //Y.log("_options::parser: " + Y.dump(data));
-                                        var return_data = "";
-
-                                        Y.each(
-                                            data,
-                                            function (v, i, a) {
-                                                if (return_data !== "") return_data += " | ";
-                                                return_data += '<a id="' + v.code + '-' + Y.guid() + '" class="row_action_link">' + v.label + '</a>';
-                                            }
-                                        );
-
-                                        return return_data;
-                                    },
-                                    this
-                                )
                             }
                         );
                     }
@@ -217,17 +197,6 @@ YUI.add(
 
                     var column_defs = this.get("meta").data_table_column_defs;
 
-                    if (this.get("meta").data_table_include_options) {
-                        column_defs.push(
-                            {
-                                key:       "_options",
-                                label:     "Options",
-                                sortable:  false,
-                                resizable: false
-                            }
-                        );
-                    }
-
                     this._data_table = new Y.YUI2.widget.DataTable(
                         render_to,
                         column_defs,
@@ -299,12 +268,86 @@ YUI.add(
                         Y.bind(this._onRowSelectEvent, this)
                     );
                     if (this.get("meta").data_table_include_options) {
-                        //Y.log("manage_window_content_function_action_list_table::_bindEvents - installing row action click handler");
+                        //Y.log("manage_window_content_function_action_list_table::_bindEvents - installing context menu handling");
                         Y.delegate(
-                            "click",
-                            this._onRowActionClick,
+                            "contextmenu",
+                            function (e) {
+                                Y.log("contextmenu event fired");
+                                //Y.log("contextmenu event fired - e: " + Y.dump(e));
+                                //Y.log("contextmenu event fired - e.target.id: " + e.target.get("id"));
+
+                                // prevent the browser's own context menu
+                                e.preventDefault();
+
+                                var record = this._data_table.getRecord( e.target.get("id") );
+
+                                // build a list of menu items based on the _options data in the record
+                                var menu_items = "";
+                                Y.each(
+                                    record._oData._options,
+                                    function (option, i, a) {
+                                        menu_items += '<li class="yui3-menuitem"><span class="yui3-menuitem-content" id="' + option.code + '-' + Y.guid() + '">' + option.label + '</span></li>';
+                                    }
+                                );
+
+                                // assemble a menu node to stuff into the overlay
+                                var menu_node = Y.Node.create('<div class="yui3-menu"><div class="yui3-menu-content"><ul>' + menu_items + '</ul></div></div>');
+                                menu_node.plug(
+                                    Y.Plugin.NodeMenuNav
+                                );
+
+                                // build and pop up an overlay housing our context menu
+                                var overlay = new Y.Overlay (
+                                    {
+                                        render:        true,
+                                        zIndex:        10,
+                                        headerContent: "Options",
+                                        bodyContent:   menu_node,
+                                        xy:            [ e.clientX, e.clientY ]
+                                    }
+                                );
+                                overlay.get("contentBox").addClass("context-menu");
+
+                                // subscribe this after so it has access to "overlay" and "record",
+                                // have it handle the clicks on the menu options, it needs to
+                                // "close" the overlay
+                                menu_node.on(
+                                    "click",
+                                    function (e) {
+                                        //Y.log("menu option chosen");
+                                        //Y.log("menu option chosen - e.target.id: " + e.target.get("id"));
+                                        overlay.destroy();
+
+                                        var matches         = e.target.get("id").match("^([^-]+)-(?:.+)$");
+                                        var selected_action = matches[1];
+
+                                        this._caller.setCurrentRecordWithAction(
+                                            record,
+                                            selected_action
+                                        );
+                                    },
+                                    this
+                                );
+
+                                //
+                                // set up mousedown handler to clear our overlay whenever there is
+                                // a mouse action somewhere on the page outside of our overlay 
+                                // (use mousedown here to also catch any other contextmenu events)
+                                //
+                                var body_handle = Y.one( document.body ).on(
+                                    "mousedown",
+                                    function (e) {
+                                        //Y.log("body clicked");
+                                        body_handle.detach();
+
+                                        if (! overlay.get("contentBox").contains( e.target )) {
+                                            overlay.destroy();
+                                        }
+                                    }
+                                );
+                            },
                             this._data_table.getContainerEl(),
-                            "a.row_action_link",
+                            "td",
                             this
                         );
                     }
@@ -337,18 +380,11 @@ YUI.add(
 
                 _onRowSelectEvent: function (e) {
                     Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent");
-                },
-
-                _onRowActionClick: function (e) {
-                    Y.log("manage_window_content_function_action_list_table::_onRowActionClick");
-                    //Y.log("manage_window_content_function_action_list_table::_onRowActionClick - e.target: " + e.target);
-                    var matches         = e.target.get("id").match("^([^-]+)-(?:.+)$");
-                    var selected_action = matches[1];
-
-                    this._caller.setCurrentRecordWithAction(
-                        this._data_table.getRecord( this._data_table.getLastSelectedRecord() ),
-                        selected_action
-                    );
+                    // TODO: make this get the default action and load it
+                    //this._caller.setCurrentRecordWithAction(
+                        //this._data_table.getRecord( this._data_table.getLastSelectedRecord() ),
+                        //selected_action
+                    //);
                 },
 
                 updateAddtlArgs: function (addtl_args) {
