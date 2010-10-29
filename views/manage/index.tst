@@ -18,8 +18,7 @@
         }
     </style>
 
-    <link rel="stylesheet" type="text/css" href="/ic/styles/base.css" />
-    <link rel="stylesheet" type="text/css" href="/ic/styles/manage.css" />
+    <link rel="stylesheet" type="text/css" href="/combo?ic/styles/base.css&ic/styles/manage.css" />
 </head>
 
 <body class="yui-skin-sam yui3-skin-sam">
@@ -43,7 +42,7 @@
 </div>
 
 <!-- YUI Seed -->
-<script type="text/javascript" src="http://yui.yahooapis.com/<%= $yui_version %>/build/yui/yui.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/combo?<%= $yui_version %>/build/yui/yui.js&<%= $yui_version %>/build/loader/loader.js"></script>
 <script type="text/javascript" src="/ic/js/manage.js"></script>
 
 </body>
