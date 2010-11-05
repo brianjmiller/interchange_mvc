@@ -59,8 +59,34 @@ YUI.add(
                         config,
                         function (row, i, a) {
                             Y.log("adding row: " + i);
+                            var row_node = Y.Node.create('<div class="yui3-u-1"></div>');
+                            var row_grid_node = Y.Node.create('<div class="yui3-g"></div>');
+                            row_node.append(row_grid_node);
+
+                            if (!Y.Lang.isValue(row.columns)) {
+                                row.columns = row;
+                            }
+
+                            if (Y.Lang.isValue(row.add_class)) {
+                                Y.log('row is class "' + row.add_class + '"');
+                                row_node.addClass(row.add_class);
+                            }
+
+                            if (Y.Lang.isValue(row.plugins)) {
+                                Y.log(RendererGrid.NAME + '::initializer: has plugins');
+                                Y.each(
+                                    row.plugins,
+                                    function (plugin_item, ii, ia) {
+                                        var plugin = _plugin_name_map[plugin_item];
+                                        Y.log('setting up ' + plugin_item + ": " + plugin);
+                                        row_node.plug(plugin);
+                                   }
+                               );
+                            }
+
+                            Y.log('row has ' + row.columns.length + ' column(s)');
                             Y.each(
-                                row,
+                                row.columns,
                                 function (col, ii, ia) {
                                     Y.log("adding col " + ii + ": " + Y.dump(col));
                                     var unit_class = "yui3-u-";
@@ -120,8 +146,10 @@ YUI.add(
 
                                     this.append(unit_node);
                                 },
-                                this
+                                row_grid_node
                             );
+
+                            this.append(row_node);
                         },
                         this._grid_node
                     );
