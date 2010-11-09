@@ -42,7 +42,6 @@ YUI.add(
                 initializer: function (config) {
                     Y.log("renderer_table::initializer");
                     //Y.log("renderer_table::initializer: " + Y.dump(config));
-                    this.get("display_node").addClass("renderer_table");
 
                     var table_args = {
                         headers: config.headers,

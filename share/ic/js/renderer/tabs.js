@@ -42,7 +42,6 @@ YUI.add(
                 initializer: function (config) {
                     Y.log("renderer_tabs::initializer");
                     //Y.log("renderer_tabs::initializer: " + Y.dump(config));
-                    this.get("display_node").addClass("renderer_tabs");
 
                     this._tab_view = new Y.TabView ();
 
@@ -64,8 +63,8 @@ YUI.add(
                                 var content = new content_constructor (v.content);
                                 content.render();
 
-                                Y.log("content display node: " + content.get("display_node"));
-                                tab_add_args.panelNode = content.get("display_node");
+                                Y.log("content display node: " + content.get("boundingBox"));
+                                tab_add_args.panelNode = content.get("boundingBox");
                             }
                             else {
                                 tab_add_args.content = v.content;

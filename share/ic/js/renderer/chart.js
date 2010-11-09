@@ -42,8 +42,6 @@ YUI.add(
                 initializer: function (config) {
                     Y.log("renderer_chart::initializer");
                     Y.log("renderer_chart::initializer - config: " + Y.dump(config));
-                    this.get("display_node").addClass("renderer_chart");
-
                     var chart_args = {
                         dataProvider: config.data
                     };

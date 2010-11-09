@@ -29,11 +29,6 @@ YUI.add(
             {
                 NAME: "ic_renderer_base",
                 ATTRS: {
-                    // our container that can be grabbed from the outside to put us
-                    // where the caller wants
-                    display_node: {
-                        value: null
-                    }
                 }
             }
         );
@@ -49,11 +44,6 @@ YUI.add(
                     Y.log("renderer_base::initializer");
                     //Y.log("renderer_base::initializer: " + Y.dump(config));
                     this._caller = config._caller;
-
-                    this.set("display_node", Y.Node.create('<div class="renderer_base"></div>'));
-                    Y.log("renderer_base::initializer - display_node: " + this.get("display_node"));
-
-                    this.DEF_PARENT_NODE = this.get("display_node");
                 },
 
                 renderUI: function () {

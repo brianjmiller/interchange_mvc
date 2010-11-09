@@ -61,7 +61,7 @@ YUI.add(
                         var renderer = new _constructor ( _constructor_config );
                         renderer.render();
 
-                        this._content_node.setContent( renderer.get("display_node") );
+                        this._content_node.setContent( renderer.get("boundingBox") );
                     }
                     else {
                         Y.log("manage_window_content_function_action_basic::initializer: No renderer provided", "error");

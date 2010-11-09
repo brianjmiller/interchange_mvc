@@ -232,7 +232,7 @@ YUI.add(
                         var renderer = new _constructor ( _constructor_config );
                         renderer.render();
 
-                        this._action_cache[action].content_node.setContent( renderer.get("display_node") );
+                        this._action_cache[action].content_node.setContent( renderer.get("boundingBox") );
                     }
 
                     this.get("header_node").one("div.header_node_description").setContent(this._action_cache[action].description);

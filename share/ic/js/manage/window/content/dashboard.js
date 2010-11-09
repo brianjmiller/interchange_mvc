@@ -241,7 +241,7 @@ YUI.add(
                         renderer.render();
 
                         this.set("message", "Last Update: " + this._last_updated);
-                        this.get("contentBox").setContent(renderer.get("display_node"));
+                        this.get("contentBox").setContent(renderer.get("boundingBox"));
                     }
                 },
 

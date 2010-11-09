@@ -101,7 +101,7 @@ YUI.add(
                     }
 
                     this._overlay.set("headerContent", this._built_data_cache[id].header);
-                    this._overlay.set("bodyContent",   this._built_data_cache[id].body.get("display_node"));
+                    this._overlay.set("bodyContent",   this._built_data_cache[id].body.get("boundingBox"));
                 },
 
                 _buildData: function (id) {
@@ -138,7 +138,7 @@ YUI.add(
                                     //action_body.hide();
                                 }
 
-                                container.get("display_node").append( action_body.get("display_node") );
+                                container.get("contentBox").append( action_body.get("boundingBox") );
                             }
                         );
 

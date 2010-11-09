@@ -56,7 +56,6 @@ YUI.add(
                 initializer: function (config) {
                     Y.log("renderer_grid::initializer");
                     Y.log("renderer_grid::initializer: " + Y.dump(config));
-                    this.get("display_node").addClass("renderer_grid");
 
                     this._grid_node = Y.Node.create('<div class="yui3-g"></div>');
 
@@ -136,8 +135,8 @@ YUI.add(
                                                 var content = new content_constructor (config.content);
                                                 content.render();
 
-                                                Y.log("content display node: " + content.get("display_node"));
-                                                content_node.setContent(content.get("display_node"));
+                                                Y.log("content display node: " + content.get("boundingBox"));
+                                                content_node.setContent(content.get("boundingBox"));
                                             }
                                             else if (Y.Lang.isValue(config.content)) {
                                                 content_node.setContent(config.content);
