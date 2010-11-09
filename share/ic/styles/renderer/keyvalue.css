@@ -1,3 +1,7 @@
+div.yui3-ic_renderer_keyvalue-hidden {
+    visibility: hidden;
+}
+
 div.yui3-ic_renderer_keyvalue-content span.key_value_title {
     font-weight: bold;
 }

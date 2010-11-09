@@ -135,7 +135,7 @@ YUI.add(
                                 if (i !== 0) {
                                     // TODO: need to hide the others, but there is an issue
                                     //       with the use of display node that should be corrected
-                                    //action_body.hide();
+                                    action_body.hide();
                                 }
 
                                 container.get("contentBox").append( action_body.get("boundingBox") );

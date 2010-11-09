@@ -1,3 +1,7 @@
+div.yui3-ic_renderer_basic-hidden {
+    visibility: hidden;
+}
+
 div.yui3-ic_renderer_basic-content span.title {
     font-weight: bold;
 }

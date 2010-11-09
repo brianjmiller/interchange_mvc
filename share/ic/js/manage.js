@@ -389,7 +389,7 @@ YUI(
                     "ic-renderer-panel": {
                         path: "renderer/panel.js",
                         requires: [
-                            //"ic-renderer-basic-css",
+                            "ic-renderer-panel-css",
                             "ic-renderer-base",
                             "overlay"
                         ]
@@ -397,6 +397,7 @@ YUI(
                     "ic-renderer-grid": {
                         path: "renderer/grid.js",
                         requires: [
+                            "ic-renderer-grid-css",
                             "ic-renderer-base",
                             "ic-plugin-ignorable"
                         ]
@@ -404,12 +405,14 @@ YUI(
                     "ic-renderer-form": {
                         path: "renderer/form.js",
                         requires: [
+                            "ic-renderer-form-css",
                             "ic-renderer-base"
                         ]
                     },
                     "ic-renderer-tabs": {
                         path: "renderer/tabs.js",
                         requires: [
+                            "ic-renderer-tabs-css",
                             "ic-renderer-base",
                             "tabview"
                         ]
@@ -427,6 +430,7 @@ YUI(
                     "ic-renderer-table": {
                         path: "renderer/table.js",
                         requires: [
+                            "ic-renderer-table-css",
                             "ic-renderer-base",
                             "gallery-simple-datatable",
                             "gallery-simple-datatable-css"
@@ -437,7 +441,6 @@ YUI(
                         requires: [
                             "ic-renderer-treeble-css",
                             "ic-renderer-base",
-                            //"gallery-simple-datatable"
                             "gallery-treeble",
                             "gallery-paginator"
                         ]
@@ -461,7 +464,7 @@ YUI(
                     "ic-renderer-panel_loader": {
                         path: "renderer/panel_loader.js",
                         requires: [
-                            //"ic-renderer-panel_loader-css",
+                            "ic-renderer-panel_loader-css",
                             "ic-renderer-base"
                         ]
                     },
@@ -490,12 +493,33 @@ YUI(
                         path: "plugin/tablefilter.css",
                         type: "css"
                     },
+
                     "ic-renderer-basic-css": {
                         path: "renderer/basic.css",
                         type: "css"
                     },
+                    "ic-renderer-panel-css": {
+                        path: "renderer/panel.css",
+                        type: "css"
+                    },
+                    "ic-renderer-grid-css": {
+                        path: "renderer/grid.css",
+                        type: "css"
+                    },
+                    "ic-renderer-form-css": {
+                        path: "renderer/form.css",
+                        type: "css"
+                    },
+                    "ic-renderer-tabs-css": {
+                        path: "renderer/tabs.css",
+                        type: "css"
+                    },
                     "ic-renderer-tree-css": {
                         path: "renderer/tree.css",
+                        type: "css"
+                    },
+                    "ic-renderer-table-css": {
+                        path: "renderer/table.css",
                         type: "css"
                     },
                     "ic-renderer-treeble-css": {
@@ -508,6 +532,10 @@ YUI(
                     },
                     "ic-renderer-chart-css": {
                         path: "renderer/chart.css",
+                        type: "css"
+                    },
+                    "ic-renderer-panel_loader-css": {
+                        path: "renderer/panel_loader.css",
                         type: "css"
                     },
                     "ic-manage-window-css": {

@@ -1,3 +1,7 @@
+div.yui3-ic_renderer_tree-hidden {
+    visibility: hidden;
+}
+
 div.yui3-ic_renderer_tree-content ol.yui3-treeviewlite {
     margin: 0;
 }

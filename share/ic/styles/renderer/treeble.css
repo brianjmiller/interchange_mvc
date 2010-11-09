@@ -1,3 +1,7 @@
+div.yui3-ic_renderer_treeble-hidden {
+    visibility: hidden;
+}
+
 div.yui3-ic_renderer_treeble-content td.treeble-nub {
     border-right-color: transparent;
 }

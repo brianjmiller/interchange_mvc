@@ -1,3 +1,7 @@
+div.yui3-ic_renderer_chart-hidden {
+    visibility: hidden;
+}
+
 .yui3-tooltip {
     position: absolute;
 }
