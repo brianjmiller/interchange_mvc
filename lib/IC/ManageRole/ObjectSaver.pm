@@ -15,6 +15,8 @@ sub save {
     my $params = $self->_controller->parameters;
     $params->{_format} ||= 'json';
 
+    my $modified_by = $self->_controller->user->id;
+
     my $struct = $self->_response_struct;
 
     my $response_value = eval {
@@ -310,6 +312,91 @@ sub save {
                 $object = $self->object_from_pk_params($params);
                 $self->_model_object($object);
             }
+
+            unless (defined $params->{resource} and $params->{resource} ne '') {
+                IC::Exception->throw('Required argument missing: resource');
+            }
+
+            my $file_resource_obj = $self->_file_resource_class->new(
+                db => $object->db,
+                id => $params->{resource},
+            );
+            unless ($file_resource_obj->load( speculative => 1 )) {
+                IC::Exception->throw("Can't load file resource obj: $params->{resource}");
+            }
+
+            my $temporary_relative_path = File::Spec->catfile(
+                'uncontrolled',
+                '_manage_properties_upload',
+                $object->meta->table,
+                $object->serialize_pk,
+                $file_resource_obj->sub_path( '_manage_properties_upload' ),
+            );
+            my $temporary_path = File::Spec->catfile(
+                $self->_file_class->_htdocs_path,
+                $temporary_relative_path,
+            );
+
+            #
+            # TODO: how do we get this in the new MVC framework?
+            #
+            my $file_contents = $::Tag->value_extended(
+                {
+                    name          => 'uploaded_file',
+                    file_contents => 1,
+                },
+            );
+            unless (length $file_contents) {
+                IC::Exception->throw('File has no contents');
+            }
+
+            my $contents_io = IO::Scalar->new(\$file_contents);
+            my $mime_type   = File::MimeInfo::Magic::magic($contents_io);
+            unless ($mime_type ne '') {
+                IC::Exception->throw('Unable to determine MIME type from file contents');
+            }
+            my $extension   = File::MimeInfo::extensions($mime_type);
+            unless ($extension ne '') {
+                IC::Exception->throw("Unable to determine file extension from mimetype: $mime_type");
+            }
+
+            my $temporary_filename      = "tmp.$$.$extension";
+            my $temporary_file          = File::Spec->catfile($temporary_path, $temporary_filename);
+            my $temporary_relative_file = File::Spec->catfile($temporary_relative_path, $temporary_filename);
+
+            umask 0002;
+
+            File::Path::mkpath($temporary_path);
+
+            open my $OUTFILE, ">$temporary_file" or die "Can't open file for writing: $!\n";
+            binmode $OUTFILE;
+            print $OUTFILE $file_contents;
+            close $OUTFILE or die "Can't close written file: $!\n";
+
+            my $file = $file_resource_obj->get_file_for_object( $object );
+            if (defined $file) {
+                $file->modified_by( $modified_by );
+                $file->save;
+            }
+            else {
+                $file_resource_obj->add_files(
+                    {
+                        db          => $object->db,
+                        object_pk   => $object->serialize_pk,
+                        created_by  => $modified_by,
+                        modified_by => $modified_by,
+                    },
+                );
+                $file_resource_obj->save;
+
+                $file = $file_resource_obj->get_file_for_object( $object );
+            }
+            $file->store( $temporary_file, extension => $extension );
+
+            # TODO: improve response to re-display file information
+            return {
+                message => 'File uploaded successfully.'
+            };
         }
         elsif ($params->{_properties_mode} eq 'unlink') {
             my $object = $self->_model_object;

@@ -44,7 +44,7 @@ YUI.add(
 
                 initializer: function (config) {
                     Y.log("renderer_form::initializer");
-                    Y.log("renderer_form::initializer - config: " + Y.dump(config));
+                    //Y.log("renderer_form::initializer - config: " + Y.dump(config));
 
                     this._form = new Y.IC.Form (config.form_config);
                     Y.log("renderer_form::initializer - _form: " + this._form);

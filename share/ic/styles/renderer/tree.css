@@ -1,0 +1,12 @@
+div.yui3-ic_renderer_tree-content ol.yui3-treeviewlite {
+    margin: 0;
+}
+
+div.yui3-ic_renderer_tree-content ol.yui3-treeviewlite ul {
+    margin: 0;
+}
+
+div.yui3-ic_renderer_tree-content ol.yui3-treeviewlite li span,
+div.yui3-ic_renderer_tree-content ol.yui3-treeviewlite ul li span {
+    padding-left: 24px;
+}

@@ -20,15 +20,17 @@ YUI.add(
     function(Y) {
         Y.namespace("IC.Renderer");
         var _constructor_map = {
-            Basic:    Y.IC.RendererBasic.prototype.constructor,
-            Grid:     Y.IC.RendererGrid.prototype.constructor,
-            Form:     Y.IC.RendererForm.prototype.constructor,
-            Tabs:     Y.IC.RendererTabs.prototype.constructor,
-            Tree:     Y.IC.RendererTree.prototype.constructor,
-            Table:    Y.IC.RendererTable.prototype.constructor,
-            Treeble:  Y.IC.RendererTreeble.prototype.constructor,
-            KeyValue: Y.IC.RendererKeyValue.prototype.constructor,
-            Chart:    Y.IC.RendererChart.prototype.constructor
+            Basic:       Y.IC.RendererBasic.prototype.constructor,
+            Panel:       Y.IC.RendererPanel.prototype.constructor,
+            Grid:        Y.IC.RendererGrid.prototype.constructor,
+            Form:        Y.IC.RendererForm.prototype.constructor,
+            Tabs:        Y.IC.RendererTabs.prototype.constructor,
+            Tree:        Y.IC.RendererTree.prototype.constructor,
+            Table:       Y.IC.RendererTable.prototype.constructor,
+            Treeble:     Y.IC.RendererTreeble.prototype.constructor,
+            KeyValue:    Y.IC.RendererKeyValue.prototype.constructor,
+            Chart:       Y.IC.RendererChart.prototype.constructor,
+            PanelLoader: Y.IC.RendererPanelLoader.prototype.constructor
         };
 
         Y.IC.Renderer.getConstructor = function (key) {
@@ -49,7 +51,8 @@ YUI.add(
             "ic-renderer-table",
             "ic-renderer-treeble",
             "ic-renderer-keyvalue",
-            "ic-renderer-chart"
+            "ic-renderer-chart",
+            "ic-renderer-panel_loader"
         ]
     }
 );

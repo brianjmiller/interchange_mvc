@@ -232,70 +232,56 @@ YUI.add(
                     var columns = this._columns;
 
                     var _table_node = Y.Node.create('<table></table>');
-                    // NEXT - add a display panel and handle this click, etc.
-                    Y.delegate(
-                        "click",
-                        function (e) {
-                            Y.log("table row click");
-        //  The list item that matched the provided selector is the 
-        //  default 'this' object
-        Y.log("Default scope: " + this.get("id"));
- 
-        //  The list item that matched the provided selector is 
-        //  also available via the event's currentTarget property
-        //  in case the 'this' object is overridden in the subscription.
-        Y.log("Clicked list item: " + e.currentTarget.get("id"));
- 
-        //  The actual click target, which could be the matched item or a
-        //  descendant of it.
-        Y.log("Event target: " + e.target); 
- 
-        //  The delegation container is added to the event facade
-        Y.log("Delegation container: " + e.container.get("id"));  
-                        },
-                        _table_node,
-                        "tr"
+
+                    var _header_row_node = Y.Node.create('<tr></tr>');
+                    Y.each(
+                        columns,
+                        function (column, i, a) {
+                            _header_row_node.append('<th>' + (column.label || '&nbsp;') + '</th>');
+                        }
                     );
-
-                    var s = '';
-
-                    s += '<tr>';
-                    for (var i = 0; i < columns.length; i++) {
-                        s += '<th>';
-                        s += columns[i].label || '&nbsp;';
-                        s += '</th>';
-                    }
-                    s += '</tr>';
+                    _table_node.append(_header_row_node);
 
                     var hasFormatters = false;
 
                     var data = response.results;
                     //Y.log("renderer_treeble::renderTable - data: " + Y.dump(data));
-                    for (var i = 0; i < data.length; i++) {
-                        s += '<tr';
-                        if (i % 2) {
-                            s += ' class="odd"';
-                        }
-                        s += '>';
 
-                        for (var j = 0; j < columns.length; j++) {
-                            s += '<td>';
+                    Y.each(
+                        data,
+                        function (row, i, a) {
+                            var row_node = Y.Node.create('<tr id="' + row._unique + '-' + Y.guid() + '"></tr>');
 
-                            var key   = columns[j].key;
-                            var value = null;
-                            if (columns[j].formatter) {
-                                hasFormatters = true;
+                            if (i % 2) {
+                                row_node.addClass('odd');
                             }
-                            else {
-                                value = data[i][ key ];
+                            if (Y.Lang.isValue(row._add_class)) {
+                                Y.log("row _add_class: " + row._add_class);
+                                row_node.addClass(row._add_class);
                             }
-                            s += ! Y.Lang.isUndefined(value) && value !== null ? value : '&nbsp;';
-                            s += '</td>';
-                        }
-                        s += '</tr>';
-                    }
 
-                    _table_node.setContent(s);
+                            Y.each(
+                                columns,
+                                function (column, ii, ia) {
+                                    var col_node = Y.Node.create('<td></td>');
+
+                                    var value = null;
+                                    if (column.formatter) {
+                                        hasFormatters = true;
+                                    }
+                                    else {
+                                        value = row[ column.key ];
+                                    }
+
+                                    col_node.setContent( Y.Lang.isValue(value) ? value : '&nbsp;' );
+
+                                    row_node.append(col_node);
+                                }
+                            );
+
+                            _table_node.append(row_node);
+                        }
+                    );
 
                     this._container_node.setContent(_table_node);
 

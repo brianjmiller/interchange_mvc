@@ -59,11 +59,11 @@ YUI.add(
                         config,
                         function (row, i, a) {
                             Y.log("adding row: " + i);
-                            var row_node = Y.Node.create('<div class="yui3-u-1"></div>');
+                            var row_node      = Y.Node.create('<div class="yui3-u-1"></div>');
                             var row_grid_node = Y.Node.create('<div class="yui3-g"></div>');
                             row_node.append(row_grid_node);
 
-                            if (!Y.Lang.isValue(row.columns)) {
+                            if (! Y.Lang.isValue(row.columns)) {
                                 row.columns = row;
                             }
 

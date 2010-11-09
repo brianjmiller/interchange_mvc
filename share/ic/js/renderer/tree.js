@@ -41,17 +41,51 @@ YUI.add(
 
                 initializer: function (config) {
                     Y.log("renderer_tree::initializer");
-                    //Y.log("renderer_tree::initializer: " + Y.dump(config));
+                    Y.log("renderer_tree::initializer: " + Y.dump(config));
 
-                    // A treeview is just a plug on a list that we need to construct
-                    // ourselves
+                    // a treeview is just a plug on a list that we need to construct ourselves
+                    this._treeview = Y.Node.create('<ol id="' + Y.guid() + '"></ol>');
 
+                    Y.each(
+                        config.data,
+                        function (data_node, i, a) {
+                            this._treeview.append( this._datanodeToNodes(data_node) );
+                        },
+                        this
+                    );
+
+                    this._treeview.plug( Y.Plugin.TreeviewLite );
+                },
+
+                _datanodeToNodes: function (data_node) {
+                    var span_node = Y.Node.create('<span id="' + data_node.id + '-' + this._treeview.get("id") + '">' + data_node.label + '</span>');
+                    if (Y.Lang.isValue(data_node.add_class)) {
+                        span_node.addClass(data_node.add_class);
+                    }
+
+                    var li_node   = Y.Node.create('<li></li>');
+                    li_node.append(span_node);
+
+                    if (data_node.branches) {
+                        var ul_node = Y.Node.create('<ul></ul>');
+                        li_node.append(ul_node);
+
+                        Y.each(
+                            data_node.branches,
+                            function (branch, i, a) {
+                                ul_node.append( this._datanodeToNodes(branch) );
+                            },
+                            this
+                        );
+                    }
+
+                    return li_node;
                 },
 
                 renderUI: function () {
                     Y.log("renderer_tree::renderUI");
                     //Y.log("renderer_tree::renderUI - contentBox: " + this.get("contentBox"));
-                    this.get("contentBox").setContent("Tree");
+                    this.get("contentBox").setContent(this._treeview);
                 },
 
                 bindUI: function () {
@@ -70,7 +104,8 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
-            "ic-renderer-base"
+            "ic-renderer-base",
+            "gallery-treeviewlite"
         ]
     }
 );

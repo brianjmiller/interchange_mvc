@@ -1,5 +1,7 @@
 package IC::ManageRole::DetailView;
 
+use Image::Size;
+
 use Moose::Role;
 
 requires '_ui_meta_struct';
@@ -18,6 +20,8 @@ has '_action_log_configuration' => (
     is      => 'ro',
     default => sub { {} },
 );
+
+my $edit_action = 'Properties';
 
 around 'ui_meta_struct' => sub {
     #warn "IC::ManageRole::DetailView::ui_meta_struct";
@@ -43,6 +47,18 @@ around 'ui_meta_struct' => sub {
         $self->_model_object($object);
     }
 
+    my $can_edit    = $self->check_priv($edit_action);
+
+    my $_pk_settings;
+    if ($can_edit) {
+        for my $pk_field (@pk_fields) {
+            push @$_pk_settings, { 
+                field => '_pk_' . $pk_field->name, 
+                value => $object->$pk_field . '',
+            };
+        }
+    }
+
     my $struct = $self->_ui_meta_struct;
     $struct->{+__PACKAGE__} = 1;
 
@@ -54,21 +70,12 @@ around 'ui_meta_struct' => sub {
             object => $object,
         );
 
-        my $edit_action = 'Properties';
-        my $can_edit    = $self->check_priv($edit_action);
         my $field_form_defs;
-        my $_pk_settings;
         if ($can_edit) {
             $field_form_defs = $self->_fields_to_field_form_defs(
                 fields => \@fields,
                 object => $object,
             );
-            for my $pk_field (@pk_fields) {
-                push @$_pk_settings, { 
-                    field => '_pk_' . $pk_field->name, 
-                    value => $object->$pk_field . '',
-                };
-            }
         }
 
         my $summary_tab = {
@@ -180,137 +187,46 @@ around 'ui_meta_struct' => sub {
         };
         push @$tabs, $files_tab;
 
-        #
-        # TODO: switch to use check_priv
-        #
-        my $has_privs = 0;
-
-        #my $function_obj = IC::M::ManageFunction->new( code => $self->_func_prefix . 'Properties' );
-        #if ($function_obj->load( speculative => 1 )) {
-            #if ($self->_controller->role->check_right( 'execute', $function_obj )) {
-                #$has_privs = 1;
-            #}
-        #}
-
-        #
-        # TODO: file resources are designed to be adjacency lists so we really
-        #       ought to be doing recursion here to build our tree structure
-        #
-
         my $file_resource_objs = $object->get_file_resource_objs;
         if (@$file_resource_objs) {
-            $files_tab->{content_type} = 'Tree';
-            my $file_resource_refs = $files_tab->{content} = [];
-
-            my $count = 0;
-            for my $file_resource_obj (@$file_resource_objs) {
-                my $file_resource_ref = {
-                    order   => $count,
-                    label   => $file_resource_obj->lookup_value,
-                    content => {
-                        data => {
-                            id => $file_resource_obj->id,
-                        },
+            $files_tab->{content_type} = 'PanelLoader';
+            $files_tab->{content}      = {
+                loader_config => {
+                    content_type => 'Tree',
+                    content      => {
+                        data => [
+                            {
+                                id    => '_top',
+                                label => 'Resources',
+                            },
+                        ],
                     },
-                };
-                $count++;
+                },
+                panel_config  => {
+                    data => {},
+                },
+            };
 
-                my @property_codes = map { $_->code } @{ $file_resource_obj->attrs };
+            my $file_resource_refs = $files_tab->{content}->{loader_config}->{content}->{data}->[0]->{branches} = [];
+            my $panel_data         = $files_tab->{content}->{panel_config}->{data};
 
-                my $file = $file_resource_obj->get_file_for_object( $object );
-                my $properties;
-                if (defined $file) {
-                    $properties = $file->properties;
+            for my $file_resource_obj (@$file_resource_objs) {
+                my $config = $self->_file_resource_config(
+                    $file_resource_obj,
+                    $panel_data,
+                    $object,
+                    {
+                        pk_settings => $_pk_settings,
+                        can_edit    => $can_edit,
+                    },
+                );
+                next unless defined $config;
 
-                    if ($file->is_image) {
-                        unless (grep { $_ eq 'width' } @property_codes) {
-                            push @property_codes, 'width';
-                        }
-                        unless (grep { $_ eq 'height' } @property_codes) {
-                            push @property_codes, 'height';
-                        }
-                    }
-                }
-
-                my %property_values;
-                if (defined $properties) {
-                    %property_values = $file->property_values( \@property_codes, as_hash => 1 );
-                }
-
-                my $attr_refs;
-                for my $attr (@{ $file_resource_obj->attrs }) {
-                    $attr_refs->{ $attr->display_label } = '';
-                    if (exists $property_values{$attr->code} and defined $property_values{$attr->code}) {
-                        $attr_refs->{ $attr->display_label } = $property_values{$attr->code};
-                    }
-                }
-                if (defined $file and $file->is_image) {
-                    $attr_refs ||= {};
-                    unless (exists $attr_refs->{Width}) {
-                        $attr_refs->{'Auto: Width'} = $property_values{width};
-                    }
-                    unless (exists $attr_refs->{Height}) {
-                        $attr_refs->{'Auto: Height'} = $property_values{height};
-                    }
-                }
-                if (defined $attr_refs) {
-                    $file_resource_ref->{content}->{data}->{attrs} = $attr_refs;
-                }
-
-                my $link_text;
-                if (defined $file) {
-                    my $url_path = $file->url_path;
-                    if ($file->is_image) {
-                        #
-                        # images are just special
-                        #
-                        my ($use_width, $use_height, $use_alt) = $file->property_values( [ qw( width height alt ) ] );
-
-                        $file_resource_ref->{content}->{data}->{url} = qq{<img src="$url_path" width="$use_width" height="$use_height"};
-                        if (defined $use_alt) {
-                            $file_resource_ref->{content}->{data}->{url} .= qq{ alt="$use_alt"};
-                        }
-                        $file_resource_ref->{content}->{data}->{url} .= ' />';
-                    }
-                    else {
-                        $file_resource_ref->{content}->{data}->{url} = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
-                    }
-
-                    $link_text = 'Replace';
-
-                    if ($has_privs) {
-                        #$file_resource_ref->{content}->{data}->{drop_link} = $self->_object_manage_function_link(
-                            #'Properties',
-                            #$object,
-                            #label     => 'Drop',
-                            #addtl_cgi => {
-                                #_properties_mode => 'unlink',
-                                #resource         => $file_resource_ref->{id},
-                            #},
-                        #);
-                    }
-                }
-                else {
-                    $link_text = 'Upload';
-                }
-
-                if ($has_privs) {
-                    #$file_resource_ref->{content}->{data}->{link} = $self->_object_manage_function_link(
-                        #'Properties',
-                        #$object,
-                        #label     => $link_text,
-                        #addtl_cgi => {
-                            #_properties_mode => 'upload',
-                            #resource         => $file_resource_ref->{id},
-                        #},
-                    #);
-                }
-
-                push @$file_resource_refs, $file_resource_ref;
+                push @$file_resource_refs, $config;
             }
         }
         else {
-            #$files_tab->{content_type} = 'Tree';
+            $files_tab->{content_type} = 'Basic';
             $files_tab->{content}      = 'No file resources configured.';
         }
     }
@@ -399,6 +315,255 @@ around 'ui_meta_struct' => sub {
 };
 
 no Moose;
+
+sub _file_resource_config {
+    my $self = shift;
+    my $node = shift;
+    my $panel_data = shift;
+    my $object = shift;
+    my $args = shift;
+
+    my $ref = {
+        id        => $node->id,
+        label     => $node->lookup_value,
+        add_class => 'ic_renderer_panel_loader_control',
+    };
+
+    $panel_data->{ $node->id } = {
+        content_type => 'Grid',
+        content      => [],
+    };
+
+    my $grid_rows = $panel_data->{ $node->id }->{content};
+
+    my $file = $node->get_file_for_object( $object );
+
+    my @attribute_codes = map { $_->code } @{ $node->attrs };
+
+    my $properties;
+    if (defined $file) {
+        $properties = $file->properties;
+
+        if ($file->is_image) {
+            unless (grep { $_ eq 'width' } @attribute_codes) {
+                push @attribute_codes, 'width';
+            }
+            unless (grep { $_ eq 'height' } @attribute_codes) {
+                push @attribute_codes, 'height';
+            }
+        }
+    }
+
+    my %attribute_values;
+    if (defined $file) {
+        %attribute_values = map {
+            warn "file property: " . $_->id;
+            $_->file_resource_attr->code => { id => $_->id, value => $_->value };
+        } @{ $file->properties };
+    }
+
+    my $attr_refs = {};
+    for my $attr (@{ $node->attrs }) {
+        $attr_refs->{ $attr->code } = {
+            _attr_id      => $attr->id,
+            display_label => $attr->display_label,
+            value         => $attribute_values{ $attr->code }->{value},
+            id            => $attribute_values{ $attr->code }->{id},
+        };
+    }
+
+    if (defined $file and $file->is_image) {
+        if (! defined $attr_refs->{width}->{value} or ! defined $attr_refs->{height}->{value}) {
+            my %auto;
+            @auto{ qw( width height ) } = imgsize($file->local_path);
+
+            for my $key (keys %auto) {
+                unless (defined $attr_refs->{$key}->{value}) {
+                    $attr_refs->{$key}->{display_only_value} = '(Auto: ' . $auto{$key} . ')';
+                    $attr_refs->{$key}->{value}              = $auto{$key};
+                }
+            }
+        }
+    }
+
+    if (defined $attr_refs) {
+        my $attr_row = {
+            content_type => 'KeyValue',
+            content      => {
+                label => 'Attributes',
+                data  => [],
+            },
+        };
+        push @$grid_rows, $attr_row;
+
+        while (my ($code, $ref) = each %$attr_refs) {
+            my $kv = {
+                label => $ref->{display_label},
+                value => (defined $ref->{display_only_value} ? $ref->{display_only_value} : $ref->{value}),
+            };
+            if (defined $file and defined $args->{can_edit} and $args->{can_edit}) {
+                # TODO: restore ACL on file properties
+                $kv->{form} = {
+                    action         => $self->_controller->url(
+                        controller => 'manage',
+                        action     => 'run_action_method',
+                        parameters => {
+                            _class    => 'Files__Properties',
+                            _subclass => (defined $ref->{id} ? 'Properties' : 'Add'),
+                            _method   => 'save',
+                        },
+                        secure     => 1,
+                    ),
+                    fields_present => [ 'value' ],
+                    field_defs     => [
+                        {
+                            controls => [
+                                {   
+                                    name  => '_properties_mode',
+                                    value => 'basic',
+                                    type  => 'hidden',
+                                },
+                            ],
+                        },
+                        {
+                            controls => [
+                                {
+                                    name  => 'value',
+                                    value => $ref->{value},
+                                },
+                            ],
+                        }
+                    ],
+                };
+                if (defined $ref->{id}) {
+                    $kv->{form}->{pk} = [
+                        {
+                            field => '_pk_id',
+                            value => "$ref->{id}",
+                        },
+                    ];
+                }
+                else {
+                    push @{ $kv->{form}->{fields_present} }, qw( file_id file_resource_attr_id );
+                    push @{ $kv->{form}->{field_defs}->[0]->{controls} }, (
+                        {
+                            type  => 'hidden',
+                            name  => 'file_resource_attr_id',
+                            value => "$ref->{_attr_id}",
+                        },
+                        {
+                            type  => 'hidden',
+                            name  => 'file_id',
+                            value => $file->id . '',
+                        },
+                    );
+                }
+            }
+
+            push @{ $attr_row->{content}->{data} }, $kv;
+        }
+    }
+
+    if (defined $args->{can_edit} and $args->{can_edit}) {
+        my $form_row = {
+            content_type => 'Form',
+            content      => {
+                caption     => 'File handling',
+                form_config => {
+                    # TODO: improve the handling of this on the client side
+                    encodingType   => 2,
+
+                    action         => $self->_controller->url(
+                        controller => 'manage',
+                        action     => 'run_action_method',
+                        secure     => 1,
+                        parameters => {
+                            _class    => $self->_class,
+                            _subclass => $edit_action,
+                            _method   => 'save',
+                        },
+                    ),
+                    pk             => $args->{pk_settings},
+                    fields_present => [ 'uploaded_file' ],
+                    field_defs     => [
+                        {
+                            controls => [
+                                {
+                                    type  => 'hidden',
+                                    name  => '_properties_mode',
+                                    value => 'upload',
+                                },
+                                {
+                                    type  => 'hidden',
+                                    name  => 'resource',
+                                    value => $node->id . '',
+                                },
+                                {
+                                    label => 'File to Upload',
+                                    name  => 'uploaded_file',
+                                    type  => 'file',
+                                },
+                            ],
+                        },
+                    ],
+                    buttons => [
+                        {
+                            name  => 'submit',
+                            label => (defined $file ? 'Replace' : 'Upload'),
+                            type  => 'submit',
+                        },
+                    ],
+                },
+            },
+        };
+        push @$grid_rows, $form_row;
+    }
+
+    my $display_row = {
+        content_type => 'Basic',
+        content      => {
+            label => 'File',
+            data  => 'No file uploaded yet.',
+        },
+    };
+    push @$grid_rows, $display_row;
+
+    if (defined $file) {
+        my $content;
+
+        my $url_path = $file->url_path;
+        if ($file->is_image) {
+            #
+            # images are just special
+            #
+            my ($use_width, $use_height, $use_alt) = $file->property_values( [ qw( width height alt ) ] );
+
+            $content = qq{<img src="$url_path" width="$use_width" height="$use_height"};
+            if (defined $use_alt) {
+                $content .= qq{ alt="$use_alt"};
+            }
+            $content .= ' />';
+        }
+        else {
+            $content = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
+        }
+
+        $display_row->{content}->{data} = $content;
+
+        if (defined $args->{can_edit} and $args->{can_edit}) {
+            # TODO: restore ability to unlink file
+        }
+    }
+
+    for my $child (@{ $node->children }) {
+        my $config = $self->_file_resource_config($child, $panel_data, $object, %$args);
+        next unless defined $config;
+
+        push @{ $ref->{branches} }, $config;
+    }
+
+    return $ref;
+}
 
 1;
 

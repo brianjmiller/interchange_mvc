@@ -351,6 +351,7 @@ YUI(
                         path: "renderer.js",
                         requires: [
                             "ic-renderer-basic",
+                            "ic-renderer-panel",
                             "ic-renderer-grid",
                             "ic-renderer-form",
                             "ic-renderer-tabs",
@@ -358,7 +359,8 @@ YUI(
                             "ic-renderer-table",
                             "ic-renderer-treeble",
                             "ic-renderer-keyvalue",
-                            "ic-renderer-chart"
+                            "ic-renderer-chart",
+                            "ic-renderer-panel_loader"
                         ],
                     },
 
@@ -374,6 +376,14 @@ YUI(
                         requires: [
                             "ic-renderer-basic-css",
                             "ic-renderer-base"
+                        ]
+                    },
+                    "ic-renderer-panel": {
+                        path: "renderer/panel.js",
+                        requires: [
+                            //"ic-renderer-basic-css",
+                            "ic-renderer-base",
+                            "overlay"
                         ]
                     },
                     "ic-renderer-grid": {
@@ -398,7 +408,11 @@ YUI(
                     "ic-renderer-tree": {
                         path: "renderer/tree.js",
                         requires: [
-                            "ic-renderer-base"
+                            "ic-renderer-tree-css",
+                            "ic-renderer-base",
+                            "gallery-treeviewlite",
+                            "gallery-treeviewlite-core-css",
+                            "gallery-treeviewlite-skin-css"
                         ]
                     },
                     "ic-renderer-table": {
@@ -435,6 +449,13 @@ YUI(
                             "gallery-charts"
                         ]
                     },
+                    "ic-renderer-panel_loader": {
+                        path: "renderer/panel_loader.js",
+                        requires: [
+                            //"ic-renderer-panel_loader-css",
+                            "ic-renderer-base"
+                        ]
+                    },
 
                     // utility functions
                     "ic-util": {
@@ -458,6 +479,10 @@ YUI(
                     },
                     "ic-renderer-basic-css": {
                         path: "renderer/basic.css",
+                        type: "css"
+                    },
+                    "ic-renderer-tree-css": {
+                        path: "renderer/tree.css",
                         type: "css"
                     },
                     "ic-renderer-treeble-css": {
@@ -523,6 +548,7 @@ YUI(
             // and caused an odd error with Y.Lang when not included
             //
             gallerycss: {
+                // TODO: combine this
                 base: "http://yui.yahooapis.com/" + _yui_gallery_version + "/build/",
                 modules: {
                     "gallery-accordion-css": {
@@ -531,6 +557,14 @@ YUI(
                     },
                     "gallery-simple-datatable-css": {
                         path: "gallery-simple-datatable/assets/skins/gallery-simple-datatable.css",
+                        type: "css"
+                    },
+                    "gallery-treeviewlite-core-css": {
+                        path: "gallery-treeviewlite/assets/gallery-treeviewlite-core.css",
+                        type: "css"
+                    },
+                    "gallery-treeviewlite-skin-css": {
+                        path: "gallery-treeviewlite/assets/skins/sam/gallery-treeviewlite-skin.css",
                         type: "css"
                     }
                 }
