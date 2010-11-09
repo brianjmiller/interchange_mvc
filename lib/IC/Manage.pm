@@ -364,7 +364,7 @@ sub _fields_to_kv_defs {
             }
 
             # force stringification with a concat
-            $ref->{value} = $value . '';
+            $ref->{value} = defined($value) ? $value . '' : '';
         }
         else {
             # TODO: add ability to pull default value using an adjustment sub

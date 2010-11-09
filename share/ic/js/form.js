@@ -181,9 +181,15 @@ YUI.add(
             Form,
             Y.Form,
             {
+                _replacement_node: null,
+
+                _error_node: null,
+
                 initializer: function (config) {
                     Y.log("form::initializer");
 
+                    this._error_node = Y.Node.create("<div>Error Node: </div>");
+                    this._error_node.addClass("hidden");
 
                     this.on('success', Y.bind(this._onFormSuccess, this));
                     this.on('successful_response', Y.bind(this._onSuccessfulResponse, this));
@@ -192,6 +198,19 @@ YUI.add(
 
                     // subscribe to the custom event our form wrapper provides
                     this.on("ic_form_reset", Y.bind(this._onReset, this));
+
+                    if (Y.Lang.isValue(config.replacement_node)) {
+                        this._replacement_node = config.replacement_node;
+                    }
+                },
+
+                renderUI: function () {
+                    Y.log("form::renderUI");
+                    Y.log("form::renderUI - contentBox: " + this.get("contentBox")); 
+
+                    Form.superclass.renderUI.apply(this, arguments);
+
+                    this.get("contentBox").append(this._error_node);
                 },
 
                 reset: function (bool, e) {
@@ -258,50 +277,94 @@ YUI.add(
 
                     var form = this;
 
-                    // TODO: this could be optimized by setting up a local object to get a form
-                    //       field by name so that we would only loop the form fields once
-                    Y.each(
-                        response.value.fields,
-                        function (v, k, obj) {
-                            if (v.controls_to_update && v.controls_to_update.length) {
-                                Y.each(
-                                    v.controls_to_update,
-                                    function (control, i, a) {
-                                        Y.log("Updating control: " + control.name + " => " + control.value);
-                                        Y.each(
-                                            form.get("fields"),
-                                            function (field, fi, fa) {
-                                                if (field.get("name") === control.name) {
-                                                    Y.log("Setting field value: " + field.get("name"));
-                                                    field.set("value", control.value);
-                                                }
-                                            }
-                                        );
-                                    }
-                                );
+                    if (response.value.replace === 1) {
+                        if (this._replacement_node == null) {
+                            Y.log('form::_onSuccessfulResponse(replace): looking for ic_form_replaceable');
+                            this._replacement_node = this.get("boundingBox").ancestor(function(node){
+                                    Y.log('form::_onSuccessfulResponse(replace): in ancestor test with ' + Y.dump(node));
+                                    return node.hasClass("ic_form_replaceable");
+                                }
+                            );
+                            if (this._replacement_node == null) {
+                                Y.log('form::_onSuccessfulResponse: did not find it');
                             }
                         }
-                    );
+
+                        if (this._replacement_node != null) {
+                            Y.log('form::_onSuccessfulResponse(replace): replacing content');
+                            this._replacement_node.setContent(response.value.content);
+                        }
+                    }
+
+                    else if (response.value.destroy === 1) {
+                        if (this._replacement_node == null) {
+                            Y.log('form::_onSuccessfulResponse(destroy): looking for ic_form_replaceable');
+                            this._replacement_node = this.get("boundingBox").ancestor(function(node){
+                                    Y.log('form::_onSuccessfulResponse(destroy): in ancestor test with ' + Y.dump(node));
+                                    return node.hasClass("ic_form_destroyable");
+                                }
+                            );
+                            if (this._replacement_node == null) {
+                                Y.log('form::_onSuccessfulResponse(destroy): did not find it');
+                            }
+                        }
+
+                        if (this._replacement_node != null) {
+                            Y.log('form::_onSuccessfulResponse: replacing content');
+                            this._replacement_node.destroy();
+                        }
+                    }
+
+                    else {
+
+                        // TODO: this could be optimized by setting up a local object to get a form
+                        //       field by name so that we would only loop the form fields once
+                        Y.each(
+                               response.value ? response.value.fields : null,
+                               function (v, k, obj) {
+                                   if (v.controls_to_update && v.controls_to_update.length) {
+                                       Y.each(
+                                              v.controls_to_update,
+                                              function (control, i, a) {
+                                                  Y.log("Updating control: " + control.name + " => " + control.value);
+                                                  Y.each(
+                                                         form.get("fields"),
+                                                         function (field, fi, fa) {
+                                                             if (field.get("name") === control.name) {
+                                                                 Y.log("Setting field value: " + field.get("name"));
+                                                                 field.set("value", control.value);
+                                                             }
+                                                         }
+                                                         );
+                                              }
+                                              );
+                                   }
+                               }
+                        );
+                    }
+                    this._error_node.addClass("hidden");
                 },
 
                 _onFormFailure: function (e) {
                     Y.log('form::_onFormFailure');
+                    Y.log('form::_onFormFailure - e: ' + Y.dump(e));
 
-                    this.fire("failed_response", response);
+                    this.fire("failed_response", e);
                 },
 
                 _onFailedResponse: function (e) {
                     Y.log('form::_onFailedResponse');
-                    Y.log('form::_onFailedResponse - e: ' + e);
-
-                    // TODO: need to pull response out of e
+                    Y.log('form::_onFailedResponse - e: ' + Y.dump(e));
 
                     if (e.exception) {
                         Y.log("form::_onFormFailure: Exception: " + e.exception);
+                        this._error_node.setContent(e.exception);
                     }
                     else {
                         Y.log("form::_onFormFailure: Error: " + e);
+                        this._error_node.setContent(e);
                     }
+                    this._error_node.removeClass("hidden");
                 }
             }
         );

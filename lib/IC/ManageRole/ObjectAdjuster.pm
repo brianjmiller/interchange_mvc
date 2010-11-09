@@ -30,7 +30,7 @@ sub save {
         $db->begin_work;
 
         eval {
-            $self->_save_object_adjust($object, $params);
+            $result = $self->_save_object_adjust($object, $params);
         };
         my $e;
         if ($e = Exception::Class->caught) {

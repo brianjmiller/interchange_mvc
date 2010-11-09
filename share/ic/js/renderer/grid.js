@@ -42,6 +42,11 @@ YUI.add(
             "25":  "1-4"
         };
 
+        Y.log("Plugin.Ignorable: " + Y.IC.Plugin.Ignorable);
+        var _plugin_name_map = {
+            ignorable: Y.IC.Plugin.Ignorable
+        };
+
         Y.extend(
             RendererGrid,
             Y.IC.RendererBase,
@@ -169,7 +174,8 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
-            "ic-renderer-base"
+            "ic-renderer-base",
+            "ic-plugin-ignorable"
         ]
     }
 );

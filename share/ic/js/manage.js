@@ -274,6 +274,14 @@ YUI(
                     },
 
                     // plugins to add to various instances
+                    "ic-plugin-ignorable": {
+                        path: "plugin/ignorable.js",
+                        requires: [
+                            "ic-plugin-ignorable-css",
+                            "plugin",
+                            "gallery-button",
+                        ],
+                    },
                     "ic-plugin-editable": {
                         path: "plugin/editable.js",
                         requires: [
@@ -389,7 +397,8 @@ YUI(
                     "ic-renderer-grid": {
                         path: "renderer/grid.js",
                         requires: [
-                            "ic-renderer-base"
+                            "ic-renderer-base",
+                            "ic-plugin-ignorable"
                         ]
                     },
                     "ic-renderer-form": {
@@ -469,6 +478,10 @@ YUI(
                 root:      "ic/styles/",
                 base:      "/ic/styles/",
                 modules: {
+                    "ic-plugin-ignorable-css": {
+                        path: "plugin/ignorable.css",
+                        type: "css"
+                    },
                     "ic-plugin-editable-css": {
                         path: "plugin/editable.css",
                         type: "css"
