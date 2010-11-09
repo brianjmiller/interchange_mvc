@@ -170,7 +170,6 @@ sub property_values {
     @return{ @$properties } = @check_properties{ @$properties };
     
     return wantarray ? %return : \%return;
-
 }
 
 sub store {

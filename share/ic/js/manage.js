@@ -81,7 +81,6 @@ YUI(
                             "base-base",
                             "yui2-layout",
                             "yui2-resize",
-                            "ic-history-manager",
                             "ic-manage-window-menu",
                             "ic-manage-window-tools",
                             "ic-manage-window-content",
@@ -240,36 +239,6 @@ YUI(
                             "gallery-button",
                             "gallery-button-toggle",
                             "ic-renderer"
-                        ]
-                    },
-
-                    //
-                    // interface to the gallery-history-lite module - it makes sure 
-                    // history doesn't change until a history profile has been achieved, 
-                    // to eliminate "history fragmentation", implemented as a singleton
-                    //
-                    // history is about browser-level (app-level) state management
-                    //
-                    "ic-manage-history": {
-                        path: "manage/history.js",
-                        requires: [
-                            "gallery-history-lite",
-                            "base-base",
-                            "event-custom"
-                        ]
-                    },
-
-                    //
-                    // an abstract class that provides state management tools,
-                    // it is mixed in by widgets to extend them
-                    //
-                    // history_manager is about module-level state management
-                    //
-                    "ic-history-manager": {
-                        path: "manage/history_manager.js",
-                        requires: [
-                            "gallery-history-lite",
-                            "ic-manage-history"
                         ]
                     },
 

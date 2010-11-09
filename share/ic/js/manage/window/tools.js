@@ -215,7 +215,7 @@ YUI.add(
                 _loadProfile: function (profile, state) {
                     var new_state = Y.merge(profile, state);
 
-                    Y.IC.ManageHistory.setHistory(null, new_state);
+                    //Y.IC.ManageHistory.setHistory(null, new_state);
                 },
 
                 // TODO: need to build the quick access content based on config from server
@@ -255,16 +255,7 @@ YUI.add(
 
                             var values = form1_node.values.getValues();
 
-                            // build a complete history profile
-                            var profile = Y.IC.ManageHistory.profiles[Y.IC.ManageHistory.DTDV];
-                            var state = {
-                                _dtargs: 'Orders_orderList',
-                                _lsresults: '50', _lsstartIndex: '0', _lssort: 'order_date', 
-                                _lsdir: 'yui-dt-desc', _lssrec: values._pk_id,
-                                _dvargs: 'Orders_orderDetailView-_pk_id=' + values._pk_id,
-                                _dx_otst: '0'
-                            };
-                            this._loadProfile(profile, state);
+                            // TODO: restore handling
 
                             // TODO: I'm not sure we really want to clear the form
                             form1.reset();
@@ -312,14 +303,8 @@ YUI.add(
 
                             var values  = form2_node.values.getValues();
                             var args    = 'Products_productList-search_by[]=sku%3Dilike&sku=' + values.sku
-                            var profile = Y.IC.ManageHistory.profiles[ Y.IC.ManageHistory.DTMAX ];
 
-                            // TODO: still need to add the search_by[] and sku query params...
-                            var state = {
-                                _dtargs: args, _lsresults: '50', _lsstartIndex: '0', 
-                                _lssort: 'sku', _lsdir: 'yui-dt-desc'
-                            };
-                            this._loadProfile(profile, state);
+                            // TODO: restore handling
 
                             // TODO: I'm not sure we really want to clear the form
                             form2.reset();
@@ -340,7 +325,7 @@ YUI.add(
                         links.unshift(
                             {
                                 name: name,
-                                state: Y.HistoryLite.get()
+                                //state: Y.HistoryLite.get()
                             }
                         );
                         Y.StorageLite.setItem('ic_links', links, true);

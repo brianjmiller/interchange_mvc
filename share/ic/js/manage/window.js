@@ -26,9 +26,7 @@ YUI.add(
             Y.Base,
 
             // classes to mix in
-            [
-                Y.IC.HistoryManager,
-            ],
+            [],
 
             // overrides/additions
             {
@@ -157,7 +155,6 @@ YUI.add(
                         'center'
                     );
 
-                    // TODO:  handle deriving initial event configuration from history and passing config
                     //Y.log('window::_onOuterLayoutRender should fire *initial* show content event');
                     this.fire(
                         "manage_window:contentPaneShowContent",
@@ -280,7 +277,7 @@ YUI.add(
                     //
                     var unit_body_region = Y.one(unit.body).get("region");
 
-                    this._panes['content'] = new Y.IC.ManageWindowContent(
+                    this._panes['content'] = new Y.IC.ManageWindowContent (
                         {
                             header_to: Y.one(unit.header.childNodes[0]),
                             render_to: unit.body.childNodes[0],
@@ -389,7 +386,6 @@ YUI.add(
             "base-base",
             "yui2-layout",
             "yui2-resize",
-            "ic-history-manager",
             "ic-manage-window-menu",
             "ic-manage-window-tools",
             "ic-manage-window-content"
