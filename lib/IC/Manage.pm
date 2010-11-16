@@ -481,7 +481,6 @@ sub _fields_to_field_form_defs {
                 elsif ($field->type eq 'boolean') {
                     # use our own wrapper class because gallery-form's choicefield doesn't
                     # allow for pre-selected value
-                    #$control_ref->{type} = 'choice';
                     $control_ref->{type} = 'Radio';
                 }
                 elsif ($field->type eq 'date') {
@@ -514,13 +513,11 @@ sub _fields_to_field_form_defs {
             # hasn't been stringified too
             $control_ref->{value} = $control_ref->{value} . '';
 
-            $control_ref->{ic_override_type} = $control_ref->{type};
-
-            if (grep { $control_ref->{type} eq $_ } qw( choice Radio CheckboxField SelectField )) {
+            if (grep { $control_ref->{type} eq $_ } qw( Radio CheckboxField SelectField )) {
                 if (defined $adjust->{get_choices}) {
                     $control_ref->{choices} = $adjust->{get_choices}->($self, $args->{object});
                 }
-                elsif (grep { $_ eq $control_ref->{type} } qw( Radio choice ) and $field->type eq 'boolean') {
+                elsif (grep { $_ eq $control_ref->{type} } qw( Radio ) and $field->type eq 'boolean') {
                     # these choices take strings instead of 0/1 because gallery-form doesn't handle 0/1 well ATM
                     $control_ref->{choices} = [
                         {
