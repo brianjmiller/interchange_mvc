@@ -241,27 +241,27 @@ YUI.add(
                     var form1 = new Y.IC.Form(
                         {
                             method: 'get',
-                            fields: fields
+                            children: fields
                         }
                     );
                     form1.render(node);
 
-                    var form1_node = form1._formNode;
-                    form1_node.plug(Y.Form.Values);
-                    form1_node.one('button').on(
-                        'click',
-                        function (e) {
-                            e.stopPropagation();
+                    //var form1_node = form1._formNode;
+                    //form1_node.plug(Y.Form.Values);
+                    //form1_node.one('button').on(
+                        //'click',
+                        //function (e) {
+                            //e.stopPropagation();
 
-                            var values = form1_node.values.getValues();
+                            //var values = form1_node.values.getValues();
 
                             // TODO: restore handling
 
                             // TODO: I'm not sure we really want to clear the form
-                            form1.reset();
-                        },
-                        this
-                    );
+                            //form1.reset();
+                        //},
+                        //this
+                    //);
 
                     // add the goto product 
                     fields = [];
@@ -279,38 +279,38 @@ YUI.add(
                     var form2 = new Y.IC.Form(
                         {
                             method: 'get',
-                            fields: fields
+                            children: fields
                         }
                     );
                     form2.render(node);
 
-                    var form2_node = form2._formNode;
-                    form2_node.plug(Y.Form.Values);
-                    form2_node.one('button').on(
-                        'click',
-                        function (e) {
-                            e.stopPropagation();
+                    //var form2_node = form2._formNode;
+                    //form2_node.plug(Y.Form.Values);
+                    //form2_node.one('button').on(
+                        //'click',
+                        //function (e) {
+                            //e.stopPropagation();
 
-                            // TODO: finish refactoring this
-                            this.get("window").fire(
-                                "manage_window:contentPaneShowContent",
-                                'function',
-                                'Products',
-                                'List',
-                                ''
-                            );
-                            return;
+                            //// TODO: finish refactoring this
+                            //this.get("window").fire(
+                                //"manage_window:contentPaneShowContent",
+                                //'function',
+                                //'Products',
+                                //'List',
+                                //''
+                            //);
+                            //return;
 
-                            var values  = form2_node.values.getValues();
-                            var args    = 'Products_productList-search_by[]=sku%3Dilike&sku=' + values.sku
+                            //var values  = form2_node.values.getValues();
+                            //var args    = 'Products_productList-search_by[]=sku%3Dilike&sku=' + values.sku
 
                             // TODO: restore handling
 
                             // TODO: I'm not sure we really want to clear the form
-                            form2.reset();
-                        },
-                        this
-                    );
+                            //form2.reset();
+                        //},
+                        //this
+                    //);
                 },
 
                 _createPageLink: function (e) {

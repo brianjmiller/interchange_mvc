@@ -19,7 +19,7 @@ around 'ui_meta_struct' => sub {
     $struct->{+__PACKAGE__} = 1;
     $struct->{label} = 'Add';
     $struct->{renderer} = {
-        type   => 'Form',
+        type   => 'FormWrapper',
         config => {},
     };
 
@@ -40,7 +40,7 @@ around 'ui_meta_struct' => sub {
                     {   
                         name  => '_properties_mode',
                         value => 'basic',
-                        type  => 'hidden',
+                        type  => 'HiddenField',
                     },
                 ],
             },

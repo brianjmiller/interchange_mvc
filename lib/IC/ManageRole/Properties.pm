@@ -6,7 +6,7 @@ with 'IC::ManageRole::Base';
 with 'IC::ManageRole::ObjectSaver';
 
 has '+_prototype' => (
-    default => 'Form',
+    default => 'FormWrapper',
 );
 
 around 'ui_meta_struct' => sub {

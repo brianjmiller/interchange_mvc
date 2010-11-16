@@ -256,8 +256,8 @@ YUI.add(
                     //Y.log('manage_window::_initToolsPane');
                     var unit = layout.getUnitByPosition(unit_position);
 
-                    this._panes['tools'] = new Y.IC.ManageTools(
-                        {                            
+                    this._panes['tools'] = new Y.IC.ManageTools (
+                        {
                             window:      this,
                             layout:      layout,
                             layout_unit: unit,

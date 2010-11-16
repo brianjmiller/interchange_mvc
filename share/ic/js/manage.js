@@ -288,7 +288,7 @@ YUI(
                         requires: [
                             "pluginhost",
                             "gallery-form",
-                            "ic-formfield",
+                            "ic-formfield"
                         ]
                     },
 
@@ -331,9 +331,11 @@ YUI(
                             "ic-renderer-panel",
                             "ic-renderer-grid",
                             "ic-renderer-form",
+                            "ic-renderer-form_wrapper",
                             "ic-renderer-tabs",
                             "ic-renderer-tree",
                             "ic-renderer-table",
+                            "ic-renderer-data_table",
                             "ic-renderer-treeble",
                             "ic-renderer-keyvalue",
                             "ic-renderer-chart",
@@ -378,6 +380,14 @@ YUI(
                             "ic-renderer-base"
                         ]
                     },
+                    "ic-renderer-form_wrapper": {
+                        path: "renderer/form_wrapper.js",
+                        requires: [
+                            "ic-renderer-form_wrapper-css",
+                            "ic-renderer-base",
+                            "ic-form"
+                        ]
+                    },
                     "ic-renderer-tabs": {
                         path: "renderer/tabs.js",
                         requires: [
@@ -400,6 +410,13 @@ YUI(
                         path: "renderer/table.js",
                         requires: [
                             "ic-renderer-table-css",
+                            "ic-renderer-base"
+                        ]
+                    },
+                    "ic-renderer-data_table": {
+                        path: "renderer/data_table.js",
+                        requires: [
+                            "ic-renderer-data_table-css",
                             "ic-renderer-base",
                             "gallery-simple-datatable",
                             "gallery-simple-datatable-css"
@@ -479,6 +496,10 @@ YUI(
                         path: "renderer/form.css",
                         type: "css"
                     },
+                    "ic-renderer-form_warpper-css": {
+                        path: "renderer/form_warpper.css",
+                        type: "css"
+                    },
                     "ic-renderer-tabs-css": {
                         path: "renderer/tabs.css",
                         type: "css"
@@ -489,6 +510,10 @@ YUI(
                     },
                     "ic-renderer-table-css": {
                         path: "renderer/table.css",
+                        type: "css"
+                    },
+                    "ic-renderer-data_table-css": {
+                        path: "renderer/data_table.css",
                         type: "css"
                     },
                     "ic-renderer-treeble-css": {

@@ -23,7 +23,7 @@ YUI.add(
         Form = function (config) {
             Y.log("form constructor: " + Y.dump(config));
 
-            if (config && ! config.fields) {
+            if (config && ! config.children) {
                 //
                 // doing this here so that we can automatically set up fields
                 // attribute value by munging the config before the Base.init()
@@ -44,7 +44,7 @@ YUI.add(
                                     {
                                         name:  v.field,
                                         value: v.value,
-                                        type: 'hidden'
+                                        type: 'HiddenField'
                                     }
                                 );
                             }
@@ -70,7 +70,7 @@ YUI.add(
                                 {
                                     name: 'fields_present[]',
                                     value: v,
-                                    type: 'hidden'
+                                    type: 'HiddenField'
                                 }
                             );
                         }
@@ -99,34 +99,16 @@ YUI.add(
 
                                     var field_class;
 
-                                    // TODO: are both of these checks still needed?
-                                    if (control.ic_override_type) {
-                                        Y.log("form constructor - each: " + control.ic_override_type);
-                                        try {
-                                            field_class = Y.IC.FormField[control.ic_override_type] || Y[control.ic_override_type];
-                                            Y.log("form constructor - field_class: " + field_class);
+                                    try {
+                                        field_class = Y.IC.FormField[control.type] || Y[control.type];
+                                        Y.log("form constructor - field_class: " + field_class);
 
-                                            if (Y.Lang.isFunction(field_class)) {
-                                                control.type = field_class;
-                                            }
-                                        }
-                                        catch (err) {
-                                            Y.log("Can't test control for field_class (" + control.ic_override_type + "): " + err, "error");
+                                        if (Y.Lang.isFunction(field_class)) {
+                                            control.type = field_class;
                                         }
                                     }
-                                    else {
-                                        Y.log("form constructor - each: " + control.type);
-                                        try {
-                                            field_class = Y.IC[control.type] || Y[control.type];
-                                            Y.log("form constructor - field_class: " + field_class);
-
-                                            if (Y.Lang.isFunction(field_class)) {
-                                                control.type = field_class;
-                                            }
-                                        }
-                                        catch (err) {
-                                            Y.log("Can't determine field class from control (" + control + "): " + err, "error");
-                                        }
+                                    catch (err) {
+                                        Y.log("Can't test control for field_class (" + control.type + "): " + err, "error");
                                     }
 
                                     _controls.push(control);
@@ -144,13 +126,13 @@ YUI.add(
                     var _buttons  = [
                         {
                             name:  'submit',
-                            label: 'Submit',
-                            type:  'submit'
+                            value: 'Submit',
+                            type:  'SubmitButton'
                         },
                         {
                             name:  'reset',
-                            label: 'Reset',
-                            type:  'reset'
+                            value: 'Reset',
+                            type:  'ResetButton'
                         }
                     ];
                 }
@@ -163,7 +145,7 @@ YUI.add(
                 );
 
                 Y.log("form constructor - fields: " + Y.dump(fields));
-                config.fields = fields;
+                config.children = fields;
             }
 
             Form.superclass.constructor.apply(this, arguments);

@@ -44,7 +44,7 @@ around 'ui_meta_struct' => sub {
     $struct->{+__PACKAGE__} = 1;
     $struct->{label}        = $self->_object_adjust_simple_label;
 
-    if ($self->_prototype eq 'Form') {
+    if ($self->_prototype eq 'FormWrapper') {
         $struct->{_prototype_config} = {
             form_config => {
                 pk     => $_pk_settings,

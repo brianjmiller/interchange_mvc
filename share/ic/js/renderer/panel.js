@@ -119,9 +119,10 @@ YUI.add(
                         container.render();
 
                         var header_node = Y.Node.create('<div>' + id + '</div>');
+                        var count = 0;
                         Y.each(
                             data.actions,
-                            function (action, i, a) {
+                            function (action, k, obj) {
                                 Y.log("action: " + Y.dump(action));
                                 header_node.append(action.label);
 
@@ -132,13 +133,14 @@ YUI.add(
                                 var action_body = new action_constructor (action_constructor_config);
                                 action_body.render();
 
-                                if (i !== 0) {
-                                    // TODO: need to hide the others, but there is an issue
-                                    //       with the use of display node that should be corrected
+                                Y.log("count: " + count);
+                                if (count !== 0) {
                                     action_body.hide();
                                 }
 
                                 container.get("contentBox").append( action_body.get("boundingBox") );
+
+                                count++;
                             }
                         );
 

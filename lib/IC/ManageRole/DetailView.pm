@@ -166,9 +166,9 @@ around 'ui_meta_struct' => sub {
                             {
                                 controls => [
                                     {
+                                        type  => 'HiddenField',
                                         name  => '_properties_mode',
                                         value => 'basic',
-                                        type  => 'hidden',
                                     },
                                 ],
                             },
@@ -234,7 +234,7 @@ around 'ui_meta_struct' => sub {
     if (UNIVERSAL::can($object, 'log_actions')) {
         my $log_tab = {
             label        => 'Log',
-            content_type => 'Table',
+            content_type => 'DataTable',
             content      => {
                 caption => 'This happens to be the log.',
             },
@@ -419,9 +419,9 @@ sub _file_resource_config {
                         {
                             controls => [
                                 {   
+                                    type  => 'HiddenField',
                                     name  => '_properties_mode',
                                     value => 'basic',
-                                    type  => 'hidden',
                                 },
                             ],
                         },
@@ -466,7 +466,7 @@ sub _file_resource_config {
 
     if (defined $args->{can_edit} and $args->{can_edit}) {
         my $form_row = {
-            content_type => 'Form',
+            content_type => 'FormWrapper',
             content      => {
                 caption     => 'File handling',
                 form_config => {
@@ -489,7 +489,7 @@ sub _file_resource_config {
                         {
                             controls => [
                                 {
-                                    type  => 'hidden',
+                                    type  => 'HiddenField',
                                     name  => '_properties_mode',
                                     value => 'upload',
                                 },

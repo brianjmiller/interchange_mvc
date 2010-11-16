@@ -7,7 +7,7 @@ requires '_ui_meta_struct';
 with 'IC::ManageRole::Base';
 
 has '+_prototype' => (
-    default => 'Form',
+    default => 'FormWrapper',
 );
 
 has '_response_struct' => (

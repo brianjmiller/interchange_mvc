@@ -18,67 +18,65 @@
 YUI.add(
     "ic-renderer-form",
     function(Y) {
-        var RendererForm;
-
-        RendererForm = function (config) {
-            RendererForm.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererForm,
-            {
-                NAME: "ic_renderer_form",
-                ATTRS: {
-                    caption: {
-                        value: ''
-                    }
-                }
-            }
-        );
-
-        Y.extend(
-            RendererForm,
+        var Clazz = Y.namespace("IC").RendererForm = Y.Base.create(
+            "ic_renderer_form",
             Y.IC.RendererBase,
+            [],
             {
-                _form: null,
+                _form_node:      null,
+
+                _action:         null,
+                _content_config: null,
 
                 initializer: function (config) {
-                    Y.log("renderer_form::initializer");
-                    //Y.log("renderer_form::initializer - config: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
 
-                    this._form = new Y.IC.Form (config.form_config);
-                    Y.log("renderer_form::initializer - _form: " + this._form);
+                    this._action         = config.action;
+                    this._content_config = {
+                        content_type: config.content_type,
+                        content:      config.content,
+                    }
+                },
+
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._form_node      = null;
+                    this._action         = null;
+                    this._content_config = null;
                 },
 
                 renderUI: function () {
-                    Y.log("renderer_form::renderUI");
-                    Y.log("renderer_form::renderUI - contentBox: " + this.get("contentBox"));
+                    Y.log(Clazz.NAME + "::renderUI");
 
-                    if (this.get("caption") !== "") {
-                        this.get("contentBox").setContent('<span class="ic_renderer_form_caption">' + this.get("caption") + '</span>');
-                    }
+                    // TODO: replace with call to I/O
+                    this._form_node = Y.Node.create('<form action="' + this._action + '"></form>');
 
-                    this._form.render(this.get("contentBox"));
+                    this._content_config.content._caller = this;
+
+                    var content_constructor = Y.IC.Renderer.getConstructor(this._content_config.content_type);
+                    var content = new content_constructor (this._content_config.content);
+                    content.render(this._form_node);
+
+                    this.get("contentBox").setContent(this._form_node);
                 },
 
                 bindUI: function () {
-                    Y.log("renderer_form::bindUI");
-                },
+                    Y.log(Clazz.NAME + "::bindUI");
 
-                syncUI: function () {
-                    Y.log("renderer_form::syncUI");
-                },
+                    // TODO: need to bind to submit buttons
+                }
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererForm = RendererForm;
     },
     "@VERSION@",
     {
         requires: [
-            "ic-renderer-base",
-            "ic-form"
+            "ic-renderer-form-css",
+            "ic-renderer-base"
         ]
     }
 );

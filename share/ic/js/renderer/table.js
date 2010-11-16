@@ -18,68 +18,181 @@
 YUI.add(
     "ic-renderer-table",
     function(Y) {
-        var RendererTable;
-
-        RendererTable = function (config) {
-            RendererTable.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererTable,
-            {
-                NAME: "ic_renderer_table",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            RendererTable,
+        var Clazz = Y.namespace("IC").RendererTable = Y.Base.create(
+            "ic_renderer_table",
             Y.IC.RendererBase,
+            [],
             {
-                _table: null,
+                _headers: null,
+                _rows:    null,
+
+                _table_node: null,
 
                 initializer: function (config) {
-                    Y.log("renderer_table::initializer");
-                    //Y.log("renderer_table::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
 
-                    var table_args = {
-                        headers: config.headers,
-                        rows:    config.rows
-                    };
-                    if (Y.Lang.isValue(config.caption)) {
-                        table_args.caption = config.caption;
-                    }
+                    this._headers = config.headers;
+                    this._rows    = config.rows;
+                },
 
-                    this._table = new Y.SimpleDatatable (table_args);
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._table_node = null;
                 },
 
                 renderUI: function () {
-                    Y.log("renderer_table::renderUI");
-                    //Y.log("renderer_table::renderUI - contentBox: " + this.get("contentBox"));
+                    Y.log(Clazz.NAME + "::renderUI");
 
-                    this._table.render(this.get("contentBox"));
-                },
+                    var _caller = this;
 
-                bindUI: function () {
-                    Y.log("renderer_table::bindUI");
-                },
+                    this._table_node = Y.Node.create('<table></table>');
 
-                syncUI: function () {
-                    //Y.log("renderer_table::syncUI");
-                },
+                    var thead_node = Y.Node.create('<thead></thead>');
+                    this._table_node.append(thead_node);
+
+                    var thead_row_node = Y.Node.create('<tr></tr>');
+                    thead_node.append(thead_row_node);
+
+                    Y.each(
+                        this._headers,
+                        function (header, i, a) {
+                            this.append('<td>' + header.label + '</td>');
+                        },
+                        thead_row_node
+                    );
+
+                    var tbody_node = Y.Node.create('<tbody></tbody>');
+                    this._table_node.append(tbody_node);
+
+                    Y.each(
+                        this._rows,
+                        function (row, i, a) {
+                            Y.log(Clazz.NAME + "::renderUI - adding row: " + i);
+                            Y.log(Clazz.NAME + "::renderUI - row " + i + " config: " + Y.dump(row));
+                            var row_node = Y.Node.create('<tr></tr>');
+
+                            if (! Y.Lang.isValue(row.columns)) {
+                                row.columns = row;
+                            }
+
+                            if (Y.Lang.isValue(row.add_class)) {
+                                Y.log(Clazz.NAME + "::renderUI - row " + i + " add class '" + row.add_class + "'");
+                                row_node.addClass(row.add_class);
+                            }
+
+                            if (Y.Lang.isValue(row.plugins)) {
+                                Y.log(Clazz.NAME + "::renderUI - row " + i + " has plugins");
+                                Y.each(
+                                    row.plugins,
+                                    function (plugin_item) {
+                                        var plugin = _plugin_name_map[plugin_item];
+                                        Y.log(Clazz.NAME + "::renderUI - row " + i + " plugging " + plugin_item);
+                                        row_node.plug(plugin);
+                                   }
+                               );
+                            }
+
+                            Y.each(
+                                row.columns,
+                                function (col, ii, ia) {
+                                    Y.log(Clazz.NAME + "::renderUI - row " + i + " adding col " + ii);
+                                    Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " config: " + Y.dump(col));
+
+                                    var col_node = Y.Node.create('<td></td>');
+                                    if (Y.Lang.isValue(col.attributes)) {
+                                        Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " attributes: " + Y.dump(col.attributes));
+                                        //
+                                        // TODO: .setAttrs wouldn't work for colspan,
+                                        //       see http://yuilibrary.com/projects/yui3/ticket/2529526
+                                        //       when it has been fixed this should be able to leverage .setAttrs
+                                        //
+                                        //col_node.setAttrs(col.attributes);
+                                        Y.each(
+                                            col.attributes,
+                                            function (val, attr, o) {
+                                                this.setAttribute(attr, val);
+                                            },
+                                            col_node
+                                        );
+                                    }
+
+                                    // force single content structure into array so that we can
+                                    // always handle as an array to allow for multiple content
+                                    // items in a single table unit
+                                    var content_items = [];
+
+                                    if (Y.Lang.isValue(col.has_multi_content) && col.has_multi_content) {
+                                        content_items = col.content;
+                                    }
+                                    else if (Y.Lang.isValue(col.content_type)) {
+                                        content_items.push(
+                                            {
+                                                content_type: col.content_type,
+                                                content:      col.content
+                                            }
+                                        );
+                                    }
+                                    else {
+                                        content_items.push(
+                                            col.content
+                                        );
+                                    }
+
+                                    Y.each(
+                                        content_items,
+                                        function (config, iii, iia) {
+                                            Y.log(Clazz.NAME + "::renderUI - row " + i + ", col " + ii + ", content_item " + iii + ": " + Y.dump(config));
+                                            var clazz = i + "-" + ii + "-" + iii;
+                                            var content_node = Y.Node.create('<div class="' + clazz + '"></div>');
+
+                                            if (Y.Lang.isValue(config.content_type)) {
+                                                Y.log(Clazz.NAME + "::renderUI - row " + i + ", col " + ii + ", content_item " + iii + " - content_type: " + Y.dump(config.content_type));
+                                                var content_constructor = Y.IC.Renderer.getConstructor(config.content_type);
+
+                                                config.content._caller = _caller;
+
+                                                var content = new content_constructor (config.content);
+                                                content.render();
+
+                                                Y.log("content display node: " + content.get("boundingBox"));
+                                                content_node.setContent( content.get("boundingBox") );
+                                            }
+                                            else if (Y.Lang.isValue(config.content)) {
+                                                content_node.setContent(config.content);
+                                            }
+                                            else {
+                                                content_node.setContent(config);
+                                            }
+
+                                            this.append(content_node);
+                                        },
+                                        col_node
+                                    );
+
+                                    this.append(col_node);
+                                },
+                                row_node
+                            );
+
+                            this.append(row_node);
+                        },
+                        tbody_node
+                    );
+
+                    this.get("contentBox").setContent(this._table_node);
+                }
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererTable = RendererTable;
     },
     "@VERSION@",
     {
         requires: [
             "ic-renderer-base",
-            "gallery-simple-datatable",
-            "gallery-simple-datatable-css"
+            "ic-plugin-ignorable"
         ]
     }
 );
