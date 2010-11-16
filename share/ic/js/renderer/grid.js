@@ -18,21 +18,6 @@
 YUI.add(
     "ic-renderer-grid",
     function(Y) {
-        var RendererGrid;
-
-        RendererGrid = function (config) {
-            RendererGrid.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererGrid,
-            {
-                NAME: "ic_renderer_grid",
-                ATTRS: {
-                }
-            }
-        );
-
         var _percent_to_unit_map = {
             "100": "1",
             "75":  "3-4",
@@ -42,20 +27,20 @@ YUI.add(
             "25":  "1-4"
         };
 
-        Y.log("Plugin.Ignorable: " + Y.IC.Plugin.Ignorable);
         var _plugin_name_map = {
             ignorable: Y.IC.Plugin.Ignorable
         };
 
-        Y.extend(
-            RendererGrid,
+        var Clazz = Y.namespace("IC").RendererTable = Y.Base.create(
+            "ic_renderer_grid",
             Y.IC.RendererBase,
+            [],
             {
                 _grid_node: null,
 
                 initializer: function (config) {
                     Y.log("renderer_grid::initializer");
-                    Y.log("renderer_grid::initializer: " + Y.dump(config));
+                    //Y.log("renderer_grid::initializer: " + Y.dump(config));
 
                     this._grid_node = Y.Node.create('<div class="yui3-g"></div>');
 
@@ -164,15 +149,16 @@ YUI.add(
                     //Y.log("renderer_grid::renderUI - contentBox: " + this.get("contentBox"));
                     this.get("contentBox").setContent(this._grid_node);
                 }
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererGrid = RendererGrid;
     },
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-grid-css",
             "ic-renderer-base",
             "ic-plugin-ignorable"
         ]
