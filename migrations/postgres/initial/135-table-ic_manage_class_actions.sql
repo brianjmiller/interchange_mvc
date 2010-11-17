@@ -71,6 +71,9 @@ Rights	Add	Add Right	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814
 Rights	DetailView	Right Detail View	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
 Rights	Drop	Drop Right	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
 Rights	Properties	Edit Right Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Files__Properties	Properties	Edit File Properties Properties	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
+Files__Properties	Drop	Drop File Property	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
+Files__Properties	Add	Add File Property	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
 \.
 
 --ROLLBACK;

@@ -38,6 +38,7 @@ schema	schema	3
 schema	schema	4
 schema	schema	5
 schema	schema	6
+schema	schema	7
 \.
 
 --ROLLBACK;
