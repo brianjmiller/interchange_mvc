@@ -35,11 +35,86 @@ YUI.add(
             PanelLoader: Y.IC.RendererPanelLoader.prototype.constructor
         };
 
+        var _control_template_map = {
+            TextField:     '<input></input>',
+            TextareaField: '<textarea></textarea>',
+            SelectField:   '<select></select>',
+            Button:        '<button></button>'
+        };
+
         Y.IC.Renderer.getConstructor = function (key) {
-            Y.log('Y.IC.Renderer::getConstructor');
-            Y.log('Y.IC.Renderer::getConstructor - key: ' + key);
+            Y.log("Y.IC.Renderer::getConstructor");
+            Y.log("Y.IC.Renderer::getConstructor - key: " + key);
 
             return _constructor_map[key];
+        };
+
+        Y.IC.Renderer.buildContent = function (config, caller) {
+            Y.log("Y.IC.Renderer::buildContent");
+            Y.log("Y.IC.Renderer::buildContent - config: " + Y.dump(config));
+            var content_node = Y.Node.create('<div class="ic-renderer-content_node"></div>');
+
+            if (Y.Lang.isString(config)) {
+                // the simple case, what they passed is our content
+                content_node.setContent(config);
+            }
+            else if (Y.Lang.isArray(config)) {
+                Y.each(
+                    config,
+                    function (v, i, a) {
+                        this.append( Y.IC.Renderer.buildContent(v, caller) );
+                    },
+                    content_node
+                );
+            }
+            else {
+                if (Y.Lang.isValue(config.type)) {
+                    Y.log("Y.IC.Renderer::buildContent - content_type: " + config.type);
+                    var content_constructor = Y.IC.Renderer.getConstructor(config.type);
+                    config.config._caller = caller;
+
+                    var content = new content_constructor (config.config);
+                    content.render();
+
+                    content_node.setContent( content.get("boundingBox") );
+                }
+                else if (Y.Lang.isArray(config.controls)) {
+                    Y.log("Y.IC.Renderer::buildContent - controls: " + Y.dump(config.controls));
+                    Y.each(
+                        config.controls,
+                        function (control, i, a) {
+                            var control_node = Y.Node.create(_control_template_map[control.type]);
+
+                            if (Y.Lang.isValue(control.name)) {
+                                control_node.setAttribute("name", control.name);
+                            }
+
+                            if (Y.Lang.isValue(control.value)) {
+                                if (control.type === "TextareaField" || control.type === "Button") {
+                                    control_node.setContent(control.value);
+                                }
+                                else {
+                                    control_node.setAttribute("value", control.value);
+                                }
+                            }
+                            if (Y.Lang.isArray(control.choices)) {
+                                if (control.type === "SelectField") {
+                                    Y.each(
+                                        control.choices,
+                                        function (option, ii, ia) {
+                                            control_node.append('<option value="' + option.value + '"' + (option.selected ? ' selected="selected"' : '') + '>' + (Y.Lang.isValue(option.label) ? option.label : option.value) + '</option>');
+                                        }
+                                    );
+                                }
+                            }
+
+                            content_node.append(control_node);
+                        }
+                    );
+                }
+            }
+
+            return content_node;
         };
     },
     "@VERSION@",

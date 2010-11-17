@@ -32,10 +32,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::initializer");
 
                     this._action         = config.action;
-                    this._content_config = {
-                        content_type: config.content_type,
-                        content:      config.content,
-                    }
+                    this._content_config = config.content;
                 },
 
                 destructor: function () {
@@ -48,15 +45,13 @@ YUI.add(
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
+                    Y.log(Clazz.NAME + "::renderUI - _content_config: " + Y.dump(this._content_config));
 
                     // TODO: replace with call to I/O
                     this._form_node = Y.Node.create('<form action="' + this._action + '"></form>');
 
-                    this._content_config.content._caller = this;
-
-                    var content_constructor = Y.IC.Renderer.getConstructor(this._content_config.content_type);
-                    var content = new content_constructor (this._content_config.content);
-                    content.render(this._form_node);
+                    var content_node = Y.IC.Renderer.buildContent(this._content_config, this);
+                    this._form_node.setContent(content_node);
 
                     this.get("contentBox").setContent(this._form_node);
                 },

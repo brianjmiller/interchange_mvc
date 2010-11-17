@@ -31,53 +31,72 @@ YUI.add(
             ignorable: Y.IC.Plugin.Ignorable
         };
 
-        var Clazz = Y.namespace("IC").RendererTable = Y.Base.create(
+        var Clazz = Y.namespace("IC").RendererGrid = Y.Base.create(
             "ic_renderer_grid",
             Y.IC.RendererBase,
             [],
             {
+                _unit_config: null,
+
                 _grid_node: null,
 
                 initializer: function (config) {
-                    Y.log("renderer_grid::initializer");
-                    //Y.log("renderer_grid::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
+                    this._unit_config = config;
+                },
+
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._unit_config = null;
+                    this._grid_node   = null;
+                },
+
+                renderUI: function () {
+                    Y.log(Clazz.NAME + "::renderUI");
                     this._grid_node = Y.Node.create('<div class="yui3-g"></div>');
 
+                    var _caller = this;
+
                     Y.each(
-                        config,
+                        this._unit_config,
                         function (row, i, a) {
-                            Y.log("adding row: " + i);
-                            var row_node      = Y.Node.create('<div class="yui3-u-1"></div>');
+                            Y.log(Clazz.NAME + "::renderUI - adding row: " + i);
+
+                            // each row is a unit itself
+                            var row_unit_node = Y.Node.create('<div class="yui3-u-1"></div>');
+
+                            // with a grid inside of it
                             var row_grid_node = Y.Node.create('<div class="yui3-g"></div>');
-                            row_node.append(row_grid_node);
+                            row_unit_node.append(row_grid_node);
+
+                            if (Y.Lang.isValue(row.add_class)) {
+                                Y.log(Clazz.NAME + "::renderUI - row " + i + " adds class '" + row.add_class + "'");
+                                row_unit_node.addClass(row.add_class);
+                            }
+
+                            if (Y.Lang.isValue(row.plugins)) {
+                                Y.each(
+                                    row.plugins,
+                                    function (plugin_item, ii, ia) {
+                                        Y.log(Clazz.NAME + "::renderUI - row " + i + " plugging " + plugin_item);
+                                        var plugin = _plugin_name_map[plugin_item];
+                                        row_unit_node.plug(plugin);
+                                   }
+                                );
+                            }
 
                             if (! Y.Lang.isValue(row.columns)) {
                                 row.columns = row;
                             }
 
-                            if (Y.Lang.isValue(row.add_class)) {
-                                Y.log('row is class "' + row.add_class + '"');
-                                row_node.addClass(row.add_class);
-                            }
-
-                            if (Y.Lang.isValue(row.plugins)) {
-                                Y.log(RendererGrid.NAME + '::initializer: has plugins');
-                                Y.each(
-                                    row.plugins,
-                                    function (plugin_item, ii, ia) {
-                                        var plugin = _plugin_name_map[plugin_item];
-                                        Y.log('setting up ' + plugin_item + ": " + plugin);
-                                        row_node.plug(plugin);
-                                   }
-                               );
-                            }
-
-                            Y.log('row has ' + row.columns.length + ' column(s)');
+                            Y.log(Clazz.NAME + "::renderUI - row " + i + " has " + row.columns.length + " column(s)");
                             Y.each(
                                 row.columns,
                                 function (col, ii, ia) {
-                                    Y.log("adding col " + ii + ": " + Y.dump(col));
+                                    Y.log(Clazz.NAME + "::renderUI - row " + i + ", col " + ii + ": " + Y.dump(col));
                                     var unit_class = "yui3-u-";
                                     if (Y.Lang.isValue(col.percent)) {
                                         unit_class += _percent_to_unit_map[col.percent];
@@ -88,65 +107,20 @@ YUI.add(
 
                                     var unit_node = Y.Node.create('<div class="' + unit_class + '"></div>');
 
-                                    // force single content structure into array so that we can
-                                    // always handle as an array to allow for multiple content
-                                    // items in a single grid unit
-                                    var content_items = [];
+                                    var content_node = Y.IC.Renderer.buildContent( col.content, _caller );
 
-                                    if (Y.Lang.isValue(col.has_multi_content) && col.has_multi_content) {
-                                        content_items = col.content;
-                                    }
-                                    else {
-                                        content_items.push(
-                                            {
-                                                content_type: col.content_type,
-                                                content:      col.content
-                                            }
-                                        );
-                                    }
-
-                                    Y.each(
-                                        content_items,
-                                        function (config, iii, iia) {
-                                            Y.log("content_items loop - " + iii + ": " + Y.dump(config));
-                                            var clazz = i + "-" + ii + "-" + iii;
-                                            var content_node = Y.Node.create('<div class="' + clazz + '"></div>');
-
-                                            if (config.content_type) {
-                                                Y.log("content_type: " + config.content_type);
-                                                var content_constructor = Y.IC.Renderer.getConstructor(config.content_type);
-                                                config.content._caller = this;
-
-                                                var content = new content_constructor (config.content);
-                                                content.render();
-
-                                                Y.log("content display node: " + content.get("boundingBox"));
-                                                content_node.setContent(content.get("boundingBox"));
-                                            }
-                                            else if (Y.Lang.isValue(config.content)) {
-                                                content_node.setContent(config.content);
-                                            }
-
-                                            //unit_node.append('<br />');
-                                            unit_node.append(content_node);
-                                        },
-                                        this
-                                    );
+                                    unit_node.setContent(content_node);
 
                                     this.append(unit_node);
                                 },
                                 row_grid_node
                             );
 
-                            this.append(row_node);
+                            this.append(row_unit_node);
                         },
                         this._grid_node
                     );
-                },
 
-                renderUI: function () {
-                    //Y.log("renderer_grid::renderUI");
-                    //Y.log("renderer_grid::renderUI - contentBox: " + this.get("contentBox"));
                     this.get("contentBox").setContent(this._grid_node);
                 }
             },

@@ -18,88 +18,64 @@
 YUI.add(
     "ic-renderer-tabs",
     function(Y) {
-        var RendererTabs;
-
-        RendererTabs = function (config) {
-            RendererTabs.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererTabs,
-            {
-                NAME: "ic_renderer_tabs",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            RendererTabs,
+        var Clazz = Y.namespace("IC").RendererTabs = Y.Base.create(
+            "ic_renderer_tabs",
             Y.IC.RendererBase,
+            [],
             {
+                _config:   null,
                 _tab_view: null,
 
                 initializer: function (config) {
-                    Y.log("renderer_tabs::initializer");
-                    //Y.log("renderer_tabs::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
+
+                    this._config = config.data;
+                },
+
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._config   = null;
+                    this._tab_view = null;
+                },
+
+                renderUI: function () {
+                    Y.log(Clazz.NAME + "::renderUI");
 
                     this._tab_view = new Y.TabView ();
 
+                    var _caller = this;
+
                     Y.each(
-                        config.tabs,
+                        this._config,
                         function (v, i, a) {
-                            Y.log("adding tab: " + i);
+                            Y.log(Clazz.NAME + "::renderUI - adding tab: " + i);
 
-                            // build content based on the content_type of the tab meta
                             var tab_add_args = {
-                                label:   v.label,
-                                index:   i,
+                                label:     v.label,
+                                index:     i,
+                                panelNode: Y.Node.create("<div></div>")
                             };
-                            if (v.content_type) {
-                                Y.log("content_type: " + v.content_type);
-                                var content_constructor = Y.IC.Renderer.getConstructor(v.content_type);
-                                v.content._caller = this;
+                            tab_add_args.panelNode.setContent( Y.IC.Renderer.buildContent(v.content, _caller) );
 
-                                var content = new content_constructor (v.content);
-                                content.render();
-
-                                Y.log("content display node: " + content.get("boundingBox"));
-                                tab_add_args.panelNode = content.get("boundingBox");
-                            }
-                            else {
-                                tab_add_args.content = v.content;
-                            }
-
-                            Y.dump("tab_add_args: " + Y.dump(tab_add_args));
                             this.add(tab_add_args, i);
                         },
                         this._tab_view
                     );
-                },
 
-                renderUI: function () {
-                    Y.log("renderer_tabs::renderUI");
-                    Y.log("renderer_tabs::renderUI - contentBox: " + this.get("contentBox"));
-
-                    this._tab_view.render(this.get("contentBox"));
-                },
-
-                bindUI: function () {
-                    Y.log("renderer_tabs::bindUI");
-                },
-
-                syncUI: function () {
-                    Y.log("renderer_tabs::syncUI");
-                },
+                    this._tab_view.render( this.get("contentBox") );
+                }
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererTabs = RendererTabs;
     },
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-tabs-css",
             "ic-renderer-base",
             "tabview"
         ]

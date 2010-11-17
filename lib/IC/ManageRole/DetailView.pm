@@ -62,7 +62,7 @@ around 'ui_meta_struct' => sub {
     my $struct = $self->_ui_meta_struct;
     $struct->{+__PACKAGE__} = 1;
 
-    my $tabs = $struct->{_prototype_config}->{tabs} = [];
+    my $tabs = $struct->{_prototype_config}->{data} = [];
 
     if ($self->_use_default_summary_tab) {
         my $field_kv_defs = $self->_fields_to_kv_defs(
@@ -80,7 +80,9 @@ around 'ui_meta_struct' => sub {
 
         my $summary_tab = {
             label        => 'Summary',
-            content_type => 'Grid',
+            content      => {
+                type => 'Grid',
+            },
         };
         push @$tabs, $summary_tab;
 
@@ -114,24 +116,24 @@ around 'ui_meta_struct' => sub {
             {
                 row     => 0,
                 col     => 0,
-                percent => 50,
+                percent => 100,
                 type    => 'KeyValue',
                 label   => 'Primary Key Fields and Values',
                 # TODO: should these just be names?
                 fields  => \@pk_fields,
             },
             {
-                row     => 0,
-                col     => 1,
-                percent => 50,
+                row     => 1,
+                col     => 0,
+                percent => 100,
                 type    => 'KeyValue',
                 label   => 'Auto Fields and Values',
                 fields  => \@auto_fields,
             },
             {
-                row     => 1,
+                row     => 2,
                 col     => 0,
-                percent => 50,
+                percent => 100,
                 type    => 'KeyValue',
                 label   => 'Other Fields and Values',
                 fields  => \@other_fields,
@@ -139,15 +141,18 @@ around 'ui_meta_struct' => sub {
         ];
 
         for my $ref (@$content_to_build) {
-            my $grid_ref = $summary_tab->{content}->[$ref->{row}]->[$ref->{col}] = {
+            my $grid_ref = $summary_tab->{content}->{config}->[$ref->{row}]->[$ref->{col}] = {
                 percent      => $ref->{percent},
-                content_type => $ref->{type},
                 content      => {
-                    label   => $ref->{label},
+                    type    => $ref->{type},
+                    config  => {
+                        label   => $ref->{label},
+                    },
                 },
             };
             for my $field (@{ $ref->{fields} }) {
                 my $data_ref = $field_kv_defs->{$field->name};
+
                 if (defined $field_form_defs->{$field->name}) {
                     $data_ref->{form} = {
                         action         => $self->_controller->url(
@@ -176,24 +181,25 @@ around 'ui_meta_struct' => sub {
                         ],
                     };
                 }
-                push @{ $grid_ref->{content}->{data} }, $data_ref;
+                push @{ $grid_ref->{content}->{config}->{data} }, $data_ref;
             }
         }
     }
 
     if (UNIVERSAL::can($object, 'get_file')) {
         my $files_tab = {
-            label        => 'Files',
+            label   => 'Files',
+            content => {},
         };
         push @$tabs, $files_tab;
 
         my $file_resource_objs = $object->get_file_resource_objs;
         if (@$file_resource_objs) {
-            $files_tab->{content_type} = 'PanelLoader';
-            $files_tab->{content}      = {
+            $files_tab->{content}->{type}   = 'PanelLoader';
+            $files_tab->{content}->{config} = {
                 loader_config => {
-                    content_type => 'Tree',
-                    content      => {
+                    type   => 'Tree',
+                    config => {
                         data => [
                             {
                                 id    => '_top',
@@ -207,8 +213,8 @@ around 'ui_meta_struct' => sub {
                 },
             };
 
-            my $file_resource_refs = $files_tab->{content}->{loader_config}->{content}->{data}->[0]->{branches} = [];
-            my $panel_data         = $files_tab->{content}->{panel_config}->{data};
+            my $file_resource_refs = $files_tab->{content}->{config}->{loader_config}->{config}->{data}->[0]->{branches} = [];
+            my $panel_data         = $files_tab->{content}->{config}->{panel_config}->{data};
 
             for my $file_resource_obj (@$file_resource_objs) {
                 my $config = $self->_file_resource_config(
@@ -226,17 +232,23 @@ around 'ui_meta_struct' => sub {
             }
         }
         else {
-            $files_tab->{content_type} = 'Basic';
-            $files_tab->{content}      = 'No file resources configured.';
+            $files_tab->{content} = {
+                type   => 'Basic',
+                config => {
+                    data => 'No file resources configured.',
+                },
+            };
         }
     }
 
     if (UNIVERSAL::can($object, 'log_actions')) {
         my $log_tab = {
-            label        => 'Log',
-            content_type => 'DataTable',
-            content      => {
-                caption => 'This happens to be the log.',
+            label   => 'Log',
+            content => {
+                type   => 'DataTable',
+                config => {
+                    caption => 'This happens to be the log.',
+                },
             },
         };
         push @$tabs, $log_tab;
@@ -246,7 +258,7 @@ around 'ui_meta_struct' => sub {
             $log_tab->{content}->{description} = $configuration->{description};
         }
 
-        $log_tab->{content}->{headers} = {
+        $log_tab->{content}->{config}->{headers} = {
             action       => 'Action',
             performed_by => 'Performed By',
             performed_at => 'Performed At',
@@ -254,7 +266,7 @@ around 'ui_meta_struct' => sub {
             content      => 'Content',
         };
 
-        my $rows = $log_tab->{content}->{rows} = [];
+        my $rows = $log_tab->{content}->{config}->{rows} = [];
 
         for my $entry (@{ $object->action_log }) {
             my $details = [];
@@ -330,11 +342,11 @@ sub _file_resource_config {
     };
 
     $panel_data->{ $node->id } = {
-        content_type => 'Grid',
-        content      => [],
+        type   => 'Grid',
+        config => [],
     };
 
-    my $grid_rows = $panel_data->{ $node->id }->{content};
+    my $grid_rows = $panel_data->{ $node->id }->{config};
 
     my $file = $node->get_file_for_object( $object );
 
@@ -387,13 +399,17 @@ sub _file_resource_config {
     }
 
     if (defined $attr_refs) {
-        my $attr_row = {
-            content_type => 'KeyValue',
-            content      => {
-                label => 'Attributes',
-                data  => [],
+        my $attr_row = [
+            {
+                content => {
+                    type   => 'KeyValue',
+                    config => {
+                        label => 'Attributes',
+                        data  => [],
+                    },
+                },
             },
-        };
+        ];
         push @$grid_rows, $attr_row;
 
         while (my ($code, $ref) = each %$attr_refs) {
@@ -447,12 +463,12 @@ sub _file_resource_config {
                     push @{ $kv->{form}->{fields_present} }, qw( file_id file_resource_attr_id );
                     push @{ $kv->{form}->{field_defs}->[0]->{controls} }, (
                         {
-                            type  => 'hidden',
+                            type  => 'HiddenField',
                             name  => 'file_resource_attr_id',
                             value => "$ref->{_attr_id}",
                         },
                         {
-                            type  => 'hidden',
+                            type  => 'HiddenField',
                             name  => 'file_id',
                             value => $file->id . '',
                         },
@@ -460,72 +476,80 @@ sub _file_resource_config {
                 }
             }
 
-            push @{ $attr_row->{content}->{data} }, $kv;
+            push @{ $attr_row->[0]->{content}->{config}->{data} }, $kv;
         }
     }
 
     if (defined $args->{can_edit} and $args->{can_edit}) {
-        my $form_row = {
-            content_type => 'FormWrapper',
-            content      => {
-                caption     => 'File handling',
-                form_config => {
-                    # TODO: improve the handling of this on the client side
-                    encodingType   => 2,
+        my $form_row = [
+            {
+                content => {
+                    type   => 'FormWrapper',
+                    config => {
+                        caption     => 'File handling',
+                        form_config => {
+                            # TODO: improve the handling of this on the client side
+                            encodingType   => 2,
 
-                    action         => $self->_controller->url(
-                        controller => 'manage',
-                        action     => 'run_action_method',
-                        secure     => 1,
-                        parameters => {
-                            _class    => $self->_class,
-                            _subclass => $edit_action,
-                            _method   => 'save',
-                        },
-                    ),
-                    pk             => $args->{pk_settings},
-                    fields_present => [ 'uploaded_file' ],
-                    field_defs     => [
-                        {
-                            controls => [
-                                {
-                                    type  => 'HiddenField',
-                                    name  => '_properties_mode',
-                                    value => 'upload',
+                            action         => $self->_controller->url(
+                                controller => 'manage',
+                                action     => 'run_action_method',
+                                secure     => 1,
+                                parameters => {
+                                    _class    => $self->_class,
+                                    _subclass => $edit_action,
+                                    _method   => 'save',
                                 },
+                            ),
+                            pk             => $args->{pk_settings},
+                            fields_present => [ 'uploaded_file' ],
+                            field_defs     => [
                                 {
-                                    type  => 'hidden',
-                                    name  => 'resource',
-                                    value => $node->id . '',
+                                    controls => [
+                                        {
+                                            type  => 'HiddenField',
+                                            name  => '_properties_mode',
+                                            value => 'upload',
+                                        },
+                                        {
+                                            type  => 'HiddenField',
+                                            name  => 'resource',
+                                            value => $node->id . '',
+                                        },
+                                        {
+                                            label => 'File to Upload',
+                                            name  => 'uploaded_file',
+                                            type  => 'FileField',
+                                        },
+                                    ],
                                 },
+                            ],
+                            buttons => [
                                 {
-                                    label => 'File to Upload',
-                                    name  => 'uploaded_file',
-                                    type  => 'file',
+                                    name  => 'submit',
+                                    value => (defined $file ? 'Replace' : 'Upload'),
+                                    type  => 'SubmitButton',
                                 },
                             ],
                         },
-                    ],
-                    buttons => [
-                        {
-                            name  => 'submit',
-                            label => (defined $file ? 'Replace' : 'Upload'),
-                            type  => 'submit',
-                        },
-                    ],
+                    },
                 },
-            },
-        };
+            }
+        ];
         push @$grid_rows, $form_row;
     }
 
-    my $display_row = {
-        content_type => 'Basic',
-        content      => {
-            label => 'File',
-            data  => 'No file uploaded yet.',
+    my $display_row = [
+        {
+            content => {
+                type   => 'Basic',
+                config => {
+                    label => 'File',
+                    data  => 'No file uploaded yet.',
+                },
+            },
         },
-    };
+    ];
     push @$grid_rows, $display_row;
 
     if (defined $file) {
@@ -548,7 +572,7 @@ sub _file_resource_config {
             $content = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
         }
 
-        $display_row->{content}->{data} = $content;
+        $display_row->[0]->{content}->{config}->{data} = $content;
 
         if (defined $args->{can_edit} and $args->{can_edit}) {
             # TODO: restore ability to unlink file

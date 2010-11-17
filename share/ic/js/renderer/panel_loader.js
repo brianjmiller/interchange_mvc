@@ -18,24 +18,10 @@
 YUI.add(
     "ic-renderer-panel_loader",
     function(Y) {
-        var RendererPanelLoader;
-
-        RendererPanelLoader = function (config) {
-            RendererPanelLoader.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererPanelLoader,
-            {
-                NAME: "ic_renderer_panel_loader",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            RendererPanelLoader,
+        var Clazz = Y.namespace("IC").RendererPanelLoader = Y.Base.create(
+            "ic_renderer_panel_loader",
             Y.IC.RendererBase,
+            [],
             {
                 // the object that is used as the loader
                 _loader: null,
@@ -55,8 +41,8 @@ YUI.add(
                 _panel_node: null,
 
                 initializer: function (config) {
-                    Y.log(RendererPanelLoader.NAME + "::initializer");
-                    Y.log(RendererPanelLoader.NAME + "::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
                     //
                     // the loader can be basically any renderer that has elements that
@@ -65,11 +51,10 @@ YUI.add(
                     //
                     // tree and treeble are two examples
                     //
-                    var loader_constructor = Y.IC.Renderer.getConstructor(config.loader_config.content_type);
-                    Y.log("loader_config: " + Y.dump(config.loader_config));
-                    config.loader_config.content._caller = this;
+                    var loader_constructor = Y.IC.Renderer.getConstructor(config.loader_config.type);
+                    config.loader_config.config._caller = this;
 
-                    this._loader = new loader_constructor (config.loader_config.content);
+                    this._loader = new loader_constructor (config.loader_config.config);
                     this._loader.render();
 
                     this._loader_node = Y.Node.create('<div class="yui3-u">Put the loader here</div>');
@@ -89,14 +74,24 @@ YUI.add(
                     this._grid_node.append(this._panel_node);
                 },
 
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._loader      = null;
+                    this._panel       = null;
+                    this._grid_node   = null;
+                    this._loader_node = null;
+                    this._panel_node  = null;
+                },
+
                 renderUI: function () {
-                    //Y.log(RendererPanelLoader.NAME + "::renderUI");
-                    //Y.log(RendererPanelLoader.NAME + "::renderUI - contentBox: " + this.get("contentBox"));
-                    this.get("contentBox").setContent(this._grid_node);
+                    Y.log(Clazz.NAME + "::renderUI");
+
+                    this.get("contentBox").setContent( this._grid_node );
                 },
 
                 bindUI: function () {
-                    Y.log(RendererPanelLoader.NAME + "::bindUI");
+                    Y.log(Clazz.NAME + "::bindUI");
 
                     this._loader.get("contentBox").delegate(
                         "click",
@@ -108,23 +103,25 @@ YUI.add(
                 },
 
                 _onControlClick: function (e, me) {
-                    Y.log(RendererPanelLoader.NAME + "::_onControlClick");
-                    Y.log(RendererPanelLoader.NAME + "::_onControlClick - this.id: " + this.get("id"));
-                    Y.log(RendererPanelLoader.NAME + "::_onControlClick - e.target.id: " + e.target.get("id"));
+                    Y.log(Clazz.NAME + "::_onControlClick");
+                    Y.log(Clazz.NAME + "::_onControlClick - this.id: " + this.get("id"));
+                    Y.log(Clazz.NAME + "::_onControlClick - e.target.id: " + e.target.get("id"));
+
                     var matches     = this.get("id").match("^([^-]+)-(?:.+)$");
                     var selected_id = matches[1];
 
                     me._panel.fire("show_data", selected_id);
-                },
+                }
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererPanelLoader = RendererPanelLoader;
     },
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-panel_loader-css",
             "ic-renderer-base",
             "ic-renderer-panel"
         ]

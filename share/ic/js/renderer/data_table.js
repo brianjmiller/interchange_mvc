@@ -18,30 +18,16 @@
 YUI.add(
     "ic-renderer-data_table",
     function(Y) {
-        var RendererDataTable;
-
-        RendererDataTable = function (config) {
-            RendererDataTable.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererDataTable,
-            {
-                NAME: "ic_renderer_data_table",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            RendererDataTable,
+        var Clazz = Y.namespace("IC").RendererDataTable = Y.Base.create(
+            "ic_renderer_data_table",
             Y.IC.RendererBase,
+            [],
             {
                 _table: null,
 
                 initializer: function (config) {
-                    Y.log("renderer_data_table::initializer");
-                    //Y.log("renderer_data_table::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
                     var table_args = {
                         headers: config.headers,
@@ -54,25 +40,19 @@ YUI.add(
                     this._table = new Y.SimpleDatatable (table_args);
                 },
 
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._table = null;
+                },
+
                 renderUI: function () {
-                    Y.log("renderer_data_table::renderUI");
-                    //Y.log("renderer_data_table::renderUI - contentBox: " + this.get("contentBox"));
+                    Y.log(Clazz.NAME + "::renderUI");
 
                     this._table.render(this.get("contentBox"));
-                },
-
-                bindUI: function () {
-                    Y.log("renderer_data_table::bindUI");
-                },
-
-                syncUI: function () {
-                    //Y.log("renderer_data_table::syncUI");
-                },
+                }
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererDataTable = RendererDataTable;
     },
     "@VERSION@",
     {

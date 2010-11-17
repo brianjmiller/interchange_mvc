@@ -57,7 +57,7 @@ YUI.add(
                     Y.each(
                         this._headers,
                         function (header, i, a) {
-                            this.append('<td>' + header.label + '</td>');
+                            this.append('<th>' + header.label + '</th>');
                         },
                         thead_row_node
                     );
@@ -71,10 +71,6 @@ YUI.add(
                             Y.log(Clazz.NAME + "::renderUI - adding row: " + i);
                             Y.log(Clazz.NAME + "::renderUI - row " + i + " config: " + Y.dump(row));
                             var row_node = Y.Node.create('<tr></tr>');
-
-                            if (! Y.Lang.isValue(row.columns)) {
-                                row.columns = row;
-                            }
 
                             if (Y.Lang.isValue(row.add_class)) {
                                 Y.log(Clazz.NAME + "::renderUI - row " + i + " add class '" + row.add_class + "'");
@@ -91,6 +87,10 @@ YUI.add(
                                         row_node.plug(plugin);
                                    }
                                );
+                            }
+
+                            if (! Y.Lang.isValue(row.columns)) {
+                                row.columns = row;
                             }
 
                             Y.each(
@@ -117,58 +117,9 @@ YUI.add(
                                         );
                                     }
 
-                                    // force single content structure into array so that we can
-                                    // always handle as an array to allow for multiple content
-                                    // items in a single table unit
-                                    var content_items = [];
+                                    var content_node = Y.IC.Renderer.buildContent( col.content, _caller );
 
-                                    if (Y.Lang.isValue(col.has_multi_content) && col.has_multi_content) {
-                                        content_items = col.content;
-                                    }
-                                    else if (Y.Lang.isValue(col.content_type)) {
-                                        content_items.push(
-                                            {
-                                                content_type: col.content_type,
-                                                content:      col.content
-                                            }
-                                        );
-                                    }
-                                    else {
-                                        content_items.push(
-                                            col.content
-                                        );
-                                    }
-
-                                    Y.each(
-                                        content_items,
-                                        function (config, iii, iia) {
-                                            Y.log(Clazz.NAME + "::renderUI - row " + i + ", col " + ii + ", content_item " + iii + ": " + Y.dump(config));
-                                            var clazz = i + "-" + ii + "-" + iii;
-                                            var content_node = Y.Node.create('<div class="' + clazz + '"></div>');
-
-                                            if (Y.Lang.isValue(config.content_type)) {
-                                                Y.log(Clazz.NAME + "::renderUI - row " + i + ", col " + ii + ", content_item " + iii + " - content_type: " + Y.dump(config.content_type));
-                                                var content_constructor = Y.IC.Renderer.getConstructor(config.content_type);
-
-                                                config.content._caller = _caller;
-
-                                                var content = new content_constructor (config.content);
-                                                content.render();
-
-                                                Y.log("content display node: " + content.get("boundingBox"));
-                                                content_node.setContent( content.get("boundingBox") );
-                                            }
-                                            else if (Y.Lang.isValue(config.content)) {
-                                                content_node.setContent(config.content);
-                                            }
-                                            else {
-                                                content_node.setContent(config);
-                                            }
-
-                                            this.append(content_node);
-                                        },
-                                        col_node
-                                    );
+                                    col_node.setContent(content_node);
 
                                     this.append(col_node);
                                 },
@@ -191,6 +142,7 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-table-css",
             "ic-renderer-base",
             "ic-plugin-ignorable"
         ]

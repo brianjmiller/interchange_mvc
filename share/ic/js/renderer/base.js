@@ -18,55 +18,35 @@
 YUI.add(
     "ic-renderer-base",
     function(Y) {
-        var RendererBase;
-
-        RendererBase = function (config) {
-            RendererBase.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererBase,
-            {
-                NAME: "ic_renderer_base",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            RendererBase,
+        var Clazz = Y.namespace("IC").RendererBase = Y.Base.create(
+            "ic_renderer_base",
             Y.Widget,
+            [],
             {
                 _caller:            null,
                 _meta:              null,
 
                 initializer: function (config) {
-                    Y.log("renderer_base::initializer");
-                    //Y.log("renderer_base::initializer: " + Y.dump(config));
+                    //Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
                     this._caller = config._caller;
                 },
 
-                renderUI: function () {
-                    Y.log("renderer_base::renderUI");
-                    Y.log("renderer_base::renderUI - contentBox: " + this.get("contentBox"));
+                destructor: function () {
+                    //Y.log(Clazz.NAME + "::destructor");
+                    this._caller = null;
+                    this._meta   = null;
                 },
-
-                bindUI: function () {
-                    Y.log("renderer_base::bindUI");
-                },
-
-                syncUI: function () {
-                    Y.log("renderer_base::syncUI");
-                },
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererBase = RendererBase;
     },
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-base-css",
             "widget"
         ]
     }

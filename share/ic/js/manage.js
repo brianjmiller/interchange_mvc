@@ -496,8 +496,8 @@ YUI(
                         path: "renderer/form.css",
                         type: "css"
                     },
-                    "ic-renderer-form_warpper-css": {
-                        path: "renderer/form_warpper.css",
+                    "ic-renderer-form_wrapper-css": {
+                        path: "renderer/form_wrapper.css",
                         type: "css"
                     },
                     "ic-renderer-tabs-css": {

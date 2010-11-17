@@ -18,30 +18,16 @@
 YUI.add(
     "ic-renderer-tree",
     function(Y) {
-        var RendererTree;
-
-        RendererTree = function (config) {
-            RendererTree.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererTree,
-            {
-                NAME: "ic_renderer_tree",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            RendererTree,
+        var Clazz = Y.namespace("IC").RendererTree = Y.Base.create(
+            "ic_renderer_tree",
             Y.IC.RendererBase,
+            [],
             {
                 _treeview: null,
 
                 initializer: function (config) {
-                    Y.log("renderer_tree::initializer");
-                    Y.log("renderer_tree::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
                     // a treeview is just a plug on a list that we need to construct ourselves
                     this._treeview = Y.Node.create('<ol id="' + Y.guid() + '"></ol>');
@@ -57,7 +43,21 @@ YUI.add(
                     this._treeview.plug( Y.Plugin.TreeviewLite );
                 },
 
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._treeview = null;
+                },
+
+                renderUI: function () {
+                    Y.log(Clazz.NAME + "::renderUI");
+
+                    this.get("contentBox").setContent( this._treeview );
+                },
+
                 _datanodeToNodes: function (data_node) {
+                    //Y.log(Clazz.NAME + "::_datanodeToNodes");
+
                     var span_node = Y.Node.create('<span id="' + data_node.id + '-' + this._treeview.get("id") + '">' + data_node.label + '</span>');
                     if (Y.Lang.isValue(data_node.add_class)) {
                         span_node.addClass(data_node.add_class);
@@ -80,30 +80,18 @@ YUI.add(
                     }
 
                     return li_node;
-                },
+                }
 
-                renderUI: function () {
-                    Y.log("renderer_tree::renderUI");
-                    //Y.log("renderer_tree::renderUI - contentBox: " + this.get("contentBox"));
-                    this.get("contentBox").setContent(this._treeview);
-                },
-
-                bindUI: function () {
-                    Y.log("renderer_tree::bindUI");
-                },
-
-                syncUI: function () {
-                    Y.log("renderer_tree::syncUI");
-                },
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererTree = RendererTree;
     },
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-tree-css",
             "ic-renderer-base",
             "gallery-treeviewlite"
         ]

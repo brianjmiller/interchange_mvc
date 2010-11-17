@@ -18,27 +18,10 @@
 YUI.add(
     "ic-renderer-panel",
     function(Y) {
-        var RendererPanel;
-
-        RendererPanel = function (config) {
-            RendererPanel.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererPanel,
-            {
-                NAME: "ic_renderer_panel",
-                ATTRS: {
-                    align_to: {
-                        value: null
-                    }
-                }
-            }
-        );
-
-        Y.extend(
-            RendererPanel,
+        var Clazz = Y.namespace("IC").RendererPanel = Y.Base.create(
+            "ic_renderer_panel",
             Y.IC.RendererBase,
+            [],
             {
                 _overlay: null,
 
@@ -53,32 +36,44 @@ YUI.add(
                 _built_data_cache: null,
 
                 initializer: function (config) {
-                    Y.log(RendererPanel.NAME + "::initializer");
-                    //Y.log(RendererPanel.NAME + "::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
-                    var overlay_args = {
-                        headerContent: "",
-                        bodyContent:   "Select a control to load content."
-                    };
-                    this._overlay          = new Y.Overlay( overlay_args );
+                    this._overlay = new Y.Overlay(
+                        {
+                            headerContent: "",
+                            bodyContent:   "Select a control to load content."
+                        }
+                    );
 
                     this._data             = config.data;
                     this._built_data_cache = {};
                 },
 
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._overlay          = null;
+                    this._data             = null;
+                    this._built_data_cache = null;
+                },
+
                 renderUI: function () {
-                    Y.log(RendererPanel.NAME + "::renderUI");
+                    Y.log(Clazz.NAME + "::renderUI");
 
                     // HACK: this is a bit of a hack to allow the overlay to flow
                     //       rather than be positioned absolutely which was causing
                     //       issues
+                    //
+                    //       perhaps a better approach is just to use WidgetStdMod
+                    //       directly instead of making this an overlay?
                     this._overlay.get("boundingBox").setStyle("position", "static");
 
-                    this._overlay.render(this.get("contentBox"));
+                    this._overlay.render( this.get("contentBox") );
                 },
 
                 bindUI: function () {
-                    Y.log(RendererPanel.NAME + "::bindUI");
+                    Y.log(Clazz.NAME + "::bindUI");
 
                     this.on(
                         "show_data",
@@ -86,39 +81,30 @@ YUI.add(
                     );
                 },
 
-                syncUI: function () {
-                    Y.log(RendererPanel.NAME + "::syncUI");
-                },
-
                 _onShowData: function (e, id) {
-                    Y.log(RendererPanel.NAME + "::_onShowData");
-                    Y.log(RendererPanel.NAME + "::_onShowData - id: " + id);
+                    Y.log(Clazz.NAME + "::_onShowData");
+                    Y.log(Clazz.NAME + "::_onShowData - id: " + id);
 
                     if (! this._built_data_cache[id]) {
-                        Y.log(RendererPanel.NAME + "::_onShowData - dumping data[" + id + "]: " + Y.dump(this._data[id]));
+                        Y.log(Clazz.NAME + "::_onShowData - dumping data[" + id + "]: " + Y.dump(this._data[id]));
 
                         this._buildData(id);
                     }
 
                     this._overlay.set("headerContent", this._built_data_cache[id].header);
-                    this._overlay.set("bodyContent",   this._built_data_cache[id].body.get("boundingBox"));
+                    this._overlay.set("bodyContent",   this._built_data_cache[id].body);
                 },
 
                 _buildData: function (id) {
-                    Y.log(RendererPanel.NAME + "::_buildData");
+                    Y.log(Clazz.NAME + "::_buildData");
                     var data = this._data[id];
 
                     if (Y.Lang.isValue(data.actions)) {
-                        var container_constructor = Y.IC.Renderer.getConstructor("Basic");
-                        var container = new container_constructor (
-                            {
-                                _caller: this,
-                                data:    ""
-                            }
-                        );
-                        container.render();
+                        var header_node = Y.Node.create('<div></div>');
+                        var body_node   = Y.Node.create('<div></div>');
 
-                        var header_node = Y.Node.create('<div>' + id + '</div>');
+                        var _caller = this;
+
                         var count = 0;
                         Y.each(
                             data.actions,
@@ -131,48 +117,44 @@ YUI.add(
                                 action_constructor_config._caller = this;
 
                                 var action_body = new action_constructor (action_constructor_config);
-                                action_body.render();
+                                action_body.render( body_node );
 
-                                Y.log("count: " + count);
                                 if (count !== 0) {
                                     action_body.hide();
                                 }
-
-                                container.get("contentBox").append( action_body.get("boundingBox") );
-
                                 count++;
                             }
                         );
 
                         this._built_data_cache[id] = {
                             header: header_node,
-                            body:   container
+                            body:   body_node
                         };
                     }
-                    else if (Y.Lang.isValue(data.content_type)) {
-                        var body_constructor        = Y.IC.Renderer.getConstructor( this._data[id].content_type );
-                        var body_constructor_config = this._data[id].content;
-                        body_constructor_config._caller = this;
-
+                    else if (Y.Lang.isValue(data.type)) {
                         this._built_data_cache[id] = {
-                            body: new body_constructor (body_constructor_config)
+                            body: Y.IC.Renderer.buildContent( this._data[id], this )
                         };
-                        this._built_data_cache[id].body.render();
 
-                        if (Y.Lang.isValue(data.label)) {
+                        if (Y.Lang.isValue( data.label )) {
                             this._built_data_cache[id].header = data.label;
                         }
                     }
                 }
+            },
+            {
+                ATTRS: {
+                    align_to: {
+                        value: null
+                    }
+                }
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererPanel = RendererPanel;
     },
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-panel-css",
             "ic-renderer-base",
             "overlay"
         ]

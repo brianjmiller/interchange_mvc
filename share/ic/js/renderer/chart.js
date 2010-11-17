@@ -18,64 +18,66 @@
 YUI.add(
     "ic-renderer-chart",
     function(Y) {
-        var RendererChart;
-
-        RendererChart = function (config) {
-            RendererChart.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererChart,
-            {
-                NAME: "ic_renderer_chart",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            RendererChart,
+        var Clazz = Y.namespace("IC").RendererChart = Y.Base.create(
+            "ic_renderer_chart",
             Y.IC.RendererBase,
+            [],
             {
                 _chart: null,
 
                 initializer: function (config) {
-                    Y.log("renderer_chart::initializer");
-                    Y.log("renderer_chart::initializer - config: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer - config: " + Y.dump(config));
                     var chart_args = {
-                        dataProvider: config.data
+                        dataProvider: config.data,
+                        width:        400,
+                        height:       700,
+                        //axes:         {
+                            //order_counts: {
+                                //type:     "numeric",
+                                //position: "left",
+                                //keys:     [ "count" ],
+                                //roundMinAndMax: true,
+                                //roundingUnit: 5
+                            //},
+                            //days: {
+                                //type:     "category",
+                                //position: "bottom",
+                                //keys:     [ "day" ],
+                                //styles:   {
+                                    //label: {
+                                        //rotation: -63
+                                    //}
+                                //}
+                            //}
+                        //}
                     };
                     //if (config.caption) {
                         //chart_args.caption = config.caption;
                     //}
-                    Y.log("renderer_chart::initializer - chart_args: " + Y.dump(chart_args));
+                    Y.log(Clazz.NAME + "::initializer - chart_args: " + Y.dump(chart_args));
 
                     this._chart = new Y.Chart (chart_args);
                 },
 
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._chart = null;
+                },
+
                 renderUI: function () {
-                    Y.log("renderer_chart::renderUI");
-                    Y.log("renderer_chart::renderUI - contentBox: " + this.get("contentBox"));
+                    Y.log(Clazz.NAME + "::renderUI");
 
                     this._chart.render(this.get("contentBox"));
-                },
-
-                bindUI: function () {
-                    Y.log("renderer_chart::bindUI");
-                },
-
-                syncUI: function () {
-                    Y.log("renderer_chart::syncUI");
-                },
+                }
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererChart = RendererChart;
     },
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-chart-css",
             "ic-renderer-base",
             "gallery-chart"
         ]

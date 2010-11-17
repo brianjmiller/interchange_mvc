@@ -37,6 +37,12 @@ YUI.add(
                     //Y.log(Clazz.NAME + "::initializer - _form: " + this._form);
                 },
 
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._form = null;
+                },
+
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
                     //Y.log(Clazz.NAME + "::renderUI - contentBox: " + this.get("contentBox"));
@@ -49,7 +55,11 @@ YUI.add(
                 }
             },
             {
-                ATTRS: {}
+                ATTRS: {
+                    caption: {
+                        value: null
+                    }
+                }
             }
         );
     },

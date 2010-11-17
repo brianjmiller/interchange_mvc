@@ -18,31 +18,17 @@
 YUI.add(
     "ic-renderer-keyvalue",
     function(Y) {
-        var RendererKeyValue;
-
-        RendererKeyValue = function (config) {
-            RendererKeyValue.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererKeyValue,
-            {
-                NAME: "ic_renderer_keyvalue",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            RendererKeyValue,
+        var Clazz = Y.namespace("IC").RendererKeyValue = Y.Base.create(
+            "ic_renderer_keyvalue",
             Y.IC.RendererBase,
+            [],
             {
                 _title: null,
                 _def_list: null,
 
                 initializer: function (config) {
-                    Y.log("renderer_keyvalue::initializer");
-                    //Y.log("renderer_keyvalue::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
                     this._title = config.label;
 
                     this._def_list = Y.Node.create('<dl></dl>');
@@ -50,7 +36,7 @@ YUI.add(
                     Y.each(
                         config.data,
                         function (v, i, a) {
-                            Y.log("adding key/value pair: " + v.label + " => " + v.value);
+                            Y.log(Clazz.NAME + "::initializer - adding key/value pair: " + v.label + " => " + v.value);
                             var dt = Y.Node.create('<dt>' + v.label + '</dt>');
                             var dd = Y.Node.create('<dd>' + (v.value !== "" ? v.value : '&nbsp;') + '</dd>');
 
@@ -60,8 +46,8 @@ YUI.add(
                                     {
                                         form_config:             v.form,
                                         updated_content_handler: function (response) {
-                                            Y.log("updated_content_handler: " + this);
-                                            Y.log("updated_content_handler - " + v.label + ": " + Y.dump(response));
+                                            Y.log(Clazz.NAME + "::initializer - updated_content_handler: " + this);
+                                            Y.log(Clazz.NAME + "::initializer - updated_content_handler - " + v.label + ": " + Y.dump(response));
 
                                             // we know by virtue of being an edit in place form
                                             // on a key value pair that we'll get back one key
@@ -87,17 +73,23 @@ YUI.add(
                     );
                 },
 
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._title    = null;
+                    this._def_list = null;
+                },
+
                 renderUI: function () {
-                    //Y.log("renderer_keyvalue::renderUI");
-                    //Y.log("renderer_keyvalue::renderUI - contentBox: " + this.get("contentBox"));
+                    Y.log(Clazz.NAME + "::renderUI");
                     this.get("contentBox").append('<span class="key_value_title">' + this._title + '</span><br />');
                     this.get("contentBox").append(this._def_list);
                 }
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererKeyValue = RendererKeyValue;
     },
     "@VERSION@",
     {

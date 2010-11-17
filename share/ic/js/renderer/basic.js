@@ -18,60 +18,44 @@
 YUI.add(
     "ic-renderer-basic",
     function(Y) {
-        var RendererBasic;
-
-        RendererBasic = function (config) {
-            RendererBasic.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererBasic,
-            {
-                NAME: "ic_renderer_basic",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            RendererBasic,
+        var Clazz = Y.namespace("IC").RendererBasic = Y.Base.create(
+            "ic_renderer_basic",
             Y.IC.RendererBase,
+            [],
             {
                 _title: null,
                 _body:  null,
 
                 initializer: function (config) {
-                    //Y.log("renderer_basic::initializer");
-                    //Y.log("renderer_basic::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
                     this._title = config.label;
                     this._body  = config.data;
                 },
 
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+                    this._title = null;
+                    this._body  = null;
+                },
+
                 renderUI: function () {
-                    //Y.log("renderer_basic::renderUI");
-                    //Y.log("renderer_basic::renderUI - contentBox: " + this.get("contentBox"));
+                    Y.log(Clazz.NAME + "::renderUI");
+
                     if (Y.Lang.isValue(this._title)) {
                         this.get("contentBox").append('<span class="title">' + this._title + '</span><br />');
                     }
                     this.get("contentBox").append(this._body);
-                },
-
-                bindUI: function () {
-                    //Y.log("renderer_basic::bindUI");
-                },
-
-                syncUI: function () {
-                    //Y.log("renderer_basic::syncUI");
-                },
+                }
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererBasic = RendererBasic;
     },
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-basic-css",
             "ic-renderer-base"
         ]
     }

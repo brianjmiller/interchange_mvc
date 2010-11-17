@@ -21,27 +21,10 @@
 YUI.add(
     "ic-renderer-treeble",
     function(Y) {
-        var RendererTreeble;
-
-        RendererTreeble = function (config) {
-            RendererTreeble.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            RendererTreeble,
-            {
-                NAME: "ic_renderer_treeble",
-                ATTRS: {
-                    data: {
-                        value: null
-                    }
-                }
-            }
-        );
-
-        Y.extend(
-            RendererTreeble,
+        var Clazz = Y.namespace("IC").RendererTreeble = Y.Base.create(
+            "ic_renderer_treeble",
             Y.IC.RendererBase,
+            [],
             {
                 _data_source:    null,
                 _columns:        null,
@@ -49,8 +32,8 @@ YUI.add(
                 _pg:             null,
 
                 initializer: function (config) {
-                    Y.log("renderer_treeble::initializer");
-                    //Y.log("renderer_treeble::initializer: " + Y.dump(config));
+                    Y.log(Clazz.NAME + "::initializer");
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
                     var local_columns = [
                         {
@@ -153,8 +136,8 @@ YUI.add(
                     this._pg.on(
                         'changeRequest',
                         function (state) {
-                            Y.log("renderer_treeble::updatePaginator");
-                            Y.log("renderer_treeble::updatePaginator - state: " + Y.dump(state));
+                            Y.log(Clazz.NAME + "::updatePaginator");
+                            //Y.log(Clazz.NAME + "::updatePaginator - state: " + Y.dump(state));
                             this.setPage(state.page, true);
                             this.setRowsPerPage(state.rowsPerPage, true);
                             this.setTotalRecords(state.totalRecords, true);
@@ -165,8 +148,17 @@ YUI.add(
                     );
                 },
 
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._data_source    = null;
+                    this._columns        = null;
+                    this._container_node = null;
+                    this._pg             = null;
+                },
+
                 renderUI: function () {
-                    Y.log("renderer_treeble::renderUI");
+                    Y.log(Clazz.NAME + "::renderUI");
 
                     this._container_node = Y.Node.create("<div></div>");
                     this.get("contentBox").append(this._container_node);
@@ -178,17 +170,9 @@ YUI.add(
                     this.reloadTable();
                 },
 
-                bindUI: function () {
-                    Y.log("renderer_treeble::bindUI");
-                },
-
-                syncUI: function () {
-                    Y.log("renderer_treeble::syncUI");
-                },
-
                 updatePaginator: function (state) {
-                    Y.log("renderer_treeble::updatePaginator");
-                    //Y.log("renderer_treeble::updatePaginator - state: " + Y.dump(state));
+                    Y.log(Clazz.NAME + "::updatePaginator");
+                    //Y.log(Clazz.NAME + "::updatePaginator - state: " + Y.dump(state));
                     this._pg.setPage(state.page, true);
                     this._pg.setRowsPerPage(state.rowsPerPage, true);
                     this._pg.setTotalRecords(state.totalRecords, true);
@@ -197,13 +181,13 @@ YUI.add(
                 },
 
                 reloadTable: function () {
-                    Y.log("renderer_treeble::reloadTable");
+                    Y.log(Clazz.NAME + "::reloadTable");
                     var request = {
                         startIndex:  this._pg.getStartIndex(),
                         resultCount: this._pg.getRowsPerPage(),
                         extra: window.treeble_request_extra
                     };
-                    Y.log("renderer_treeble::reloadTable - request: " + Y.dump(request));
+                    Y.log(Clazz.NAME + "::reloadTable - request: " + Y.dump(request));
 
                     this._data_source.sendRequest(
                         {
@@ -227,7 +211,7 @@ YUI.add(
                 },
 
                 renderTable: function (response) {
-                    Y.log("renderer_treeble::renderTable");
+                    Y.log(Clazz.NAME + "::renderTable");
 
                     var columns = this._columns;
 
@@ -245,7 +229,7 @@ YUI.add(
                     var hasFormatters = false;
 
                     var data = response.results;
-                    //Y.log("renderer_treeble::renderTable - data: " + Y.dump(data));
+                    //Y.log(Clazz.NAME + "::renderTable - data: " + Y.dump(data));
 
                     Y.each(
                         data,
@@ -309,18 +293,23 @@ YUI.add(
                 },
 
                 toggleRow: function (path) {
-                    Y.log("renderer_treeble::toggleRow - path: " + path);
+                    Y.log(Clazz.NAME + "::toggleRow - path: " + path);
                     this._data_source.toggle(path, {}, Y.bind(this.reloadTable, this));
+                }
+            },
+            {
+                ATTRS: {
+                    data: {
+                        value: null
+                    }
                 }
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.RendererTreeble = RendererTreeble;
     },
     "@VERSION@",
     {
         requires: [
+            "ic-renderer-treeble-css",
             "ic-renderer-base",
             "gallery-treeble"
         ]
