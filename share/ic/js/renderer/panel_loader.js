@@ -52,7 +52,6 @@ YUI.add(
                     // tree and treeble are two examples
                     //
                     var loader_constructor = Y.IC.Renderer.getConstructor(config.loader_config.type);
-                    config.loader_config.config._caller = this;
 
                     this._loader = new loader_constructor (config.loader_config.config);
                     this._loader.render();
@@ -61,7 +60,6 @@ YUI.add(
                     this._loader_node.setContent( this._loader.get("boundingBox") );
 
                     var panel_constructor = Y.IC.Renderer.getConstructor('Panel');
-                    config.panel_config._caller = this;
 
                     this._panel = new panel_constructor (config.panel_config);
                     this._panel.render();

@@ -103,8 +103,6 @@ YUI.add(
                         var header_node = Y.Node.create('<div></div>');
                         var body_node   = Y.Node.create('<div></div>');
 
-                        var _caller = this;
-
                         var count = 0;
                         Y.each(
                             data.actions,
@@ -114,7 +112,6 @@ YUI.add(
 
                                 var action_constructor        = Y.IC.Renderer.getConstructor( action.meta._prototype );
                                 var action_constructor_config = action.meta._prototype_config;
-                                action_constructor_config._caller = this;
 
                                 var action_body = new action_constructor (action_constructor_config);
                                 action_body.render( body_node );

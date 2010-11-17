@@ -23,20 +23,6 @@ YUI.add(
             Y.Widget,
             [],
             {
-                _caller:            null,
-                _meta:              null,
-
-                initializer: function (config) {
-                    //Y.log(Clazz.NAME + "::initializer");
-                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
-                    this._caller = config._caller;
-                },
-
-                destructor: function () {
-                    //Y.log(Clazz.NAME + "::destructor");
-                    this._caller = null;
-                    this._meta   = null;
-                },
             },
             {
                 ATTRS: {}

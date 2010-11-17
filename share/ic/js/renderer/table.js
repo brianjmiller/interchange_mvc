@@ -44,8 +44,6 @@ YUI.add(
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
 
-                    var _caller = this;
-
                     this._table_node = Y.Node.create('<table></table>');
 
                     var thead_node = Y.Node.create('<thead></thead>');
@@ -117,7 +115,7 @@ YUI.add(
                                         );
                                     }
 
-                                    var content_node = Y.IC.Renderer.buildContent( col.content, _caller );
+                                    var content_node = Y.IC.Renderer.buildContent( col.content );
 
                                     col_node.setContent(content_node);
 

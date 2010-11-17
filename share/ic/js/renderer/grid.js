@@ -58,8 +58,6 @@ YUI.add(
                     Y.log(Clazz.NAME + "::renderUI");
                     this._grid_node = Y.Node.create('<div class="yui3-g"></div>');
 
-                    var _caller = this;
-
                     Y.each(
                         this._unit_config,
                         function (row, i, a) {
@@ -107,7 +105,7 @@ YUI.add(
 
                                     var unit_node = Y.Node.create('<div class="' + unit_class + '"></div>');
 
-                                    var content_node = Y.IC.Renderer.buildContent( col.content, _caller );
+                                    var content_node = Y.IC.Renderer.buildContent( col.content );
 
                                     unit_node.setContent(content_node);
 

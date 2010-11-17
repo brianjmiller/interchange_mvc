@@ -49,7 +49,7 @@ YUI.add(
             return _constructor_map[key];
         };
 
-        Y.IC.Renderer.buildContent = function (config, caller) {
+        Y.IC.Renderer.buildContent = function (config) {
             Y.log("Y.IC.Renderer::buildContent");
             Y.log("Y.IC.Renderer::buildContent - config: " + Y.dump(config));
             var content_node = Y.Node.create('<div class="ic-renderer-content_node"></div>');
@@ -62,7 +62,7 @@ YUI.add(
                 Y.each(
                     config,
                     function (v, i, a) {
-                        this.append( Y.IC.Renderer.buildContent(v, caller) );
+                        this.append( Y.IC.Renderer.buildContent(v) );
                     },
                     content_node
                 );
@@ -71,7 +71,6 @@ YUI.add(
                 if (Y.Lang.isValue(config.type)) {
                     Y.log("Y.IC.Renderer::buildContent - content_type: " + config.type);
                     var content_constructor = Y.IC.Renderer.getConstructor(config.type);
-                    config.config._caller = caller;
 
                     var content = new content_constructor (config.config);
                     content.render();
