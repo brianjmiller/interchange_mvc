@@ -121,6 +121,7 @@ YUI.add(
                                 failure: Y.bind(
                                     function (txnId, response) {
                                         //Y.log("manage_window_content_function_action_list_record::_onGetMetaData - Failed to get object meta data", "error");
+                                        this._action_cache._message.content_node.setContent("Record meta data failed to load");
                                     },
                                     this
                                 )
