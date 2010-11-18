@@ -45,24 +45,34 @@ YUI.add(
                     Y.log(Ignorable.NAME + "::initializer");
 
                     this._host = this.get('host');
-                    var host = this.get('host');
-                    var button = new Y.Button({
-                            label: config.label || 'Ignore',
-                            render: this._host
-                        });
                     Y.log(Ignorable.NAME + "::initializer: " + Y.dump(this._host));
-                    button.set('callback',
-                               Y.bind( function() {
-                                   Y.log(Ignorable.NAME + ' button callback');
-                                   this.schedule_destroy();
-                                   }, this));
+
+                    var button = new Y.Button (
+                        {
+                            label:  config.label || 'Ignore',
+                            render: this._host
+                        }
+                    );
+                    button.set(
+                        'callback',
+                        Y.bind(
+                            function () {
+                                Y.log(Ignorable.NAME + ' button callback');
+
+                                this.schedule_destroy();
+                            },
+                            this
+                        )
+                    );
 
                     this._bindUI();
                 }, 
 
-                schedule_destroy: function() {
+                schedule_destroy: function () {
                     Y.log(Ignorable.NAME + "::schedule_destroy");
+
                     this._host.setContent('This space intentionally left blank.');
+
                     this._timer = Y.later(
                         3000,
                         this,
@@ -76,8 +86,7 @@ YUI.add(
                 },
 
                 destructor: function (el) {
-                    Y.log(Ignorable.NAME + "::destructor"
-                          + (el ? el : ''));
+                    Y.log(Ignorable.NAME + "::destructor" + (el ? el : ''));
 
                     this._detachUI();
                 },
