@@ -36,7 +36,9 @@ YUI.add(
         };
 
         var _control_template_map = {
-            TextField:     '<input></input>',
+            TextField:     '<input />',
+            HiddenField:   '<input type="hidden" />',
+            CheckboxField: '<input type="checkbox" />',
             TextareaField: '<textarea></textarea>',
             SelectField:   '<select></select>',
             Button:        '<button></button>'
@@ -82,7 +84,16 @@ YUI.add(
                     Y.each(
                         config.controls,
                         function (control, i, a) {
+                            if (Y.Lang.isValue(control.pre_label)) {
+                                var label_node = Y.Node.create('<label>' + control.pre_label + '</label>');
+
+                                content_node.append(label_node);
+                            }
+
                             var control_node = Y.Node.create(_control_template_map[control.type]);
+                            if (Y.Lang.isValue(control.class)) {
+                                control_node.addClass(control.class);
+                            }
 
                             if (Y.Lang.isValue(control.name)) {
                                 control_node.setAttribute("name", control.name);
@@ -105,6 +116,9 @@ YUI.add(
                                         }
                                     );
                                 }
+                            }
+                            if (Y.Lang.isValue(control.checked) && control.checked) {
+                                control_node.setAttribute("checked", "checked");
                             }
 
                             content_node.append(control_node);
