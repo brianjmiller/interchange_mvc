@@ -66,10 +66,6 @@ YUI.add(
                             // each row is a unit itself
                             var row_unit_node = Y.Node.create('<div class="yui3-u-1"></div>');
 
-                            // with a grid inside of it
-                            var row_grid_node = Y.Node.create('<div class="yui3-g"></div>');
-                            row_unit_node.append(row_grid_node);
-
                             if (Y.Lang.isValue(row.add_class)) {
                                 Y.log(Clazz.NAME + "::renderUI - row " + i + " adds class '" + row.add_class + "'");
                                 row_unit_node.addClass(row.add_class);
@@ -86,33 +82,49 @@ YUI.add(
                                 );
                             }
 
-                            if (! Y.Lang.isValue(row.columns)) {
-                                row.columns = row;
+                            if (Y.Lang.isValue(row.content)) {
+                                row_unit_node.setContent( Y.IC.Renderer.buildContent(row.content) );
                             }
+                            else {
+                                var columns;
+                                if (Y.Lang.isValue(row.columns)) {
+                                    columns = row.columns;
+                                }
+                                else if (Y.Lang.isArray(row)) {
+                                    columns = row;
+                                }
+                                else {
+                                    // TODO: throw an exception
+                                }
 
-                            Y.log(Clazz.NAME + "::renderUI - row " + i + " has " + row.columns.length + " column(s)");
-                            Y.each(
-                                row.columns,
-                                function (col, ii, ia) {
-                                    Y.log(Clazz.NAME + "::renderUI - row " + i + ", col " + ii + ": " + Y.dump(col));
-                                    var unit_class = "yui3-u-";
-                                    if (Y.Lang.isValue(col.percent)) {
-                                        unit_class += _percent_to_unit_map[col.percent];
-                                    }
-                                    else {
-                                        unit_class += "1";
-                                    }
+                                // row with a grid inside of it to create the columns
+                                var row_grid_node = Y.Node.create('<div class="yui3-g"></div>');
+                                row_unit_node.append(row_grid_node);
 
-                                    var unit_node = Y.Node.create('<div class="' + unit_class + '"></div>');
+                                Y.log(Clazz.NAME + "::renderUI - row " + i + " has " + columns.length + " column(s)");
+                                Y.each(
+                                    columns,
+                                    function (col, ii, ia) {
+                                        Y.log(Clazz.NAME + "::renderUI - row " + i + ", col " + ii + ": " + Y.dump(col));
+                                        var unit_class = "yui3-u-";
+                                        if (Y.Lang.isValue(col.percent)) {
+                                            unit_class += _percent_to_unit_map[col.percent];
+                                        }
+                                        else {
+                                            unit_class += "1";
+                                        }
 
-                                    var content_node = Y.IC.Renderer.buildContent( col.content );
+                                        var unit_node = Y.Node.create('<div class="' + unit_class + '"></div>');
 
-                                    unit_node.setContent(content_node);
+                                        var content_node = Y.IC.Renderer.buildContent( col.content );
 
-                                    this.append(unit_node);
-                                },
-                                row_grid_node
-                            );
+                                        unit_node.setContent(content_node);
+
+                                        this.append(unit_node);
+                                    },
+                                    row_grid_node
+                                );
+                            }
 
                             this.append(row_unit_node);
                         },

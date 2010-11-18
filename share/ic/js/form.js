@@ -329,14 +329,14 @@ YUI.add(
 
                 _onFormFailure: function (e) {
                     Y.log('form::_onFormFailure');
-                    Y.log('form::_onFormFailure - e: ' + Y.dump(e));
+                    //Y.log('form::_onFormFailure - e: ' + Y.dump(e));
 
                     this.fire("failed_response", e);
                 },
 
                 _onFailedResponse: function (e) {
                     Y.log('form::_onFailedResponse');
-                    Y.log('form::_onFailedResponse - e: ' + Y.dump(e));
+                    //Y.log('form::_onFailedResponse - e: ' + Y.dump(e));
 
                     if (e.exception) {
                         Y.log("form::_onFormFailure: Exception: " + e.exception);
