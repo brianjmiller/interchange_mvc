@@ -55,7 +55,24 @@ YUI.add(
                     Y.each(
                         this._headers,
                         function (header, i, a) {
-                            this.append('<th>' + header.label + '</th>');
+                            var col_node = Y.Node.create('<th>' + header.label + '</th>');
+                            if (Y.Lang.isValue(header.attributes)) {
+                                //
+                                // TODO: .setAttrs wouldn't work for colspan,
+                                //       see http://yuilibrary.com/projects/yui3/ticket/2529526
+                                //       when it has been fixed this should be able to leverage .setAttrs
+                                //
+                                //col_node.setAttrs(col.attributes);
+                                Y.each(
+                                    header.attributes,
+                                    function (val, attr, o) {
+                                        this.setAttribute(attr, val);
+                                    },
+                                    col_node
+                                );
+                            }
+
+                            this.append(col_node);
                         },
                         thead_row_node
                     );

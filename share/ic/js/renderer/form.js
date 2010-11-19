@@ -47,8 +47,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::renderUI");
                     Y.log(Clazz.NAME + "::renderUI - _content_config: " + Y.dump(this._content_config));
 
-                    // TODO: replace with call to I/O
-                    this._form_node = Y.Node.create('<form action="' + this._action + '"></form>');
+                    this._form_node = Y.Node.create('<form></form>');
 
                     var content_node = Y.IC.Renderer.buildContent(this._content_config, this);
                     this._form_node.setContent(content_node);
@@ -59,7 +58,37 @@ YUI.add(
                 bindUI: function () {
                     Y.log(Clazz.NAME + "::bindUI");
 
-                    // TODO: need to bind to submit buttons
+                    this._form_node.delegate(
+                        "click",
+                        this.submit,
+                        "button.submit",
+                        this
+                    );
+                },
+
+                submit: function (e) {
+                    Y.log(Clazz.NAME + "::submit");
+
+                    e.preventDefault();
+
+                    Y.io(
+                        this._action,
+                        {
+                            // TODO: make this configurable
+                            method: 'POST',
+                            form: {
+                                id: this._form_node.get("id")
+                            },
+                            on: {
+                                success: function () {
+                                    Y.log(Clazz.NAME + "::submit - I/O succeeded");
+                                },
+                                failure: function () {
+                                    Y.log(Clazz.NAME + "::submit - I/O failed");
+                                }
+                            }
+                        }
+                    );
                 }
             },
             {
