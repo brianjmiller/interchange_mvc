@@ -52,6 +52,12 @@ IC::Controller::Route->route(
     action      => 'data',
 );
 
+IC::Controller::Route->route(
+    pattern     => 'manage/widget/tools/common_actions/data',
+    controller  => 'manage/widget/tools/common_actions',
+    action      => 'data',
+);
+
 1;
 
 __END__

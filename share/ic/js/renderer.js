@@ -58,9 +58,11 @@ YUI.add(
 
             if (Y.Lang.isString(config)) {
                 // the simple case, what they passed is our content
+                Y.log("Y.IC.Renderer::buildContent - string");
                 content_node.setContent(config);
             }
             else if (Y.Lang.isArray(config)) {
+                Y.log("Y.IC.Renderer::buildContent - array");
                 Y.each(
                     config,
                     function (v, i, a) {
@@ -71,7 +73,7 @@ YUI.add(
             }
             else {
                 if (Y.Lang.isValue(config.type)) {
-                    Y.log("Y.IC.Renderer::buildContent - content_type: " + config.type);
+                    Y.log("Y.IC.Renderer::buildContent - type: " + config.type);
                     var content_constructor = Y.IC.Renderer.getConstructor(config.type);
 
                     var content = new content_constructor (config.config);

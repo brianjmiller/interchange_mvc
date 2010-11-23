@@ -256,12 +256,12 @@ YUI.add(
                     //Y.log('manage_window::_initToolsPane');
                     var unit = layout.getUnitByPosition(unit_position);
 
-                    this._panes['tools'] = new Y.IC.ManageTools (
+                    this._panes.tools = new Y.IC.ManageTools (
                         {
                             window:      this,
                             layout:      layout,
                             layout_unit: unit,
-                            render_to:   unit.body.childNodes[0]
+                            render:      unit.body.childNodes[0]
                         }
                     );
                 },
@@ -354,7 +354,7 @@ YUI.add(
         // window stuff from any module
         //
         var ManageWindow = function () {
-            var mw = new MW(
+            var mw = new MW (
                 {
                     prefix: '_mw'
                 }

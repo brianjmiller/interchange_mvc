@@ -114,9 +114,9 @@ YUI(
                             "widget",
                             "gallery-accordion-css",
                             "gallery-accordion",
-                            "gallery-storage-lite",
-                            "gallery-form-values",
-                            "ic-form"
+                            "ic-manage-window-tools-common_actions",
+                            "ic-manage-window-tools-quick_access",
+                            "ic-manage-window-tools-your_links"
                         ]
                     },
                     "ic-manage-window-content": {
@@ -131,6 +131,38 @@ YUI(
                             "ic-manage-window-content-layout-h_divided",
                             "ic-manage-window-content-dashboard",
                             "ic-manage-window-content-function"
+                        ]
+                    },
+
+                    //
+                    // widgets to be stuffed into the tools pane
+                    //
+                    "ic-manage-window-tools-base": {
+                        path: "manage/window/tools/base.js",
+                        requires: [ 
+                            "ic-manage-window-tools-base-css",
+                            "widget"
+                        ]
+                    },
+                    "ic-manage-window-tools-common_actions": {
+                        path: "manage/window/tools/common_actions.js",
+                        requires: [ 
+                            "ic-manage-window-tools-common_actions-css",
+                            "ic-manage-window-tools-base"
+                        ]
+                    },
+                    "ic-manage-window-tools-quick_access": {
+                        path: "manage/window/tools/quick_access.js",
+                        requires: [ 
+                            "ic-manage-window-tools-quick_access-css",
+                            "ic-manage-window-tools-base"
+                        ]
+                    },
+                    "ic-manage-window-tools-your_links": {
+                        path: "manage/window/tools/your_links.js",
+                        requires: [ 
+                            "ic-manage-window-tools-your_links-css",
+                            "ic-manage-window-tools-base"
                         ]
                     },
 
@@ -542,6 +574,22 @@ YUI(
                     },
                     "ic-manage-window-tools-css": {
                         path: "manage/window/tools.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-tools-base-css": {
+                        path: "manage/window/tools/base.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-tools-common_actions-css": {
+                        path: "manage/window/tools/common_actions.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-tools-quick_access-css": {
+                        path: "manage/window/tools/quick_access.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-tools-your_links-css": {
+                        path: "manage/window/tools/your_links.css",
                         type: "css"
                     },
                     "ic-manage-window-content-css": {
