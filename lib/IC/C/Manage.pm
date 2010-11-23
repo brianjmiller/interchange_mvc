@@ -60,8 +60,12 @@ sub run_action_method {
             $params->{_subclass},
         );
     };
-    if (my $e = IC::Exception->caught()) {
+    if (my $e = Exception::Class->caught) {
         IC::Exception->throw("Can't run action method: can't load class ($params->{_class}:$params->{_subclass}) - $e (" . $e->trace . ')');
+    }
+
+    unless (defined $class) {
+        IC::Exception->throw("Can't run action method: load_class returned nothing ($params->{_class}:$params->{_subclass})");
     }
 
     my $invokee;
@@ -78,7 +82,7 @@ sub run_action_method {
                 _controller => $self,
             );
         };
-        if (my $e = IC::Exception->caught()) {
+        if (my $e = Exception::Class->caught) {
             IC::Exception->throw("Can't instantiate manage class ($class): $e");
         }
     }
@@ -86,6 +90,10 @@ sub run_action_method {
         # TODO: do we need to restrict privs on class method invocations?
         $invokee = $class;
         $args{_controller} = $self;
+    }
+
+    unless (defined $invokee) {
+        IC::Exception->throw("Can't run action method $_method: Unable to determine invokee ($params->{_class}:$params->{_subclass})"); 
     }
 
     my $result = eval {
