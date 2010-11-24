@@ -231,17 +231,11 @@ YUI.add(
                         var current = new Date();
                         this._last_updated = current;
 
-                        // TODO: this needs to be vastly improved to not recreate all the content each time
-                        var renderer_constructor = Y.IC.Renderer.getConstructor(new_data.renderer_type);
-                        var renderer_config      = new_data.renderer_config;
-
-                        renderer_config._caller = this;
-
-                        var renderer = new renderer_constructor (renderer_config);
-                        renderer.render();
+                        // TODO: this could be improved to not rebuild all the content each time
+                        var content = Y.IC.Renderer.buildContent(new_data);
 
                         this.set("message", "Last Update: " + this._last_updated);
-                        this.get("contentBox").setContent(renderer.get("boundingBox"));
+                        this.get("contentBox").setContent(content);
                     }
                 },
 
