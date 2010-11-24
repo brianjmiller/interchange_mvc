@@ -15,8 +15,8 @@
     along with this program. If not, see: http://www.gnu.org/licenses/ 
 */
 
-//var _yui_gallery_version = 'gallery-2010.09.29-18-36';
-var _yui_gallery_version = 'gallery-2010.10.06-18-55';
+//var _yui_gallery_version = 'gallery-2010.10.06-18-55';
+var _yui_gallery_version = 'gallery-2010.11.17-21-32';
 
 YUI(
     {
@@ -148,7 +148,8 @@ YUI(
                         path: "manage/window/tools/common_actions.js",
                         requires: [ 
                             "ic-manage-window-tools-common_actions-css",
-                            "ic-manage-window-tools-base"
+                            "ic-manage-window-tools-base",
+                            "gallery-button"
                         ]
                     },
                     "ic-manage-window-tools-quick_access": {

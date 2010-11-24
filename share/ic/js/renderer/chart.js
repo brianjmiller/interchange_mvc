@@ -30,27 +30,26 @@ YUI.add(
                     //Y.log(Clazz.NAME + "::initializer - config: " + Y.dump(config));
                     var chart_args = {
                         dataProvider: config.data,
-                        width:        400,
-                        height:       700,
-                        //axes:         {
-                            //order_counts: {
-                                //type:     "numeric",
-                                //position: "left",
-                                //keys:     [ "count" ],
-                                //roundMinAndMax: true,
-                                //roundingUnit: 5
-                            //},
-                            //days: {
-                                //type:     "category",
-                                //position: "bottom",
-                                //keys:     [ "day" ],
-                                //styles:   {
-                                    //label: {
-                                        //rotation: -63
-                                    //}
-                                //}
-                            //}
-                        //}
+                        width:        500,
+                        height:       250,
+                        axes:         {
+                            order_counts: {
+                                type:           "numeric",
+                                position:       "left",
+                                keys:           [ "count" ],
+                                roundMinAndMax: true,
+                                roundingUnit:   5
+                            },
+                            days: {
+                                type:     "category",
+                                position: "bottom",
+                                styles:   {
+                                    label: {
+                                        rotation: -63
+                                    }
+                                }
+                            }
+                        }
                     };
                     //if (config.caption) {
                         //chart_args.caption = config.caption;

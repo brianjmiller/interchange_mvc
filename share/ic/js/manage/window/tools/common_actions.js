@@ -60,6 +60,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::syncUI");
                     this._setInitialContent();
                     this.fire("update_data");
+                    this._initTimer();
                 },
 
                 _setInitialContent: function () {
@@ -185,7 +186,8 @@ YUI.add(
     {
         requires: [
             "ic-manage-window-tools-common_actions-css",
-            "ic-manage-window-tools-base"
+            "ic-manage-window-tools-base",
+            "gallery-button"
         ]
     }
 );
