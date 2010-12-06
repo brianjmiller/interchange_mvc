@@ -65,7 +65,6 @@ sub ui_meta_struct {
     if (ref $self) {
         $struct = $self->_ui_meta_struct;
         $struct->{+__PACKAGE__} = 1;
-        $struct->{_prototype} = $self->_prototype;
 
         my $inner_result = inner();
 
@@ -117,10 +116,22 @@ sub _class_ui_meta_struct {
         $actions->{$action_model->code} = $action->ui_meta_struct;
     }
 
-    $struct->{_class}            = $class->_class;
-    $struct->{model_name}        = $class->_model_display_name;
-    $struct->{model_name_plural} = $class->_model_display_name_plural;
-    $struct->{actions}           = $actions;
+    my $renderer = $struct->{renderer} ||= {};
+    $renderer->{type}   = 'Panel';
+    $renderer->{config} = {
+        data => {
+            unique => {
+                is_default => JSON::true(),
+                content    => {
+                    type   => 'Tile',
+                    config => {
+                        title   => $class->_model_display_name_plural,
+                        actions => $actions,
+                    },
+                },
+            },
+        },
+    };
 
     return $struct;
 }
@@ -137,12 +148,16 @@ sub object_ui_meta_struct {
     my $model_object = $class->_model_object;
 
     my $struct = $class->_object_ui_meta_struct;
-    $struct->{+__PACKAGE__} = 1;
-    $struct->{description}  = $model_object->manage_description;
+    $struct->{+__PACKAGE__}       = 1;
+    $struct->{renderer}->{type}   = 'Tile';
+    $struct->{renderer}->{config} = {};
+
+    my $config = $struct->{renderer}->{config};
+    $config->{title}  = $class->_model_display_name . ': ' . $model_object->manage_description;
 
     my @actions = $class->_record_actions($model_object);
     for my $action (@actions) {
-        $struct->{actions}->{$action} = {};
+        $config->{actions}->{$action} = {};
     }
 
     my $inner_result = inner();
@@ -154,8 +169,8 @@ sub object_ui_meta_struct {
     # post processing will set the label and meta information in
     # the case that they aren't already defined
     #
-    if (defined $struct->{actions}) {
-        push @actions, keys %{ $struct->{actions} };
+    if (defined $config->{actions}) {
+        push @actions, keys %{ $config->{actions} };
     }
 
     my $class_model_obj = $class->get_class_model_obj;
@@ -173,12 +188,12 @@ sub object_ui_meta_struct {
             _controller => $args->{_controller},
         );
 
-        my $action_ref = $struct->{actions}->{ $action_model->code } ||= {};
+        my $action_ref = $config->{actions}->{ $action_model->code } ||= {};
         unless (defined $action_ref->{label}) {
             $action_ref->{label} = $action_model->display_label; 
         }
-        unless (defined $action_ref->{meta}) {
-            $action_ref->{meta} = $action->ui_meta_struct; 
+        unless (defined $action_ref->{renderer}) {
+            $action_ref->{renderer} = $action->ui_meta_struct; 
         }
     }
 

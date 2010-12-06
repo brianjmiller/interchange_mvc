@@ -21,11 +21,17 @@ YUI.add(
         var Clazz = Y.namespace("IC").RendererBase = Y.Base.create(
             "ic_renderer_base",
             Y.Widget,
-            [],
+            [ Y.WidgetChild ],
+            {},
             {
-            },
-            {
-                ATTRS: {}
+                ATTRS: {
+                    advisory_width: {
+                        value: null
+                    },
+                    advisory_height: {
+                        value: null
+                    }
+                }
             }
         );
     },

@@ -21,127 +21,154 @@ YUI.add(
         var Clazz = Y.namespace("IC").RendererPanel = Y.Base.create(
             "ic_renderer_panel",
             Y.IC.RendererBase,
-            [],
+            //
+            // implementing the panel as a parent means that the data
+            // objects that are its children must have Y.WidgetChild
+            // in their definition
+            //
+            [ Y.WidgetParent ],
             {
-                _overlay: null,
-
                 // data store keyed on a unique key that will be used when
                 // needing to build the data, stores configuration information
                 // needed to build the display of the specific data item
                 _data: null,
 
-                // cache of previously built data display elements, keyed on
-                // same unique key, if an item exists in this cache it will
-                // not be built a subsequent time
-                _built_data_cache: null,
+                // each data item as its content is built will be created
+                // as a child of the parent, this gives us a way to determine
+                // the child index of the parent based on the data's unique key
+                _data_to_index_map: null,
+
+                // if we are constructed with an action have it passed through
+                // to the renderer that is used for the default record
+                _default_action: null,
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
                     //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
-                    this._overlay = new Y.Overlay(
-                        {
-                            headerContent: "",
-                            bodyContent:   "Select a control to load content."
-                        }
-                    );
+                    this._data              = config.data;
+                    this._data_to_index_map = {};
 
-                    this._data             = config.data;
-                    this._built_data_cache = {};
+                    if (Y.Lang.isValue( config.action )) {
+                        this._default_action = config.action;
+                        Y.log(Clazz.NAME + "::initializer - _default_action: " + this._default_action);
+                    }
                 },
 
                 destructor: function () {
                     Y.log(Clazz.NAME + "::destructor");
 
-                    this._overlay          = null;
-                    this._data             = null;
-                    this._built_data_cache = null;
+                    this._data              = null;
+                    this._data_to_index_map = null;
                 },
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
-
-                    // HACK: this is a bit of a hack to allow the overlay to flow
-                    //       rather than be positioned absolutely which was causing
-                    //       issues
-                    //
-                    //       perhaps a better approach is just to use WidgetStdMod
-                    //       directly instead of making this an overlay?
-                    this._overlay.get("boundingBox").setStyle("position", "static");
-
-                    this._overlay.render( this.get("contentBox") );
                 },
 
                 bindUI: function () {
                     Y.log(Clazz.NAME + "::bindUI");
 
-                    this.on(
-                        "show_data",
-                        Y.bind( this._onShowData, this )
+                    this.after(
+                        "currentChange",
+                        Y.bind( this._afterCurrentChange, this )
+                    );
+                    this.after(
+                        "selectionChange",
+                        Y.bind( this._afterMySelectionChange, this )
                     );
                 },
 
-                _onShowData: function (e, id) {
-                    Y.log(Clazz.NAME + "::_onShowData");
-                    Y.log(Clazz.NAME + "::_onShowData - id: " + id);
+                syncUI: function () {
+                    Y.log(Clazz.NAME + "::syncUI");
 
-                    if (! this._built_data_cache[id]) {
-                        Y.log(Clazz.NAME + "::_onShowData - dumping data[" + id + "]: " + Y.dump(this._data[id]));
+                    this.set("headerContent", "header");
 
-                        this._buildData(id);
+                    // TODO: only set default when no current already selected
+                    var default_key;
+
+                    var default_found = Y.some(
+                        this._data,
+                        function (v, k, obj) {
+                            if (Y.Lang.isValue(v.is_default) && v.is_default) {
+                                default_key = k;
+                                return true;
+                            }
+                        }
+                    );
+                    if (default_found) {
+                        Y.log(Clazz.NAME + "::syncUI - default_key: " + default_key);
+                        this.set("current", default_key);
                     }
-
-                    this._overlay.set("headerContent", this._built_data_cache[id].header);
-                    this._overlay.set("bodyContent",   this._built_data_cache[id].body);
+                    else {
+                        this.set("bodyContent", "No default data to load.");
+                    }
                 },
 
-                _buildData: function (id) {
-                    Y.log(Clazz.NAME + "::_buildData");
+                _afterMySelectionChange: function (e) {
+                    Y.log(Clazz.NAME + "::_afterMySelectionChange");
+                    Y.log(Clazz.NAME + "::_afterMySelectionChange - e.prevVal: " + e.prevVal);
+                    Y.log(Clazz.NAME + "::_afterMySelectionChange - e.newVal:"  + e.newVal);
+                    if (Y.Lang.isValue(e.prevVal)) {
+                        e.prevVal.hide();
+                    }
+                    if (Y.Lang.isValue(e.newVal)) {
+                        e.newVal.show();
+                    }
+                },
+
+                _afterCurrentChange: function (e) {
+                    Y.log(Clazz.NAME + "::_afterCurrentChange");
+                    Y.log(Clazz.NAME + "::_afterCurrentChange - e.prevVal: " + e.prevVal);
+                    Y.log(Clazz.NAME + "::_afterCurrentChange - e.newVal: " + e.newVal);
+
+                    if (! Y.Lang.isValue(this._data_to_index_map[e.newVal])) {
+                        this._buildDataContent(e.newVal, this._default_action);
+                    }
+
+                    //
+                    // selectChild didn't work here because it sets selected to "1"
+                    // but we need it to be "2", I don't fully understand why but it
+                    // has to do with how multiple parent+child relationships are
+                    // combined
+                    //
+                    //this.selectChild( this._data_to_index_map[e.newVal] );
+                    this.item(this._data_to_index_map[e.newVal]).set("selected", 2);
+                },
+
+                _buildDataContent: function (id, action) {
+                    Y.log(Clazz.NAME + "::_buildDataContent");
+                    Y.log(Clazz.NAME + "::_buildDataContent - id: " + id);
                     var data = this._data[id];
 
-                    if (Y.Lang.isValue(data.actions)) {
-                        var header_node = Y.Node.create('<div></div>');
-                        var body_node   = Y.Node.create('<div></div>');
-
-                        var count = 0;
-                        Y.each(
-                            data.actions,
-                            function (action, k, obj) {
-                                Y.log("action: " + Y.dump(action));
-                                header_node.append(action.label);
-
-                                var action_constructor        = Y.IC.Renderer.getConstructor( action.meta._prototype );
-                                var action_constructor_config = action.meta._prototype_config;
-
-                                var action_body = new action_constructor (action_constructor_config);
-                                action_body.render( body_node );
-
-                                if (count !== 0) {
-                                    action_body.hide();
-                                }
-                                count++;
-                            }
-                        );
-
-                        this._built_data_cache[id] = {
-                            header: header_node,
-                            body:   body_node
-                        };
+                    var settings;
+                    if (Y.Lang.isValue(data.content)) {
+                        settings = data.content;
                     }
-                    else if (Y.Lang.isValue(data.type)) {
-                        this._built_data_cache[id] = {
-                            body: Y.IC.Renderer.buildContent( this._data[id], this )
-                        };
-
-                        if (Y.Lang.isValue( data.label )) {
-                            this._built_data_cache[id].header = data.label;
-                        }
+                    else if (Y.Lang.isValue(data.renderer)) {
+                        settings = data.renderer;
                     }
+
+                    var child_constructor = Y.IC.Renderer.getConstructor(settings.type);
+
+                    if (Y.Lang.isValue(action) && ! Y.Lang.isValue(settings.config.action)) {
+                        settings.config.action = action;
+                    }
+
+                    settings.config.render          = this.get("contentBox");
+                    settings.config.advisory_width  = this.get("width");
+                    settings.config.advisory_height = this.get("height");
+
+                    var new_child = new child_constructor (settings.config);
+
+                    this.add(new_child);
+
+                    this._data_to_index_map[id] = new_child.get("index");
                 }
             },
             {
                 ATTRS: {
-                    align_to: {
+                    current: {
                         value: null
                     }
                 }
@@ -153,7 +180,7 @@ YUI.add(
         requires: [
             "ic-renderer-panel-css",
             "ic-renderer-base",
-            "overlay"
+            "ic-renderer-tile"
         ]
     }
 );

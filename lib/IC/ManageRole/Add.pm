@@ -5,10 +5,6 @@ use Moose::Role;
 with 'IC::ManageRole::Base';
 with 'IC::ManageRole::ObjectSaver';
 
-has '+_prototype' => (
-    default => 'Basic',
-);
-
 around 'ui_meta_struct' => sub {
     #warn "IC::ManageRole::Add::ui_meta_struct";
     my $orig = shift;

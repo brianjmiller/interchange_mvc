@@ -141,11 +141,11 @@ YUI.add(
                                             callback: Y.bind(
                                                 function () {
                                                     this._window.fire(
-                                                        "manage_window:contentPaneShowContent",
+                                                        "contentPaneShowContent",
                                                         config.kind,
                                                         config.clazz,
                                                         config.action,
-                                                        ''
+                                                        config.args
                                                     );
                                                 },
                                                 this

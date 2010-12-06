@@ -17,380 +17,130 @@
 
 YUI.add(
     "ic-manage-window-content",
-    function(Y) {
-        var ManageWindowContent;
+    function (Y) {
+        var _kind_map = {
+            remote_dashboard: Y.IC.ManageWindowContentRemoteDashboard,
 
-        ManageWindowContent = function (config) {
-            ManageWindowContent.superclass.constructor.apply(this, arguments);
+            // TODO: should these just be RemoteObject and RemoteClass?
+            remote_function:  Y.IC.ManageWindowContentRemoteFunction,
+
+            // with sufficient configuration this could be handled by RemoteFunction
+            // ultimately the only thing different is 'object_ui_meta_struct' vs. 'ui_meta_struct'
+            remote_record:    Y.IC.ManageWindowContentRemoteRecord
         };
 
-        Y.mix(
-            ManageWindowContent,
-            {
-                NAME: "ic_manage_window_content",
-                ATTRS: {
-                    description: {
-                        value: null
-                    },
-                    message: {
-                        value: null
-                    },
-                    actions: {
-                        value: null
-                    },
-                    current: {
-                        value: null
-                    },
-                    previous: {
-                        value: null
-                    },
-                    displayed_layout: {
-                        value: null
-                    }
-                }
-            }
-        );
-
-        Y.extend(
-            ManageWindowContent,
+        var Clazz = Y.namespace("IC").ManageWindowContent = Y.Base.create(
+            "ic_manage_window_content",
             Y.Widget,
+            [ Y.WidgetParent ],
             {
-                _header_to:         null,
-                _containing_layout: null,
-
-                //
-                // cache any content that we've built previously to allow for
-                // potential for quick render
-                //
-                // TODO: need to make this a smarter cache with a limit
-                //       on the number that we cache, or some other means
-                //       to determine whether a specific piece should be
-                //       cached
-                //
-                _content_cache: {},
-
-                // the content "container" needs to control a set of layouts
-                // that will display the content that is loaded, each individual
-                // content piece will decide for itself which layout units to
-                // use for display, etc.
-                //
-                // TODO: would be lovely to do lazy instantiation/loading
-                //       of these, but I don't have time right now
-                //
-                _layouts: {
-                    full:      null,
-                    h_divided: null
-                },
+                _cache_key_to_index_map: null,
 
                 initializer: function (config) {
-                    //Y.log("manage_window_content::initializer");
-                    if (config.header_to) {
-                        this._header_to = config.header_to;
-                    }
-                    if (config.containing_layout) {
-                        this._containing_layout = config.containing_layout;
-                    }
+                    Y.log(Clazz.NAME + "::initializer");
 
-                    this.render(config.render_to);
+                    this._cache_key_to_index_map = {};
                 },
 
                 destructor: function () {
-                    Y.log("manage_window_content::destructor");
+                    Y.log(Clazz.NAME + "::destructor");
+                    this._cache_key_to_index_map = null;
                 },
 
                 renderUI: function () {
-                    //Y.log('manage_window_content::renderUI');
-
-                    /*
-                        Currently, the container doesn't add any markup. It will attach widgets,
-                        but that is done elsewhere. If in the future the container holds some 
-                        sort of "widget dock" or iconification of widgets, we would set up that 
-                        chrome here.
-                    */
-                    //this.get("contentBox").setContent("Preparing to load content again...");
-
-                    // TODO: create these using append below when setting up the layouts
-                    this.get("contentBox").setContent(
-                        '<div id="manage_window_content_layout_full_body" style="z-index: 0;"></div>'
-                        + '<div id="manage_window_content_layout_h_divided_top_body" style="z-index: 1;"></div>'
-                        + '<div id="manage_window_content_layout_h_divided_center_body" style="z-index: 1;"></div>'
-                    );
-
-                    // build a grid with three units, one for the description, one for the message, one for the actions
-                    var grid_node = Y.Node.create(
-                        '<div class="yui3-g"><div class="yui3-u-1-3 content_header_description"></div><div class="yui3-u-1-3 content_header_message"></div><div class="yui3-u-1-3 content_header_actions"></div></div>'
-                    );
-                    this._header_to.setContent(grid_node);
+                    Y.log(Clazz.NAME + "::renderUI");
                 },
 
                 bindUI: function () {
-                    //Y.log('manage_window_content::bindUI');
-
-                    //
-                    // set up the layouts that the content will put its info in
-                    // the content layouts are widgets that wrap YUI2 layout manager
-                    // objects
-                    //
-                    // TODO: need to set the parent layout to the outer layout so
-                    //       that resize events are handled properly
-                    //
-                    this._layouts.full      = new Y.IC.ManageWindowContentLayoutFull(
-                        {
-                            parent: this._containing_layout,
-                            width:  this.get("width"),
-                            height: this.get("height")
-                        }
-                    );
-                    this._layouts.h_divided = new Y.IC.ManageWindowContentLayoutHDivided(
-                        {
-                            parent: this._containing_layout,
-                            width:  this.get("width"),
-                            height: this.get("height")
-                        }
-                    );
-
-                    // TODO: can/should these move to syncUI?
-                    this._layouts.full.render(this.get("contentBox"));
-                    this._layouts.h_divided.render(this.get("contentBox"));
-
-                    this.after(
-                        "descriptionChange",
-                        Y.bind( this._afterDescriptionChange, this )
-                    );
-                    this.after(
-                        "messageChange",
-                        Y.bind( this._afterMessageChange, this )
-                    );
-                    this.after(
-                        "actionsChange",
-                        Y.bind( this._afterActionsChange, this )
-                    );
-
-                    // run this "on" so that we can always make sure that the layout
-                    // isn't hidden by something else and not re-shown by our event
-                    this.on(
-                        "displayed_layoutChange",
-                        Y.bind( this._onDisplayedLayoutChange, this )
-                    );
+                    Y.log(Clazz.NAME + "::bindUI");
 
                     this.on(
-                        "manage_window_content:showContent",
+                        "showContent",
                         Y.bind( this._onShowContent, this )
+                    );
+                    this.after(
+                        "selectionChange",
+                        Y.bind( this._afterSelectionChange, this )
                     );
                 },
 
                 syncUI: function () {
-                    //Y.log('manage_window_content::syncUI');
+                    Y.log(Clazz.NAME + "::syncUI");
                 },
 
                 _onShowContent: function (e) {
-                    //Y.log('manage_window_content::_onShowContent');
+                    Y.log(Clazz.NAME + "::_onShowContent");
 
                     var config = e.details[0];
+                    Y.log(Clazz.NAME + "::_onShowContent - config: " + Y.dump(config));
 
-                    var kind         = config['kind'];
-                    var manage_class = config['manage_class'];
-
-                    var _cache_key = kind + '-' + manage_class;
-                    //Y.log('manage_window_content::_onShowContent - _cache_key: ' + _cache_key);
-
-                    var _constructor;
-                    var _constructor_args = {
-                        _pane:   this,
-                        layouts: this._layouts
-                    };
-                    var _fire_event       = 'show';
-                    var _fire_event_args  = {};
+                    var kind       = config.kind;
+                    var kind_class = _kind_map[kind];
+                    Y.log(Clazz.NAME + "::_onShowContent - kind: '" + kind + "'");
+                    Y.log(Clazz.NAME + "::_onShowContent - kind_class: " + kind_class);
 
                     //
                     // need to check for cache of this content already shown, if exists
                     // need to just restore it, if doesn't we need to init the content
-                    // which does whatever it does, and then display it, and need to 
-                    // hide whatever current content might be there
+                    // which does whatever it does, and then display it
                     //
-                    //this.get("contentBox").setContent("Preparing to load content..." + _cache_key);
+                    // the showing/hiding is handled by selecting/deselecting a particular
+                    // child, there is no need to deselect the existing displayed child
+                    // as that happens automagically by selecting a different one
+                    //
+                    var cache_key = kind_class.getCacheKey(config.config)
+                    Y.log(Clazz.NAME + "::_onShowContent - cache_key: " + cache_key);
 
-                    //Y.log("manage_window_content::_onShowContent - checking for cache of content - " + _cache_key);
-                    if (this._content_cache[_cache_key]) {
-                        //Y.log("manage_window_content::_onShowContent - found cache of content - " + _cache_key);
+                    if (! Y.Lang.isValue(this._cache_key_to_index_map[cache_key])) {
+                        Y.log(Clazz.NAME + "::_onShowContent - not cached");
+                        // TODO: should we clone this?
+                        var new_child_config = config.config;
 
-                        // if the last content object shown was this object then they are force reloading
-                        // so cause that to happen now
-                        //Y.log("manage_window_content::_onShowContent - check for force reload - " + _cache_key);
-                        if (this.get("current") === _cache_key) {
-                            //Y.log("manage_window_content::_onShowContent - force reload needed - " + this._content_cache[_cache_key]);
-                            _fire_event = 'force_reload';
-                        }
-                        else {
-                            //Y.log("manage_window_content::_onShowContent - show from cache (no reload) - " + this._content_cache[_cache_key]);
-                        }
+                        new_child_config.width  = this.get("width");
+                        new_child_config.height = this.get("height");
 
-                        if (kind === 'function') {
-                            _fire_event_args = {
-                                base: config['action'],
-                                args: config['addtl_args']
-                            };
-                        }
-                    }
-                    else {
-                        //Y.log("manage_window_content::_onShowContent - content not in cache (need to init) - " + _cache_key);
-                        // TODO: make this a map if we get more of them
-                        if (kind === 'function') {
-                            _constructor = Y.IC.ManageWindowContentFunction.prototype.constructor;
+                        var new_child = new kind_class (new_child_config);
 
-                            _constructor_args.manage_class   = manage_class;
-
-                            _fire_event_args = {
-                                base: config['action'],
-                                args: config['addtl_args']
-                            };
-                        }
-                        else if (kind === 'local') {
-                            _constructor = Y.IC.ManageWindowContentDashboard.prototype.constructor;
-                        }
-                        else {
-                            this.get("contentBox").setContent("Unable to load content: unrecognized kind '" + kind + "'");
-                        }
-
-                        this._content_cache[_cache_key] = new _constructor (_constructor_args);
+                        this.add(new_child);
+                        this._cache_key_to_index_map[cache_key] = new_child.get("index");
                     }
 
-                    //Y.log("content_cache[" + _cache_key + "]: " + this._content_cache[_cache_key]);
+                    var index = this._cache_key_to_index_map[cache_key];
 
-                    if (this.get("current") !== _cache_key) {
-                        // TODO: rather than hiding/showing the layouts we should remove/append them from the DOM
-                        // hide the layouts and let the content turn back on the one it wants
-                        Y.each(
-                            this._layouts,
-                            function (v, k, obj) {
-                                v.hide();
-                            }
-                        );
-                        if (this._content_cache[this.get("current")]) {
-                            this._content_cache[this.get("current")].fire('hide');
-                        }
+                    if (Y.Lang.isValue( config.config.action )) {
+                        Y.log(Clazz.NAME + "::_onShowContent - setting action on child: " + config.config.action);
+                        var child = this.item(index);
+                        child.set("action", config.config.action);
                     }
 
-                    if (_fire_event !== "force_reload") {
-                        this.set("description", "Loading Content...");
-                    }
+                    this.selectChild(index);
 
-                    //Y.log("firing event - " + _fire_event + " - " + _cache_key + " - " + this._content_cache[_cache_key]);
-                    this._content_cache[_cache_key].fire(
-                        _fire_event,
-                        _fire_event_args
-                    );
-
-                    if (this.get("current") !== _cache_key) {
-                        //Y.log("manage_window_content::_onShowContent - setting previous to " + this.get("current"));
-                        this.set("previous", this.get("current"));
-
-                        //Y.log("manage_window_content::_onShowContent - setting current to " + _cache_key);
-                        this.set("current", _cache_key);
-                    }
-                    else {
-                        //Y.log("manage_window_content::_onShowContent - not updating current/previous");
-                    }
+                    Y.log(Clazz.NAME + "::_onShowContent - done");
                 },
 
-                _afterDescriptionChange: function (e) {
-                    //Y.log('manage_window_content::_afterDescriptionChange');
-
-                    if (this._header_to) {
-                        this._header_to.one("div.content_header_description").setContent(this.get("description"));
+                _afterSelectionChange: function (e) {
+                    Y.log(Clazz.NAME + "::_afterSelectionChange");
+                    if (Y.Lang.isValue(e.prevVal)) {
+                        e.prevVal.hide();
                     }
-                },
-
-                _afterMessageChange: function (e) {
-                    //Y.log('manage_window_content::_afterMessageChange');
-
-                    if (this._header_to) {
-                        this._header_to.one("div.content_header_message").setContent(this.get("message"));
-                    }
-                },
-
-                _afterActionsChange: function (e) {
-                    //Y.log('manage_window_content::_afterActionsChange');
-
-                    if (this._header_to) {
-                        var action_node = this._header_to.one("div.content_header_actions");
-                        // TODO: rather than clearing the content this needs to be smarter
-                        //       about building different parts of it
-                        action_node.setContent("");
-
-                        var buttons = [];
-
-                        Y.each(
-                            this.get("actions"),
-                            function (v, i, a) {
-                                var add_class;
-                                if (Y.Lang.isValue(v.add_class)) {
-                                    add_class = v.add_class;
-                                }
-
-                                var button = new Y.Button (v);
-                                //var button = new Y.ButtonToggle (v);
-                                button.get("contentBox").addClass(add_class);
-
-                                this.push(button);
-                            },
-                            buttons
-                        );
-
-                        if (buttons.length) {
-                            var button_group = new Y.ButtonGroup (
-                                {
-                                    label:          "",
-                                    children:       buttons,
-                                    render:         action_node,
-
-                                    // TODO: this needs to be on a group basis
-                                    //alwaysSelected: true
-                                }
-                            );
-                            // TODO: need a way to determine which is selected
-                            //button_group.selectChild(0);
-                        }
-                    }
-                },
-
-                _onDisplayedLayoutChange: function (e) {
-                    //Y.log('manage_window_content::_onDisplayedLayoutChange');
-                    //Y.log('manage_window_content::_onDisplayedLayoutChange - displayed_layout: ' + e.newVal);
-
-                    Y.each(
-                        this._layouts,
-                        function (v, k, o) {
-                            //Y.log('manage_window_content::_onDisplayedLayoutChange - each: ' + k + ', ' + v);
-                            if (k !== e.newVal) {
-                                v.hide();
-                            }
-                        },
-                        this
-                    );
-
-                    if (! this._layouts[ e.newVal ].get("visible")) {
-                        this._layouts[ e.newVal ].show();
+                    if (Y.Lang.isValue(e.newVal)) {
+                        e.newVal.show();
                     }
                 }
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.ManageWindowContent = ManageWindowContent;
     },
     "@VERSION@",
     {
         requires: [
             "ic-manage-window-content-css",
             "widget",
-            "gallery-button-group",
-            "gallery-button",
-            "gallery-button-toggle",
-            "yui2-layout",
-            "yui2-resize",
-            "ic-manage-window-content-dashboard",
-            "ic-manage-window-content-function"
+            "widget-parent",
+            "ic-manage-window-content-remote-dashboard",
+            "ic-manage-window-content-remote-function"
         ]
     }
 );

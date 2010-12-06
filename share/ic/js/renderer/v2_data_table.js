@@ -16,104 +16,53 @@
 */
 
 YUI.add(
-    "ic-manage-window-content-function-action-list-table",
+    "ic-renderer-v2_data_table",
     function(Y) {
-        var ManageWindowContentFunctionActionListTable;
-
-        ManageWindowContentFunctionActionListTable = function (config) {
-            ManageWindowContentFunctionActionListTable.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            ManageWindowContentFunctionActionListTable,
+        var Clazz = Y.namespace("IC").RendererV2DataTable = Y.Base.create(
+            "ic_renderer_v2_data_table",
+            Y.IC.RendererBase,
+            [],
             {
-                NAME: "ic_manage_content_function_action_list_table",
-                ATTRS: {
-                    // TODO: break this out into separate properties
-                    meta: {
-                        value: null
-                    },
-                    addtl_args: {
-                        value: null
-                    },
+                _data_source:         null,
+                _wrapped_data_source: null,
+                _data_table:          null,
+                _data_table_config:   null,
+                _data_pager:          null,
+                _has_data:            false,
 
-                    // the number of rows we feel will fit
-                    max_rows: {
-                        value: null
-                    }
-                }
-            }
-        );
-
-        Y.extend(
-            ManageWindowContentFunctionActionListTable,
-            Y.Base,
-            {
-                _caller:          null,
-                _data_source:     null,
-                _data_table:      null,
-                _data_pager:      null,
-                _has_data:        false,
-                _prev_req:        "",
-                _already_sending: false,
+                _prev_req:            "",
+                _already_sending:     false,
 
                 initializer: function (config) {
-                    Y.log("manage_window_content_function_action_list_table::initializer");
-                    //Y.log("manage_window_content_function_action_list_table::initializer: " + Y.dump(config));
-                    this._caller = config._caller;
+                    Y.log(Clazz.NAME + "::initializer");
+                    Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
-                    this._initMaxRows();
-
-                    this._initDataSource();
-
-                    var data_table_config = this._initDataTableConfig();
-
-                    this._initDataTableFormatters();
-                    this._initDataTableSort(data_table_config);
-
-                    if (this.get("meta").paging_provider !== "none") {
-                        this._initDataTablePager(data_table_config);
-                    }
-
-                    this._initDataTable(config.render_to, data_table_config);
-
-                    this._data_table.handleDataReturnPayload = Y.bind(
-                        this._handleDataReturnPayload, this
-                    );
-
-                    this._bindEvents();
-                },
-
-                _initDataSource: function () {
-                    Y.log("manage_window_content_function_action_list_table::_initDataSource");
-                   
                     //
                     // set up a YUI3 data source that we will then wrap in a YUI2 
                     // compatibility container to pass to the YUI2 data table, 
                     // presumably when YUI3 gets its own datatable we can remove
                     // this layer 
                     //
+                    var source = this.get("data_url");
+                    Y.log(Clazz.NAME + "::initializer - source: " + source);
 
-                    var source = this._caller.getBaseURL() + "/data?_format=json";
-                    Y.log("manage_window_content_function_action_list_table::_initDataSource - source: " + source);
+                    // whether we're dealing with an unfiltered list or
+                    // a search is determined by the presence of addtl_args
+                    // TODO: need to improve our handling here
+                    var addtl_args = this.get("addtl_args");
+                    if (Y.Lang.isValue(addtl_args) && addtl_args !== "") {
+                        source += "&filter_mode=search&" + addtl_args;
+                    }
 
-                    var source_fields = this.get("meta").data_source_fields;
-
-                    if (this.get("meta").data_table_include_options) {
+                    var source_fields = this.get("data_source_fields");
+                    if (this.get("data_table_include_options")) {
                         source_fields.push(
                             {
                                 key:    "_options",
                             }
                         );
                     }
-
-                    // whether we're dealing with an unfiltered list or
-                    // a search is determined by the presence of addtl_args
-                    // TODO: need to improve our handling here
-                    var addtl_args = this.get("addtl_args");
-                    if (addtl_args) {
-                        source += "&filter_mode=search&" + addtl_args;
-                    }
+                    Y.log(Clazz.NAME + "::initializer - source_fields: " + Y.dump(source_fields));
 
                     this._data_source = new Y.DataSource.IO (
                         {
@@ -145,107 +94,63 @@ YUI.add(
                             source: this._data_source
                         }
                     );
-                },
 
-                _initDataTableConfig: function () {
-                    Y.log("manage_window_content_function_action_list_table::_initDataTableConfig");
-                    var config = {
-                        draggableColumns: true
-                        //initialLoad: false
+                    this._initMaxRows();
+                    Y.log(Clazz.NAME + "::renderUI - max_rows: " + this.get("max_rows"));
+
+                    var data_table_config = this._data_table_config = {
+                        draggableColumns: false
                     };
-
-                    if (this.get("meta").paging_provider === "server") {
-                        Y.log("manage_window_content_function_action_list_table::_initDataTableConfig - setting dynamic data to true");
-                        config.dynamicData     = true;
-                        config.initialRequest  = "&startIndex=0&results=" + this.get("max_rows");
-                        config.generateRequest = Y.bind( this.dynamicDataGenerateRequest, this );
+                    if (this.get("paging_provider") === "server") {
+                        Y.log(Clazz.NAME + "::renderUI - setting dynamic data to true");
+                        data_table_config.dynamicData     = true;
+                        data_table_config.initialRequest  = "&startIndex=0&results=" + this.get("max_rows");
+                        data_table_config.generateRequest = Y.bind( this.dynamicDataGenerateRequest, this );
                     }
-
-                    return config;
-                },
-
-                _initDataTableFormatters: function () {
-                },
-
-                _initDataTableSort: function (data_table_config) {
-                    Y.log("manage_window_content_function_action_list_table::_initDataTableSort");
-
-                    if (Y.Lang.isValue(this.get("meta").data_table_initial_sort)) {
+                    if (Y.Lang.isValue(this.get("data_table_initial_sort"))) {
                         // make a copy, as config may change the values
                         data_table_config.sortedBy = Y.merge(
-                            this.get("meta").data_table_initial_sort
+                            this.get("data_table_initial_sort")
                         );
                     }
-                },
 
-                _initDataTablePager: function (data_table_config) {
-                    Y.log("manage_window_content_function_action_list_table::_initDataTablePager");
-                    Y.log("manage_window_content_function_action_list_table::_initDataTablePager - setting up pager: " + this.get("meta").paging_provider);
+                    if (Y.Lang.isValue(this.get("paging_provider")) && this.get("paging_provider") !== "none") {
+                        this._data_pager = new Y.YUI2.widget.Paginator (
+                            {
+                                alwaysVisible: false,
+                                rowsPerPage:   this.get("max_rows"),
+                                pageLinks:     20
+                            }
+                        );
 
-                    this._data_pager = new Y.YUI2.widget.Paginator (
-                        {
-                            alwaysVisible: false,
-                            rowsPerPage:   this.get("max_rows")
-                        }
-                    );
-
-                    data_table_config.paginator = this._data_pager;
-                },
-
-                _initDataTable: function (render_to, data_table_config) {
-                    Y.log("manage_window_content_function_action_list_table::_initDataTable");
-
-                    var column_defs = this.get("meta").data_table_column_defs;
-
-                    this._data_table = new Y.YUI2.widget.DataTable(
-                        render_to,
-                        column_defs,
-                        this._wrapped_data_source,
-                        data_table_config
-                    );
-                },
-
-                _initMaxRows: function (container) {
-                    Y.log("manage_window_content_function_action_list_table::_initMaxRows");
-
-                    if (! container) {
-                        // using the layout from the function we can look at its units
-                        // to determine a height
-
-                        // TODO: we clearly need a better way to determine this
-                        //       if for no other reason than we may be in the top
-                        //       of the h_divided layout
-                        container = this._caller._caller._containing_pane._layouts.full._layout.getUnitByPosition("center");
+                        data_table_config.paginator = this._data_pager;
                     }
 
-                    var unit_height = container.get("height");
-                    // TODO: do we need to include scroll bar height? can we even determine that?
-                    var magic       = 58; // table header (24) + 1 paginator (34) height
-                    magic += 21;
-                    var total_recs  = this.get("meta").total_objects;
-                    var row_height  = 14;
+                    Y.log(Clazz.NAME + "::initializer - done");
+                },
 
-                    // how many rows will fit in my unit?
-                    var num_rows = Math.floor(
-                        (unit_height - magic) / row_height
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._table = null;
+                },
+
+                renderUI: function () {
+                    Y.log(Clazz.NAME + "::renderUI");
+
+                    this._data_table = new Y.YUI2.widget.DataTable (
+                        Y.Node.getDOMNode(this.get("contentBox")),
+                        this.get("data_table_column_defs"),
+                        this._wrapped_data_source,
+                        this._data_table_config
                     );
-                    //Y.log("manage_window_content_function_action_list_table::getMaxNumRows - calculatd rows: " + num_rows);
-
-                    this.set("max_rows", Math.min(num_rows, total_recs));
-
-                    return;
                 },
 
-                _handleDataReturnPayload: function (oRequest, oResponse, oPayload) {
-                    Y.log("manage_window_content_function_action_list_table::_handleDataReturnPayload");
-
-                    oPayload.totalRecords = oResponse.meta.totalRecords;
-
-                    return oPayload;
-                },
-
-                _bindEvents: function () {
-                    Y.log("manage_window_content_function_action_list_table::_bindEvents");
+                bindUI: function () {
+                    Y.log(Clazz.NAME + "::bindUI");
+                    this._data_table.handleDataReturnPayload = Y.bind(
+                        this._handleDataReturnPayload, this
+                    );
                     this.on(
                         "updateData",
                         Y.bind(this._onUpdateData, this)
@@ -267,8 +172,8 @@ YUI.add(
                         "rowSelectEvent", 
                         Y.bind(this._onRowSelectEvent, this)
                     );
-                    if (this.get("meta").data_table_include_options) {
-                        //Y.log("manage_window_content_function_action_list_table::_bindEvents - installing context menu handling");
+                    if (this.get("data_table_include_options")) {
+                        //Y.log(Clazz.NAME + "::_bindEvents - installing context menu handling");
                         Y.delegate(
                             "contextmenu",
                             function (e) {
@@ -353,11 +258,46 @@ YUI.add(
                     }
                 },
 
+                syncUI: function () {
+                    Y.log(Clazz.NAME + "::syncUI");
+                    //this.fire("updateData");
+                },
+
+                _initMaxRows: function () {
+                    Y.log(Clazz.NAME + "::_initMaxRows");
+
+                    // TODO: do we need to include scroll bar height? can we even determine that?
+                    //var unit_height = this.get("contentBox").get("height");
+                    var unit_height = this.get("height");
+                    Y.log(Clazz.NAME + "::_initMaxRows - unit_height: " + unit_height);
+
+                    var magic       = 39; // table header (17) + 1 paginator (22) height
+                    //magic          += 21;
+                    var total_recs  = this.get("total_objects");
+                    var row_height  = 17;
+
+                    // how many rows will fit in my unit?
+                    var num_rows = Math.floor(
+                        (unit_height - magic) / row_height
+                    );
+                    //Y.log(Clazz.NAME + "::getMaxNumRows - calculatd rows: " + num_rows);
+
+                    this.set("max_rows", Math.min(num_rows, total_recs));
+                },
+
+                _handleDataReturnPayload: function (oRequest, oResponse, oPayload) {
+                    Y.log(Clazz.NAME + "::_handleDataReturnPayload");
+
+                    oPayload.totalRecords = oResponse.meta.totalRecords;
+
+                    return oPayload;
+                },
+
                 _onUpdateData: function (e) {
-                    Y.log("manage_window_content_function_action_list_table::_onUpdateData");
+                    Y.log(Clazz.NAME + "::_onUpdateData");
 
                     var req = null
-                    if (this.get("meta").paging_provider === "server") {
+                    if (this.get("paging_provider") === "server") {
                         req = this.dynamicDataGenerateRequest(this._data_table.getState(), this._data_table);
 
                         // TODO: need to set state properties, minimally the start index
@@ -379,51 +319,20 @@ YUI.add(
                 },
 
                 _onRowSelectEvent: function (e) {
-                    Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent");
+                    Y.log(Clazz.NAME + "::_onRowSelectEvent");
                     var record = this._data_table.getRecord( this._data_table.getLastSelectedRecord() );
 
-                    var _record_cache_key = this._caller.getRecordCacheKey(record);
-                    //Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent - _record_cache_key: " + _record_cache_key);
-
-                    var action_code;
-                    if (this._caller._record_cache[_record_cache_key]) {
-                        action_code = this._caller._record_cache[_record_cache_key].get("action");
-                        //Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent - cached action: " + action_code);
-                    }
-                    else {
-                        var selected_option;
-                        Y.some(
-                            record.getData("_options"),
-                            function (option, i, a) {
-                                if (Y.Lang.isValue(option.is_default) && option.is_default) {
-                                    selected_option = option;
-                                    return true;
-                                }
-                            }
-                        );
-                        if (! selected_option) {
-                            selected_option = record.getData("_options")[0];
-                        }
-
-                        action_code = selected_option.code;
-                    }
-
-                    //Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent - action_code: " + action_code);
-                    //Y.log("manage_window_content_function_action_list_table::_onRowSelectEvent - record: " + record);
-                    this._caller.setCurrentRecordWithAction(
-                        record,
-                        action_code
-                    );
-                },
-
-                updateAddtlArgs: function (addtl_args) {
-                    Y.log("manage_window_content_function_action_list_table::updateAddtlArgs");
+                    this.fire("record_selected", record);
+                    //this._caller.setCurrentRecordWithAction(
+                        //record,
+                        //action_code
+                    //);
                 },
 
                 // this is a wrapper method to make afterHostMethod used by plugins happy
                 // it just passes through to what we'd like to call directly
                 dynamicDataGenerateRequest: function (oState, oSelf) {
-                    Y.log("manage_window_content_function_action_list_table::dynamicDataGenerateRequest");
+                    Y.log(Clazz.NAME + "::dynamicDataGenerateRequest");
                     return this._dynamicDataGenerateRequest(oState, oSelf);
                 },
 
@@ -431,9 +340,9 @@ YUI.add(
                 // do various things before/after the request generation by plugins, etc. and 
                 // it is installed as a bounded function in the data table itself
                 _dynamicDataGenerateRequest: function (oState, oSelf) {
-                    Y.log("manage_window_content_function_action_list_table::_dynamicDataGenerateRequest");
-                    Y.log("manage_window_content_function_action_list_table::_dynamicDataGenerateRequest - oState: " + Y.dump(oState));
-                    Y.log("manage_window_content_function_action_list_table::_dynamicDataGenerateRequest - oSelf: " + oSelf);
+                    Y.log(Clazz.NAME + "::_dynamicDataGenerateRequest");
+                    Y.log(Clazz.NAME + "::_dynamicDataGenerateRequest - oState: " + Y.dump(oState));
+                    Y.log(Clazz.NAME + "::_dynamicDataGenerateRequest - oSelf: " + oSelf);
 
                     var sort, dir, startIndex, results;
 
@@ -446,26 +355,52 @@ YUI.add(
                     results    = (oState.pagination) ? oState.pagination.rowsPerPage : null;
 
                     var result = "&results=" + results + "&startIndex="  + startIndex + "&sort=" + sort + "&dir=" + dir;
-                    Y.log("manage_window_content_function_action_list_table::_dynamicDataGenerateRequest - result: " + result);
+                    Y.log(Clazz.NAME + "::_dynamicDataGenerateRequest - result: " + result);
 
                     this._tmp_dynamic_data_request = result;
 
                     return result;
                 }
+            },
+            {
+                ATTRS: {
+                    data_url: {
+                        value: null
+                    },
+                    addtl_args: {
+                        value: null
+                    },
+                    data_source_fields: {
+                        value: null
+                    },
+                    data_table_column_defs: {
+                        value: null
+                    },
+                    data_table_initial_sort: {
+                        value: null
+                    },
+                    data_table_include_options: {
+                        value: null
+                    },
+                    paging_provider: {
+                        value: null
+                    },
+                    max_rows: {
+                        value: null
+                    },
+                    total_objects: {
+                        value: null
+                    }
+                }
             }
         );
-        
-        Y.namespace("IC");
-        Y.IC.ManageWindowContentFunctionActionListTable = ManageWindowContentFunctionActionListTable;
     },
     "@VERSION@",
     {
         requires: [
-            "ic-manage-window-content-function-action-list-table-css",
-            "base",
-            "ic-util",
+            "ic-renderer-v2_data_table-css",
+            "ic-renderer-base",
             "datasource",
-            "pluginhost",
             "overlay",
             "gallery-datasource-wrapper",
             "yui2-paginator",

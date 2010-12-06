@@ -39,8 +39,8 @@ YUI.add(
                 // units in which to load the "panes"
                 //
                 _layouts: {
-                    'outer':  null,
-                    'left':   null
+                    outer: null,
+                    left:  null
                 },
 
                 //
@@ -51,9 +51,9 @@ YUI.add(
                 // of more interesting content
                 //
                 _panes: {
-                    'menu':    null,
-                    'tools':   null,
-                    'content': null,
+                    menu:    null,
+                    tools:   null,
+                    content: null,
                 },
 
                 initializer: function (config) {
@@ -61,7 +61,7 @@ YUI.add(
 
                     //Y.log("manage_window::initializer: setting contentPaneShowContent event handler");
                     this.on(
-                        "manage_window:contentPaneShowContent",
+                        "contentPaneShowContent",
                         Y.bind(this._onContentPaneShowContent, this)
                     );
 
@@ -90,7 +90,7 @@ YUI.add(
                     this._layouts = null;
 
                     // detach any event handlers ...
-                    this.detach("manage_window:contentPaneShowContent");
+                    this.detach("contentPaneShowContent");
                 },
 
                 _initOuterLayout: function () {
@@ -123,7 +123,7 @@ YUI.add(
                                 },
                                 {
                                     position: "center",
-                                    header:   "I'm the header, thanks",
+                                    //header:   "I'm the header, thanks",
                                     body:     "manage_window_content_pane",
                                     zIndex:   0,
                                     scroll:   false
@@ -145,21 +145,20 @@ YUI.add(
                     this._layouts['outer'].removeListener('render');
 
                     this._initLeftLayout(
-                        this._layouts['outer'],   // parent layout
-                        'left',                   // unit
-                        'left'                    // new layout key
+                        this._layouts.outer,   // parent layout
+                        'left',                // unit
+                        'left'                 // new layout key
                     );
 
                     this._initContentPane(
-                        this._layouts['outer'],
+                        this._layouts.outer,
                         'center'
                     );
 
                     //Y.log('window::_onOuterLayoutRender should fire *initial* show content event');
                     this.fire(
-                        "manage_window:contentPaneShowContent",
-                        'local',
-                        'dashboard'
+                        "contentPaneShowContent",
+                        'remote_dashboard'
                     );
                 },
 
@@ -211,16 +210,16 @@ YUI.add(
 
                 _onLeftLayoutRender: function () {
                     //Y.log('manage_window::_onLeftLayoutRender');
-                    this._layouts['left'].removeListener('render');
+                    this._layouts.left.removeListener('render');
 
                     this._initMenuPane(
-                        this._layouts['left'],  // layout
-                        'top',                  // unit
-                        'vertical'              // menu orientation
+                        this._layouts.left,  // layout
+                        'top',               // unit
+                        'vertical'           // menu orientation
                     );
                     this._initToolsPane(
-                        this._layouts['left'],  // layout
-                        'center'                // unit
+                        this._layouts.left,  // layout
+                        'center'             // unit
                     );
                 },
 
@@ -228,7 +227,7 @@ YUI.add(
                     //Y.log('manage_window::_initMenuPane');
                     var menu_unit = layout.getUnitByPosition(unit_position).body.childNodes[0];
 
-                    this._panes['menu'] = new Y.IC.ManageMenu(
+                    this._panes.menu = new Y.IC.ManageMenu(
                         {
                             orientation: orientation,
                             render_to:   menu_unit
@@ -246,7 +245,7 @@ YUI.add(
                     Y.delegate(
                         "mousedown",
                         this._onSubmenuMousedown,
-                        this._panes['menu'].get("boundingBox"),
+                        this._panes.menu.get("boundingBox"),
                         'em.yui3-menuitem-content, a.yui3-menuitem-content',
                         this
                     );
@@ -267,7 +266,7 @@ YUI.add(
                 },
 
                 _initContentPane: function (layout, unit_position) {
-                    //Y.log('manage_window::_initContentPane');
+                    Y.log('manage_window::_initContentPane');
                     var unit = layout.getUnitByPosition(unit_position);
 
                     //
@@ -277,28 +276,29 @@ YUI.add(
                     //
                     var unit_body_region = Y.one(unit.body).get("region");
 
-                    this._panes['content'] = new Y.IC.ManageWindowContent (
+                    this._panes.content = new Y.IC.ManageWindowContent (
                         {
-                            header_to: Y.one(unit.header.childNodes[0]),
-                            render_to: unit.body.childNodes[0],
-                            width:     unit_body_region.width,
-                            height:    unit_body_region.height,
+                            //header_to: Y.one(unit.header.childNodes[0]),
+                            //render_to: unit.body.childNodes[0],
+                            render: unit.body.childNodes[0],
+                            width:  unit_body_region.width,
+                            height: unit_body_region.height,
 
-                            // we pass this so that it may be passed through
-                            // to any layouts the pane uses so that the resize
-                            // events get wired up automatically
-                            containing_layout: layout
+                            //// we pass this so that it may be passed through
+                            //// to any layouts the pane uses so that the resize
+                            //// events get wired up automatically
+                            //containing_layout: layout
                         }
                     );
                 },
 
                 _onSubmenuMousedown: function (e) {
-                    //Y.log('manage_window::_onSubmenuMousedown: ' + e.target.get("id") );
+                    Y.log('manage_window::_onSubmenuMousedown: ' + e.target.get("id") );
 
                     // hide the submenu after a selection -- there
                     // seems to be a selection bug in here - should
                     // also clear the selection...
-                    menu_nav_node = this._panes['menu'].get("boundingBox");
+                    var menu_nav_node = this._panes.menu.get("boundingBox");
 
                     var menuNav = menu_nav_node.menuNav;
                     menuNav._hideAllSubmenus(menu_nav_node);
@@ -314,35 +314,43 @@ YUI.add(
                     );
 
                     // .split doesn't return "the rest" with a limit, so use a capturing regex
-                    var matches      = e.target.get("id").match("^([^-]+)-([^-]+)-([^-]+)(?:-([^-]+)(?:-(.+))?)?$");
-                    var kind         = matches[2] || '';
-                    var manage_class = matches[3] || '';
-                    var action       = matches[4] || '';
-                    var addtl_args   = matches[5] || '';
+                    var matches = e.target.get("id").match("^manage_menu_item-([^-]+)(?:-([^-]+)-([^-]+)(?:-([^-]+)(?:-(.+))?)?)?$");
 
-                    // TODO: add passing of configuration information
-                    this.fire(
-                        "manage_window:contentPaneShowContent",
-                        kind,
-                        manage_class,
-                        action,
-                        addtl_args
-                    );
+                    if (Y.Lang.isArray(matches)) {
+                        Y.log("manage_window::_onSubmenuMousedown - matches: " + Y.dump(matches));
+                        var kind       = matches[1];
+                        var clazz      = matches[2] || "";
+                        var action     = matches[3] || "";
+                        var addtl_args = matches[4] || "";
+
+                        // TODO: add passing of configuration information
+                        this.fire(
+                            "contentPaneShowContent",
+                            kind,
+                            clazz,
+                            action,
+                            addtl_args
+                        );
+                    }
+                    else {
+                        Y.log("manage_window::_onSubmenuMousedown - Unable to parse submenu id: " + e.target.get("id"));
+                    }
                 },
 
-                _onContentPaneShowContent: function (e, kind, manage_class, action, addtl_args) {
-                    //Y.log('manage_window::_onContentPaneShowContent');
+                _onContentPaneShowContent: function (e, kind, clazz, action, addtl_args) {
+                    Y.log('manage_window::_onContentPaneShowContent');
                     var config = {
-                        kind:         kind,
-                        manage_class: manage_class,
-                        action:       action,
-                        addtl_args:   addtl_args
+                        kind:   kind,
+                        config: {
+                            clazz:      clazz,
+                            action:     action,
+                            addtl_args: addtl_args
+                        }
                     };
-                    //Y.log( 'manage_window::_onContentPaneShowContent: config: ' + Y.dump(config));
+                    Y.log('manage_window::_onContentPaneShowContent: config: ' + Y.dump(config));
 
-                    // TODO: add passing of configuration information
-                    this._panes['content'].fire(
-                        "manage_window_content:showContent",
+                    this._panes.content.fire(
+                        "showContent",
                         config
                     );
                 }

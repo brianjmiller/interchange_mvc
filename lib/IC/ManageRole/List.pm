@@ -4,13 +4,17 @@ use Moose::Role;
 
 with 'IC::ManageRole::Base';
 
-has '+_prototype' => (
-    default => 'List',
-);
-
 has '_data_struct' => (
     is      => 'rw',
     default => sub { {} },
+);
+has '_subclass' => (
+    is      => 'rw',
+    default => 'List',
+);
+has '_data_method' => (
+    is      => 'rw',
+    default => 'data',
 );
 
 has '_cols' => (
@@ -42,6 +46,7 @@ has '_cols' => (
         ],
     },
 );
+
 has '_paging_provider' => (
     is      => 'ro',
     default => 'client',
@@ -54,29 +59,47 @@ around 'ui_meta_struct' => sub {
 
     my $struct = $self->_ui_meta_struct;
 
-    $struct->{+__PACKAGE__}    = 1;
-    $struct->{label}           = 'List';
-    $struct->{_prototype}      = 'List';
-    $struct->{paging_provider} = $self->_paging_provider;
-    $struct->{total_objects}   = $self->_model_class_mgr->get_objects_count;
+    $struct->{+__PACKAGE__}       = 1;
+    $struct->{label}              = 'List';
+    $struct->{renderer}->{type}   = 'RecordSet';
+    $struct->{renderer}->{config} = {};
+
+    my $config = $struct->{renderer}->{config}->{data_table} = {
+        data_url => $self->_controller->url(
+            controller => 'manage',
+            action     => 'run_action_method',
+            parameters => {
+                _class    => $self->_class,
+                _subclass => $self->_subclass,
+                _method   => $self->_data_method,
+            },
+            get => {
+                _format => 'json',
+            },
+            secure     => 1,
+        ),
+    };
+
+    $config->{paging_provider} = $self->_paging_provider;
+    $config->{total_objects}   = $self->_model_class_mgr->get_objects_count;
 
     #
     # add this column to the data_table_column_defs but hide it,
     # so it will be available with the row record set but won't be
     # available in the to be shown columns
     #
-    push @{ $struct->{data_table_column_defs} }, {
-        key    => '_pk_settings',
-        label  => 'PK Settings',
+    push @{ $config->{data_table_column_defs} }, {
+        key    => '_record_config',
+        label  => 'Record Config',
         hidden => 1,
     };
-    push @{ $struct->{data_source_fields} }, {
-        key    => '_pk_settings',
+    push @{ $config->{data_source_fields} }, {
+        key    => '_record_config',
     };
 
     my $_cols = $self->_cols;
     for my $col (@$_cols) {
-        push @{ $struct->{data_source_fields} }, {
+        push @{ $config->{data_source_fields} }, {
             key    => $col->{method},
             parser => $col->{parser},
         };
@@ -90,20 +113,20 @@ around 'ui_meta_struct' => sub {
             $def_list_key = 'data_table_hidden_column_defs';
         }
 
-        push @{ $struct->{$def_list_key} }, {
+        push @{ $config->{$def_list_key} }, {
             key       => $col->{method},
             label     => $col->{display},
 
-            # assume the best
-            sortable  => (defined $col->{sortable} ? $col->{sortable} : 1),
-            resizable => (defined $col->{resizable} ? $col->{resizable} : 1),
+            sortable  => (defined $col->{sortable} ? $col->{sortable} : 1)
+                ? JSON::true() : JSON::false(),
+            resizeable => (defined $col->{resizable} ? $col->{resizable} : 0)
+                ? JSON::true() : JSON::false(),
 
             (defined $col->{formatter} ? (formatter => $col->{formatter}) : ()),
-            #class_opt => $col->{class_opt},
         };
 
         if (defined $col->{is_default_sort} and $col->{is_default_sort}) {
-            $struct->{data_table_initial_sort} = {
+            $config->{data_table_initial_sort} = {
                 key => $col->{method},
                 dir => $col->{default_sort_direction} || 'asc',
             };
@@ -111,10 +134,10 @@ around 'ui_meta_struct' => sub {
     }
 
     # TODO: this should be determined based off of column definitions
-    $struct->{data_table_is_filterable} = 1;
+    $config->{data_table_is_filterable} = 1;
 
     # TODO: provide a way to deactivate the options handling
-    $struct->{data_table_include_options} = 1;
+    $config->{data_table_include_options} = 1;
 
     return $self->$orig(@_);
 };
@@ -246,7 +269,7 @@ sub data {
         $get_objects_config->{offset} = $params->{startIndex} || 0;
         $struct->{startIndex}         = $get_objects_config->{offset};
 
-        $get_objects_config->{limit}  = $params->{results};
+        $get_objects_config->{limit}  = $params->{results} || 25;
         $struct->{results}            = $get_objects_config->{limit};
         $struct->{sort}               = $sort_key;
         $struct->{dir}                = $add_desc ? 'desc' : 'asc';
@@ -264,16 +287,28 @@ sub data {
         map { $_->code => $_->display_label } @$action_models,
     );
 
-    my @pk_fields = @{ $_model_class->meta->primary_key_columns };
     for my $object (@{ $_model_class_mgr->get_objects( %$get_objects_config ) }) {
-        my $details = {};
-
-        for my $pk_field (@pk_fields) {
-            push @{ $details->{_pk_settings} }, { 
-                field => '_pk_' . $pk_field->name, 
-                value => $object->$pk_field . '',
-            };
-        }
+        my $details = {
+            _record_config => {
+                unique   => $object->as_hashkey . '',
+                label    => $object->manage_description . '',
+                meta_url => $self->_controller->url(
+                    controller => 'manage',
+                    action     => 'run_action_method',
+                    parameters => {
+                        _class    => $self->_class,
+                        _method   => 'object_ui_meta_struct',
+                    },
+                    get => {
+                        _format => 'json',
+                        map {
+                            '_pk_' . $_->name => $object->$_ . ''
+                        } @{ $_model_class->meta->primary_key_columns }
+                    },
+                    secure     => 1,
+                ),
+            },
+        };
 
         for my $col (@{ $self->_cols }) {
             my $method = $col->{method};

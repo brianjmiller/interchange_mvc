@@ -124,13 +124,11 @@ YUI(
                         requires: [ 
                             "ic-manage-window-content-css", 
                             "widget",
-                            "gallery-button-group",
-                            "gallery-button",
-                            "gallery-button-toggle",
-                            "ic-manage-window-content-layout-full",
-                            "ic-manage-window-content-layout-h_divided",
-                            "ic-manage-window-content-dashboard",
-                            "ic-manage-window-content-function"
+                            "widget-parent",
+                            "ic-manage-window-content-remote",
+                            "ic-manage-window-content-remote-dashboard",
+                            "ic-manage-window-content-remote-function",
+                            "ic-manage-window-content-remote-record"
                         ]
                     },
 
@@ -168,110 +166,44 @@ YUI(
                     },
 
                     //
-                    // layout widgets to be used for displaying content in the content pane
-                    //
-                    "ic-manage-window-content-layout-base": {
-                        path: "manage/window/content/layout/base.js",
-                        requires: [ 
-                            "ic-manage-window-content-layout-base-css",
-                            "widget"
-                        ]
-                    },
-                    "ic-manage-window-content-layout-full": {
-                        path: "manage/window/content/layout/full.js",
-                        requires: [ 
-                            "ic-manage-window-content-layout-full-css",
-                            "ic-manage-window-content-layout-base",
-                            "yui2-layout",
-                            "yui2-resize"
-                        ]
-                    },
-                    "ic-manage-window-content-layout-h_divided": {
-                        path: "manage/window/content/layout/h_divided.js",
-                        requires: [ 
-                            "ic-manage-window-content-layout-h_divided-css",
-                            "ic-manage-window-content-layout-base",
-                            "yui2-layout",
-                            "yui2-resize"
-                        ]
-                    },
-
-                    //
                     // kinds of content widgets that will load their info into the layouts
                     // provided by the content pane
                     //
                     "ic-manage-window-content-base": {
                         path: "manage/window/content/base.js",
                         requires: [ 
-                            "base-base"
-                        ]
-                    },
-                    "ic-manage-window-content-dashboard": {
-                        path: "manage/window/content/dashboard.js",
-                        requires: [ 
-                            "ic-manage-window-content-dashboard-css",
-                            "ic-manage-window-content-base"
-                        ]
-                    },
-                    "ic-manage-window-content-function": {
-                        path: "manage/window/content/function.js",
-                        requires: [ 
-                            "ic-manage-window-content-base",
-                            "ic-manage-window-content-function-action-basic",
-                            "ic-manage-window-content-function-action-list"
-                        ]
-                    },
-
-                    "ic-manage-window-content-function-action-base": {
-                        path: "manage/window/content/function/action/base.js",
-                        requires: [ 
-                            "base-base"
-                        ]
-                    },
-                    "ic-manage-window-content-function-action-basic": {
-                        path: "manage/window/content/function/action/basic.js",
-                        requires: [ 
-                            "ic-manage-window-content-function-action-base"
-                        ]
-                    },
-                    "ic-manage-window-content-function-action-list": {
-                        path: "manage/window/content/function/action/list.js",
-                        requires: [ 
-                            "ic-manage-window-content-function-action-list-css",
-                            "ic-manage-window-content-function-action-base",
-                            "ic-plugin-tablefilter",
-                            "node",
-                            "querystring",
-                            "ic-manage-window-content-function-action-list-table",
-                            "ic-manage-window-content-function-action-list-record"
-                        ]
-                    },
-
-                    "ic-manage-window-content-function-action-list-table": {
-                        path: "manage/window/content/function/action/list/table.js",
-                        requires: [ 
-                            "ic-manage-window-content-function-action-list-table-css",
-                            "base",
-                            "ic-util",
-                            "datasource",
-                            "pluginhost",
-                            "overlay",
-                            "gallery-datasource-wrapper",
-                            "yui2-paginator",
-                            "yui2-datatable",
-                            "querystring"
-                        ]
-                    },
-                    "ic-manage-window-content-function-action-list-record": {
-                        path: "manage/window/content/function/action/list/record.js",
-                        requires: [ 
-                            "ic-manage-window-content-function-action-list-record-css",
                             "widget",
-                            "querystring",
-                            "gallery-button-group",
-                            "gallery-button",
-                            "gallery-button-toggle",
+                            "widget-child"
+                        ]
+                    },
+                    "ic-manage-window-content-remote": {
+                        path:     "manage/window/content/remote.js",
+                        requires: [ 
+                            //"ic-manage-window-content-remote-css",
+                            "ic-manage-window-content-base",
                             "ic-renderer"
+                        ]
+                    },
+                    "ic-manage-window-content-remote-dashboard": {
+                        path:     "manage/window/content/remote/dashboard.js",
+                        requires: [ 
+                            "ic-manage-window-content-remote-dashboard-css",
+                            "ic-manage-window-content-remote"
+                        ]
+                    },
+                    "ic-manage-window-content-remote-function": {
+                        path:     "manage/window/content/remote/function.js",
+                        requires: [ 
+                            "ic-manage-window-content-remote-function-css",
+                            "ic-manage-window-content-remote"
+                        ]
+                    },
+                    "ic-manage-window-content-remote-record": {
+                        path:     "manage/window/content/remote/record.js",
+                        requires: [ 
+                            "ic-manage-window-content-remote-record-css",
+                            "ic-manage-window-content-remote",
+                            "querystring"
                         ]
                     },
 
@@ -361,6 +293,7 @@ YUI(
                         path: "renderer.js",
                         requires: [
                             "ic-renderer-basic",
+                            "ic-renderer-tile",
                             "ic-renderer-panel",
                             "ic-renderer-grid",
                             "ic-renderer-form",
@@ -369,10 +302,12 @@ YUI(
                             "ic-renderer-tree",
                             "ic-renderer-table",
                             "ic-renderer-data_table",
+                            "ic-renderer-v2_data_table",
                             "ic-renderer-treeble",
                             "ic-renderer-keyvalue",
                             "ic-renderer-chart",
-                            "ic-renderer-panel_loader"
+                            "ic-renderer-panel_loader",
+                            "ic-renderer-record_set"
                         ],
                     },
 
@@ -390,12 +325,18 @@ YUI(
                             "ic-renderer-base"
                         ]
                     },
+                    "ic-renderer-tile": {
+                        path: "renderer/tile.js",
+                        requires: [
+                            "ic-renderer-tile-css",
+                            "ic-renderer-base"
+                        ]
+                    },
                     "ic-renderer-panel": {
                         path: "renderer/panel.js",
                         requires: [
                             "ic-renderer-panel-css",
-                            "ic-renderer-base",
-                            "overlay"
+                            "ic-renderer-base"
                         ]
                     },
                     "ic-renderer-grid": {
@@ -455,6 +396,20 @@ YUI(
                             "gallery-simple-datatable-css"
                         ]
                     },
+                    "ic-renderer-v2_data_table": {
+                        path: "renderer/v2_data_table.js",
+                        requires: [
+                            "ic-renderer-v2_data_table-css",
+                            "ic-renderer-base",
+                            "datasource",
+                            "overlay",
+                            "gallery-datasource-wrapper",
+                            "yui2-paginator",
+                            "yui2-datatable",
+                            "yui2-dragdrop",
+                            "querystring"
+                        ]
+                    },
                     "ic-renderer-treeble": {
                         path: "renderer/treeble.js",
                         requires: [
@@ -484,6 +439,14 @@ YUI(
                         path: "renderer/panel_loader.js",
                         requires: [
                             "ic-renderer-panel_loader-css",
+                            "ic-renderer-base",
+                            "ic-renderer-panel"
+                        ]
+                    },
+                    "ic-renderer-record_set": {
+                        path: "renderer/record_set.js",
+                        requires: [
+                            "ic-renderer-record_set-css",
                             "ic-renderer-base"
                         ]
                     },
@@ -515,6 +478,10 @@ YUI(
 
                     "ic-renderer-basic-css": {
                         path: "renderer/basic.css",
+                        type: "css"
+                    },
+                    "ic-renderer-tile-css": {
+                        path: "renderer/tile.css",
                         type: "css"
                     },
                     "ic-renderer-panel-css": {
@@ -549,6 +516,10 @@ YUI(
                         path: "renderer/data_table.css",
                         type: "css"
                     },
+                    "ic-renderer-v2_data_table-css": {
+                        path: "renderer/v2_data_table.css",
+                        type: "css"
+                    },
                     "ic-renderer-treeble-css": {
                         path: "renderer/treeble.css",
                         type: "css"
@@ -563,6 +534,10 @@ YUI(
                     },
                     "ic-renderer-panel_loader-css": {
                         path: "renderer/panel_loader.css",
+                        type: "css"
+                    },
+                    "ic-renderer-record_set-css": {
+                        path: "renderer/record_set.css",
                         type: "css"
                     },
                     "ic-manage-window-css": {
@@ -597,6 +572,20 @@ YUI(
                         path: "manage/window/content.css",
                         type: "css"
                     },
+
+                    "ic-manage-window-content-remote-dashboard-css": {
+                        path: "manage/window/content/remote/dashboard.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-content-remote-function-css": {
+                        path: "manage/window/content/remote/function.css",
+                        type: "css"
+                    },
+                    "ic-manage-window-content-remote-record-css": {
+                        path: "manage/window/content/remote/record.css",
+                        type: "css"
+                    },
+
                     "ic-manage-window-content-dashboard-css": {
                         path: "manage/window/content/dashboard.css",
                         type: "css"
@@ -660,36 +649,9 @@ YUI(
     //       when it is enabled, it has been filed here: 
     //       http://github.com/jafl/yui3-gallery/issues#issue/1
     //
-    //"console",
+    "console",
     "ic-manage-window",
     function (Y) {
-        // TODO: if these are restored they should move into our util class
-        /*
-        Y.Node.prototype.ancestors = function (selector) {
-            var ancestors = [];
-            var ancestor = this.ancestor(selector);
-            while (1) {
-                if (ancestor) {
-                    ancestors.push(ancestor);
-                    ancestor = ancestor.ancestor('ul.yui3-treeviewlite>li');
-                }
-                else {
-                    break;
-                }
-            }
-            return Y.all(ancestors);
-        };
-        */
-
-        /*
-        Y.Node.prototype.scrollToTop = function (container) {
-            var container_top = container.get('region').top;
-            var node_top = this.get('region').top;
-            var scroll_top = node_top - container_top;
-            Y.Node.getDOMNode(container).scrollTop = scroll_top;
-        };
-        */
-
         Y.on(
             "domready",
             function () {

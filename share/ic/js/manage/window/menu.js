@@ -41,7 +41,7 @@ YUI.add(
 
                 DASHBOARD_MENUITEM_TEMPLATE: '\
 <li class="yui3-menuitem">\
-  <em id="manage_menu_item-local-dashboard"\
+  <em id="manage_menu_item-remote_dashboard"\
     class="yui3-menuitem-content">Dashboard</em>\
 </li>',
                 SUBMENU_LABEL_TEMPLATE: '\
@@ -56,7 +56,7 @@ YUI.add(
     <ul>',
                 SUBMENU_ITEM_TEMPLATE: '\
 <li class="yui3-menuitem">\
-  <a id="manage_menu_item-function-{manage_class}-{action}"\
+  <a id="manage_menu_item-remote_function-{clazz}-{action}"\
      class="yui3-menuitem-content">{display_label}</a>\
 </li>',
 // it would be preferred to use custom properties. ex:
@@ -82,11 +82,6 @@ YUI.add(
                         // TODO: rename this to window
                         "/manage/widget/menu/config",
                         {
-                            // need this to be synchronous so that the render call happens immediately
-                            // so that the menu is rendered above the container... if we could break
-                            // the render cycle out, possibly into an event callback then this could
-                            // become async
-                            sync: false,
                             on: {
                                 success: function (txnId, response) {
                                     try {
@@ -148,7 +143,7 @@ YUI.add(
                         return_html = Y.substitute(
                             this.SUBMENU_ITEM_TEMPLATE,
                             {
-                                manage_class:  node.action.baseclass,
+                                clazz:         node.action.baseclass,
                                 action:        node.action.subclass,
                                 display_label: node.label
                             }

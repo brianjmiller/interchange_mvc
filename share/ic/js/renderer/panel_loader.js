@@ -52,6 +52,7 @@ YUI.add(
                     // tree and treeble are two examples
                     //
                     var loader_constructor = Y.IC.Renderer.getConstructor(config.loader_config.type);
+                    config.loader_config.config.bodyContent = "Select a control to load content.";
 
                     this._loader = new loader_constructor (config.loader_config.config);
                     this._loader.render();
@@ -108,7 +109,7 @@ YUI.add(
                     var matches     = this.get("id").match("^([^-]+)-(?:.+)$");
                     var selected_id = matches[1];
 
-                    me._panel.fire("show_data", selected_id);
+                    me._panel.set("current", selected_id);
                 }
             },
             {

@@ -21,6 +21,7 @@ YUI.add(
         Y.namespace("IC.Renderer");
         var _constructor_map = {
             Basic:       Y.IC.RendererBasic.prototype.constructor,
+            Tile:        Y.IC.RendererTile.prototype.constructor,
             Panel:       Y.IC.RendererPanel.prototype.constructor,
             Grid:        Y.IC.RendererGrid.prototype.constructor,
             Form:        Y.IC.RendererForm.prototype.constructor,
@@ -29,10 +30,12 @@ YUI.add(
             Tree:        Y.IC.RendererTree.prototype.constructor,
             Table:       Y.IC.RendererTable.prototype.constructor,
             DataTable:   Y.IC.RendererDataTable.prototype.constructor,
+            V2DataTable: Y.IC.RendererV2DataTable.prototype.constructor,
             Treeble:     Y.IC.RendererTreeble.prototype.constructor,
             KeyValue:    Y.IC.RendererKeyValue.prototype.constructor,
             Chart:       Y.IC.RendererChart.prototype.constructor,
-            PanelLoader: Y.IC.RendererPanelLoader.prototype.constructor
+            PanelLoader: Y.IC.RendererPanelLoader.prototype.constructor,
+            RecordSet:   Y.IC.RendererRecordSet.prototype.constructor
         };
 
         var _control_template_map = {
@@ -93,8 +96,8 @@ YUI.add(
                             }
 
                             var control_node = Y.Node.create(_control_template_map[control.type]);
-                            if (Y.Lang.isValue(control.class)) {
-                                control_node.addClass(control.class);
+                            if (Y.Lang.isValue(control.clazz)) {
+                                control_node.addClass(control.clazz);
                             }
 
                             if (Y.Lang.isValue(control.name)) {
@@ -143,10 +146,12 @@ YUI.add(
             "ic-renderer-tree",
             "ic-renderer-table",
             "ic-renderer-data_table",
+            "ic-renderer-v2_data_table",
             "ic-renderer-treeble",
             "ic-renderer-keyvalue",
             "ic-renderer-chart",
-            "ic-renderer-panel_loader"
+            "ic-renderer-panel_loader",
+            "ic-renderer-record_set"
         ]
     }
 );

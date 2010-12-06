@@ -5,22 +5,6 @@ use Moose::Role;
 with 'IC::ManageRole::Base';
 with 'IC::ManageRole::ObjectSaver';
 
-has '+_prototype' => (
-    default => 'FormWrapper',
-);
-
-around 'ui_meta_struct' => sub {
-    #warn "IC::ManageRole::Properties::ui_meta_struct";
-    my $orig = shift;
-    my $self = shift;
-
-    my $struct = $self->_ui_meta_struct;
-
-    $struct->{+__PACKAGE__} = 1;
-
-    return $self->$orig(@_);
-};
-
 no Moose;
 
 1;

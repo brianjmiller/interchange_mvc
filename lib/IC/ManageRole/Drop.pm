@@ -5,131 +5,39 @@ use Moose::Role;
 requires '_ui_meta_struct';
 
 with 'IC::ManageRole::Base';
+with 'IC::ManageRole::ObjectAdjuster::Simple';
 
-has '+_prototype' => (
-    default => 'FormWrapper',
+has '+_object_adjust_simple_label' => (
+    default => 'Drop',
+);
+has '+_object_adjust_simple_subclass' => (
+    default => 'Drop',
 );
 
-has '_response_struct' => (
-    is      => 'rw',
-    default => sub { {} },
-);
+no Moose;
 
-around 'ui_meta_struct' => sub {
-    #warn "IC::ManageRole::Drop::ui_meta_struct";
-    my $orig = shift;
+sub _simple_object_adjust_ui_meta_struct {
+    #warn "IC::ManageRole::Drop::_simple_object_adjust_ui_meta_struct";
     my $self = shift;
+    my $struct = shift;
+    my $object = shift;
 
-    my $params = $self->_controller->parameters;
+    $struct->{+__PACKAGE__} = 1;
 
-    my $object = $self->_model_object;
-    unless (defined $object) {
-        $object = $self->object_from_pk_params($params);
-        $self->_model_object($object);
-    }
+    $struct->{config}->{caption} = 'Are you sure you wish to delete the following ' . $self->_model_display_name . ': <span class="emphasized">' . $object->manage_description . '</span>';
 
-    my $_model_class = $self->_model_class;
-    my @pk_fields    = @{ $_model_class->meta->primary_key_columns };
-
-    my $_pk_settings;
-    for my $pk_field (@pk_fields) {
-        push @$_pk_settings, { 
-            field => '_pk_' . $pk_field->name, 
-            value => $object->$pk_field . '',
-        };
-    }
-
-    my $struct = $self->_ui_meta_struct;
-    $struct->{+__PACKAGE__}      = 1;
-
-    $struct->{_prototype_config} = {
-        caption     => 'Are you sure you wish to delete the following ' . $self->_model_display_name . ': <span class="emphasized">' . $object->manage_description . '</span>',
-        form_config => {
-            pk     => $_pk_settings,
-            action => $self->_controller->url(
-                controller => 'manage',
-                action     => 'run_action_method',
-                parameters => {
-                    _class    => $self->_class,
-                    _subclass => 'Drop',
-                    _method   => 'save',
-                },
-                secure     => 1,
-            ),
-        },
-    };
-
-    return $self->$orig(@_);
+    return;
 };
 
-sub save {
-    warn "IC::ManageRole::Drop::save";
+sub _save_object_adjust {
+    #warn "IC::ManageRole::Drop::_save_object_adjust";
     my $self = shift;
-    my $args = { @_ };
+    my $object = shift;
 
-    my $params = $self->_controller->parameters;
-    $params->{_format} ||= 'json';
-
-    my $struct = $self->_response_struct;
-
-    my $response_value = eval {
-        my $result;
-
-        my $object = $self->_model_object;
-        unless (defined $object) {
-            $object = $self->object_from_pk_params($params);
-            $self->_model_object($object);
-        }
-
-        my $db = $object->db;
-        $db->begin_work;
-
-        eval {
-            #
-            # TODO: add back in pre drop hook?
-            #
-
-            $object->delete;
-
-            #
-            # TODO: add back in post drop hook?
-            #
-        };
-        my $e;
-        if ($e = Exception::Class->caught) {
-           eval { $db->rollback; };
-
-           ref $e && $e->can('rethrow') ? $e->rethrow : die $e;
-        }
-
-        $db->commit;
-
-        return $result;
-    };
-    if ($@) {
-        $struct->{code}      = 0;
-        $struct->{exception} = "$@";
-    }
-    else {
-        $struct->{code}  = 1;
-        $struct->{value} = $response_value;
-    }
-
-    my $formatted = $struct;
-    if (! defined $args->{format}) {
-        return $formatted;
-    }
-    elsif ($args->{format} eq 'json') {
-        return JSON::encode_json($formatted);
-    }
-    else {
-        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
-    }
+    $object->delete;
 
     return;
 }
-
-no Moose;
 
 1;
 

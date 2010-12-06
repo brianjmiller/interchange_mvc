@@ -1,0 +1,22 @@
+div.yui3-ic_renderer_v2_data_table-hidden {
+    display: none;
+}
+
+div.yui3-ic_renderer_v2_data_table div.yui-dt-paginator {
+    margin: 0px;
+}
+div.yui-dt div.yui-dt-paginator:first-child {
+    display: none;
+}
+div.context-menu div.yui3-widget-hd {
+    background-color: white;
+    font-weight: bold;
+    padding-left: 4px;
+    border-top: 1px solid #808080;
+    border-left: 1px solid #808080;
+    border-right: 1px solid #808080;
+}
+
+div.context-menu div.yui3-widget-bd div.yui3-menu-content {
+    border-top: none;
+}

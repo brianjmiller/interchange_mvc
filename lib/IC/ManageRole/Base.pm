@@ -4,11 +4,6 @@ use Moose::Role;
 
 requires '_ui_meta_struct';
 
-has '_prototype' => (
-    is      => 'ro',
-    default => 'Base',
-);
-
 no Moose;
 
 1;

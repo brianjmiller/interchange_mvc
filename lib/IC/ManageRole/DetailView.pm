@@ -8,10 +8,6 @@ requires '_ui_meta_struct';
 
 with 'IC::ManageRole::Base';
 
-has '+_prototype' => (
-    default => 'Tabs',
-);
-
 has '_use_default_summary_tab' => (
     is      => 'ro',
     default => 1,
@@ -61,8 +57,9 @@ around 'ui_meta_struct' => sub {
 
     my $struct = $self->_ui_meta_struct;
     $struct->{+__PACKAGE__} = 1;
+    $struct->{type}         = 'Tabs';
 
-    my $tabs = $struct->{_prototype_config}->{data} = [];
+    my $tabs = $struct->{config}->{data} = [];
 
     if ($self->_use_default_summary_tab) {
         my $field_kv_defs = $self->_fields_to_kv_defs(
@@ -342,11 +339,13 @@ sub _file_resource_config {
     };
 
     $panel_data->{ $node->id } = {
-        type   => 'Grid',
-        config => [],
+        content => {
+            type   => 'Grid',
+            config => [],
+        },
     };
 
-    my $grid_rows = $panel_data->{ $node->id }->{config};
+    my $grid_rows = $panel_data->{ $node->id }->{content}->{config};
 
     my $file = $node->get_file_for_object( $object );
 
