@@ -83,10 +83,59 @@ YUI.add(
                         this.onRecordSelected,
                         this
                     );
+                    this._tab_view.after(
+                        "tab:render",
+                        this._afterTabRender,
+                        this
+                    );
+                    this._tab_view.after(
+                        "removeChild",
+                        this._afterTabRemoved,
+                        this
+                    );
+                    this._tab_view.get("contentBox").delegate(
+                        "click",
+                        this._onCloseTabClick,
+                        ".yui3-ic_renderer_record_set_tab-close",
+                        this
+                    );
                 },
 
                 syncUI: function () {
                     Y.log(Clazz.NAME + "::syncUI");
+                },
+
+                _afterTabRender: function (e) {
+                    Y.log(Clazz.NAME + "::_afterTabRender");
+
+                    var bb = e.target.get("boundingBox");
+                    Y.log(Clazz.NAME + "::_afterTabRender - target bounding box: " + bb);
+
+                    bb.addClass("yui3-ic_renderer_record_set_tab-closeable");
+                    bb.append('<a class="yui3-ic_renderer_record_set_tab-close" title="Close">x</a>');
+                },
+
+                _afterTabRemoved: function (e) {
+                    Y.log(Clazz.NAME + "::_afterTabRemoved");
+
+                    // uncache the record
+                    Y.some(
+                        this._record_cache,
+                        function (cache, k, o) {
+                            if (e.child.get("id") === cache.tab.get("id")) {
+                                Y.log(Clazz.NAME + "::_afterTabRemoved - removing from cache: " + e.child.get("id"));
+                                delete o[k];
+                            }
+                        }
+                    );
+                },
+
+                _onCloseTabClick: function (e) {
+                    Y.log(Clazz.NAME + "::_onCloseTabClick");
+                    e.stopPropagation();
+
+                    var tab = Y.Widget.getByNode(e.target);
+                    tab.remove();
                 },
 
                 onRecordSelected: function (e) {

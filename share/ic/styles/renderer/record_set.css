@@ -1,3 +1,26 @@
 div.yui3-ic_renderer_record_set-hidden {
     display: none;
 }
+
+div.yui3-ic_renderer_record_set-content li.yui3-ic_renderer_record_set_tab-closeable {
+    position: relative;
+}
+
+div.yui3-ic_renderer_record_set-content li.yui3-ic_renderer_record_set_tab-closeable .yui3-tab-label {
+    padding-right: 1.0em;
+}
+
+.yui3-ic_renderer_record_set_tab-close {
+    font-size: 85%;
+    position: absolute;
+    right: 0.05em;
+    top: -0.12em;
+}
+
+div.yui3-ic_renderer_record_set-content li.yui3-tab-selected .yui3-ic_renderer_record_set_tab-close {
+    font-size: 85%;
+    color: #FFFFFF;
+    position: absolute;
+    right: 0.05em;
+    top: -0.12em;
+}
