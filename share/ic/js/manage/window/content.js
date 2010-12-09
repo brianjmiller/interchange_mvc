@@ -109,8 +109,8 @@ YUI.add(
 
                     if (Y.Lang.isValue( config.config.action )) {
                         Y.log(Clazz.NAME + "::_onShowContent - setting action on child: " + config.config.action);
-                        var child = this.item(index);
-                        child.set("action", config.config.action);
+
+                        this.item(index).setAction(config.config.action);
                     }
 
                     this.selectChild(index);

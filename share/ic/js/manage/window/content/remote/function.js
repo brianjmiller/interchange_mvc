@@ -29,6 +29,36 @@ YUI.add(
 
                     this._data_url = "/manage/" + config.clazz + "/ui_meta_struct?_format=json";
                     Y.log(Clazz.NAME + "::initializer - _data_url: " + this._data_url);
+                },
+
+                setAction: function (action) {
+                    Y.log(Clazz.NAME + "::setAction");
+                    Y.log(Clazz.NAME + "::setAction - action: " + action);
+
+                    Clazz.superclass.setAction.apply(this, arguments);
+
+                    //
+                    // we can be sure that the implementation of data gotten for a record 
+                    // is consistent such that we can do inspection of the results to set 
+                    // the action appropriately
+                    //
+                    // for now at least _built_data will always be a panel with 1 data item 
+                    // which is always selected
+                    //
+                    if (this._built_data) {
+                        Y.log(Clazz.NAME + "::setAction - _built_data: " + this._built_data);
+
+                        var current = this._built_data.get("current");
+                        Y.log(Clazz.NAME + "::setAction - current: " + current);
+
+                        var selection = this._built_data.item(
+                            // TODO: improve this, even if need to expose real interface
+                            this._built_data._data_to_index_map[this._built_data.get("current")]
+                        );
+                        Y.log(Clazz.NAME + "::setAction - selection: " + selection);
+
+                        selection.set("action", action);
+                    }
                 }
             },
             {

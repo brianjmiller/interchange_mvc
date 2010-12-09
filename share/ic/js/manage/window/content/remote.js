@@ -23,9 +23,17 @@ YUI.add(
             Y.IC.ManageWindowContentBase,
             [],
             {
-                _data_url:     null,
-                _last_updated: null,
-                _last_tried:   null,
+                _data_url:         null,
+                _last_updated:     null,
+                _last_tried:       null,
+
+                _built_data:       null,
+
+                // action here is just a default suggestion that gets provided to
+                // the underlying content, since we don't control the underlying
+                // content's actions if that content already exists this will get
+                // ignored
+                _suggested_action: null,
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
@@ -34,9 +42,13 @@ YUI.add(
                 destructor: function () {
                     Y.log(Clazz.NAME + "::destructor");
 
-                    this._data_url     = null;
-                    this._last_updated = null;
-                    this._last_tried   = null;
+                    this._built_data.destroy();
+                    this._built_data       = null;
+
+                    this._data_url         = null;
+                    this._last_updated     = null;
+                    this._last_tried       = null;
+                    this._suggested_action = null;
                 },
 
                 renderUI: function () {
@@ -65,6 +77,13 @@ YUI.add(
                     Clazz.superclass.syncUI.apply(this, arguments);
 
                     this.fire("update_data");
+                },
+
+                setAction: function (action) {
+                    Y.log(Clazz.NAME + "::setAction");
+                    Y.log(Clazz.NAME + "::setAction - action: " + action);
+
+                    this._suggested_action = action;
                 },
 
                 _onUpdateData: function () {
@@ -123,12 +142,12 @@ YUI.add(
                             new_data.renderer.config.width  = region.width;
                             new_data.renderer.config.height = region.height;
 
-                            var my_action = this.get("action");
+                            var my_action = this._suggested_action;
                             if (Y.Lang.isValue(my_action) && my_action !== "") {
                                 new_data.renderer.config.action = my_action;
                             }
-                    
-                            var renderer = new constructor (new_data.renderer.config);
+
+                            this._built_data = new constructor (new_data.renderer.config);
                         }
                         else {
                             var content = Y.IC.Renderer.buildContent(new_data);
@@ -151,15 +170,7 @@ YUI.add(
                 }
             },
             {
-                ATTRS: {
-                    // action here is just a default suggestion that gets provided to
-                    // the underlying content, since we don't control the underlying
-                    // content's actions if that content already exists this will get
-                    // ignored
-                    action: {
-                        value: null
-                    }
-                },
+                ATTRS: {},
 
                 getCacheKey: function (config) {
                     Y.log(Clazz.NAME + "::getCacheKey");
