@@ -21,6 +21,65 @@
 YUI.add(
     "ic-renderer-treeble",
     function(Y) {
+        var formatters = {
+            text: function (elCell, oRecord, oColumn, oData) {
+                Y.log("ic-renderer-treeeble formatter::text");
+                if (Y.Lang.isObject(oData)) {
+                    var text_input = Y.Node.create('<input type="text" name="' + oData.name + '" />');
+                    if (Y.Lang.isValue(oData.value)) {
+                        text_input.set("value", oData.value);
+                    }
+
+                    elCell.setContent(text_input);
+
+                    // TODO: delegation would be better for this
+                    text_input.on(
+                        "valueChange",
+                        function (e) {
+                            Y.log("ic-renderer-treeeble formatter::text - valueChange handler - this: " + this);
+                            Y.log("ic-renderer-treeeble formatter::text - valueChange handler - oData:  " + Y.dump(oData));
+                            oData.value = e.newVal;
+                            Y.log("ic-renderer-treeeble formatter::text - valueChange handler - oData:  " + Y.dump(oData));
+                        },
+                        this
+                    );
+                }
+                else {
+                    elCell.setContent("");
+                }
+            },
+            checkbox: function (elCell, oRecord, oColumn, oData) {
+                Y.log("ic-renderer-treeeble formatter::checkbox");
+                if (Y.Lang.isObject(oData)) {
+                    var checkbox = Y.Node.create('<input type="checkbox" name="' + oData.name + '" />');
+                    if (Y.Lang.isValue(oData.checked) && oData.checked) {
+                        checkbox.set("checked", "checked");
+                    }
+
+                    elCell.setContent(checkbox);
+
+                    // TODO: delegation would be better for this
+                    checkbox.on(
+                        "click",
+                        function (e) {
+                            Y.log("ic-renderer-treeeble formatter::checkbox - click handler - this: " + this);
+                            Y.log("ic-renderer-treeeble formatter::checkbox - click handler - oData:  " + Y.dump(oData));
+                            if (oData.checked) {
+                                oData.checked = false;
+                            }
+                            else {
+                                oData.checked = true;
+                            }
+                        },
+                        this
+                    );
+                }
+                else {
+                    elCell.setContent("");
+                }
+            }
+        };
+
         var Clazz = Y.namespace("IC").RendererTreeble = Y.Base.create(
             "ic_renderer_treeble",
             Y.IC.RendererBase,
@@ -66,6 +125,21 @@ YUI.add(
                             )
                         }
                     ];
+
+                    Y.each(
+                        config.headers,
+                        function (header, i, a) {
+                            Y.log(Clazz.NAME + "::initializer - pre-processing columns");
+                            if (Y.Lang.isValue(header.formatter_name)) {
+                                header.formatter = Y.bind(
+                                    formatters[header.formatter_name],
+                                    this
+                                );
+                                delete header.formatter_name;
+                            }
+                        },
+                        this
+                    );
 
                     config.headers[0].formatter = function (elCell, oRecord, oColumn, oData) {
                         // TODO: minimally make 15 a named constant
@@ -134,7 +208,7 @@ YUI.add(
                     // TODO: switch this to be an instance method
                     var treeble = this;
                     this._pg.on(
-                        'changeRequest',
+                        "changeRequest",
                         function (state) {
                             Y.log(Clazz.NAME + "::updatePaginator");
                             //Y.log(Clazz.NAME + "::updatePaginator - state: " + Y.dump(state));
@@ -311,7 +385,8 @@ YUI.add(
         requires: [
             "ic-renderer-treeble-css",
             "ic-renderer-base",
-            "gallery-treeble"
+            "gallery-treeble",
+            "event-valuechange"
         ]
     }
 );

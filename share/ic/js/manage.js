@@ -416,7 +416,8 @@ YUI(
                             "ic-renderer-treeble-css",
                             "ic-renderer-base",
                             "gallery-treeble",
-                            "gallery-paginator"
+                            "gallery-paginator",
+                            "event-valuechange"
                         ]
                     },
                     "ic-renderer-keyvalue": {
