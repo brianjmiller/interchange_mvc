@@ -219,6 +219,27 @@ YUI.add(
                     this.fire("ic_form_reset");
                 },
 
+                schedule_destroy: function (period) {
+                    Y.log(Form.NAME + "::schedule_destroy with period " + period);
+
+                    var timer_period = period === 1
+                        ? 3000
+                        : period < 50
+                          ? period * 1000
+                          : period;
+                    Y.log(Form.NAME + "::schedule_destroy timer " + timer_period);
+                    this._timer = Y.later(
+                        timer_period,
+                        this,
+                        function() {
+                            this._replacement_node.addClass('hide');
+                            this._replacement_node.destroy();
+                        },
+                        null,
+                        false
+                    );
+                },
+
                 _onReset: function (e) {
                     Y.log("form::_onReset");
                 },
@@ -275,7 +296,11 @@ YUI.add(
                         if (this._replacement_node != null) {
                             Y.log('form::_onSuccessfulResponse(replace): replacing content');
                             this._replacement_node.setContent(response.value.content);
+                            if (response.value.fade_out != null) {
+                                this.schedule_destroy(response.value.fade_out);
+                            }
                         }
+
                     }
 
                     else if (response.value.destroy === 1) {
@@ -293,7 +318,12 @@ YUI.add(
 
                         if (this._replacement_node != null) {
                             Y.log('form::_onSuccessfulResponse: replacing content');
-                            this._replacement_node.destroy();
+                            if (response.value.fade_out == null) {
+                                this._replacement_node.destroy();
+                            }
+                            else {
+                                this.schedule_destroy(response.value.fade_out);
+                            }
                         }
                     }
 
