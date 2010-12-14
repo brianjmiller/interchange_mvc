@@ -71,7 +71,7 @@ YUI.add(
                 schedule_destroy: function () {
                     Y.log(Ignorable.NAME + "::schedule_destroy");
 
-                    this._host.setContent('This space intentionally left blank.');
+                    this._host.setContent('');
 
                     this._timer = Y.later(
                         3000,
