@@ -1,3 +1,8 @@
 div.yui3-ic_renderer_table-hidden {
     visibility: hidden;
 }
+
+div.yui3-ic_renderer_table-content table th,
+div.yui3-ic_renderer_table-content table td {
+    border: 0px;
+}
