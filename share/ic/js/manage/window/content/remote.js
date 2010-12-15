@@ -23,11 +23,14 @@ YUI.add(
             Y.IC.ManageWindowContentBase,
             [],
             {
-                _data_url:         null,
-                _last_updated:     null,
-                _last_tried:       null,
+                _last_updated:        null,
+                _last_tried:          null,
 
-                _built_data:       null,
+                // _data_url should be set in the initializer of the subclass
+                _data_url:            null,
+
+                // reference of the object that makes up the content
+                _built_data:          null,
 
                 // action here is just a default suggestion that gets provided to
                 // the underlying content, since we don't control the underlying
@@ -37,18 +40,21 @@ YUI.add(
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
+
+                    this._suggested_action = config.action;
                 },
 
                 destructor: function () {
                     Y.log(Clazz.NAME + "::destructor");
 
-                    this._built_data.destroy();
-                    this._built_data       = null;
+                    this._last_updated        = null;
+                    this._last_tried          = null;
 
-                    this._data_url         = null;
-                    this._last_updated     = null;
-                    this._last_tried       = null;
-                    this._suggested_action = null;
+                    this._data_url            = null;
+                    this._built_data.destroy();
+                    this._built_data          = null;
+
+                    this._suggested_action    = null;
                 },
 
                 renderUI: function () {
@@ -56,7 +62,7 @@ YUI.add(
 
                     Clazz.superclass.renderUI.apply(this, arguments);
 
-                    this.set("footerContent", "Remote Footer");
+                    // make sure that the body node exists
                     this.set("bodyContent", "Remote Body");
                 },
 
@@ -76,6 +82,7 @@ YUI.add(
 
                     Clazz.superclass.syncUI.apply(this, arguments);
 
+                    // TODO: can/should this be done by a watcher on render?
                     this.fire("update_data");
                 },
 
@@ -84,20 +91,31 @@ YUI.add(
                     Y.log(Clazz.NAME + "::setAction - action: " + action);
 
                     this._suggested_action = action;
+
+                    //
+                    // we can be sure that the implementation of data gotten for the remotes
+                    // is consistent such that we can do inspection of the results to set 
+                    // the action appropriately
+                    //
+                    // for now at least _built_data will always be a tile that we can set 
+                    // an action directly on
+                    //
+                    if (this._built_data) {
+                        Y.log(Clazz.NAME + "::setAction - _built_data: " + this._built_data);
+
+                        this._built_data.set("action", action);
+                    }
                 },
 
                 _onUpdateData: function () {
                     Y.log(Clazz.NAME + "::_onUpdateData");
 
-                    // TODO: set a loading indicator
-                    // TODO: protect against more than one call at once
-                    var current = new Date();
-                    this._last_tried = current;
+                    this._last_tried = new Date ();
 
-                    this.set("footerContent", "Loading...");
+                    // TODO: set a loading spinner
                     this.set("bodyContent", "Requesting data from server...");
 
-                    // TODO: URL building needs to take domain, protocol, and path prefix into account
+                    // TODO: protect against more than one call at once
                     Y.io(
                         this._data_url,
                         {
@@ -125,22 +143,23 @@ YUI.add(
                         Y.log(Clazz.NAME + "::_onRequestSuccess - Can't parse JSON: " + e, "error");
 
                         this.set("bodyContent", "Can't parse JSON response: " + e);
-                        this.set("footerContent", "Last Try: " + this._last_tried);
 
                         return;
                     }
                     if (new_data) {
+                        Y.log(Clazz.NAME + "::_onRequestSuccess - new_data: " + Y.dump(new_data));
                         if (Y.Lang.isValue(new_data.renderer)) {
                             this.set("bodyContent", "");
 
                             var constructor = Y.IC.Renderer.getConstructor(new_data.renderer.type);
 
-                            //Y.log(Clazz.NAME + "::_onRequetSuccess - BODY region: " + Y.dump(this.getStdModNode( Y.WidgetStdMod.BODY ).get("region")));
                             var body_node = this.getStdModNode( Y.WidgetStdMod.BODY );
                             var region    = body_node.get("region");
                             new_data.renderer.config.render = body_node;
-                            new_data.renderer.config.width  = region.width;
-                            new_data.renderer.config.height = region.height;
+                            new_data.renderer.config.advisory_width  = region.width;
+                            new_data.renderer.config.advisory_height = region.height;
+                            Y.log(Clazz.NAME + "::_onRequestSuccess - region.width: " + region.width);
+                            Y.log(Clazz.NAME + "::_onRequestSuccess - region.height: " + region.height);
 
                             var my_action = this._suggested_action;
                             if (Y.Lang.isValue(my_action) && my_action !== "") {
@@ -155,18 +174,17 @@ YUI.add(
                             this.set("bodyContent", content);
                         }
 
-                        var current = new Date();
-                        this._last_updated = current;
-
-                        this.set("footerContent", "Last Update: " + this._last_updated);
+                        this._last_updated = new Date ();
+                    }
+                    else {
+                        this.set("bodyContent", "No data in response");
                     }
                 },
 
                 _onRequestFailure: function (txnId, response) {
                     Y.log(Clazz.NAME + "::_onRequestFailure");
 
-                    this.set("bodyContent", "Request failed");
-                    this.set("footerContent", "Last Try: " + this._last_tried + "(" + response.status + " - " + response.statusText + ")");
+                    this.set("bodyContent", "Request failed" + " (" + response.status + " - " + response.statusText + ")");
                 }
             },
             {

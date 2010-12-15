@@ -7,15 +7,14 @@ div.ic_renderer_tile_header_title {
     vertical-align: middle;
 }
 
-div.ic_renderer_tile_header_mesg {
-    text-align: center;
+div.ic_renderer_tile_header_buttons {
+    text-align: right;
     vertical-align: middle;
     white-space: nowrap;
     font-size: 85%;
 }
 
-div.ic_renderer_tile_header_buttons {
-    text-align: right;
+div.ic_renderer_tile_header_mesg {
     vertical-align: middle;
     white-space: nowrap;
     font-size: 85%;

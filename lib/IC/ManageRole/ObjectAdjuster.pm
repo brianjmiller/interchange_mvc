@@ -22,7 +22,7 @@ sub save {
 
         my $object = $self->_model_object;
         unless (defined $object) {
-            $object = $self->object_from_pk_params($params);
+            $object = $self->object_from_params($params);
             $self->_model_object($object);
         }
 

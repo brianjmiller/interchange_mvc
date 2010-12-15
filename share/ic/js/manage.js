@@ -123,6 +123,7 @@ YUI(
                         path: "manage/window/content.js",
                         requires: [ 
                             "ic-manage-window-content-css", 
+                            "cache",
                             "widget",
                             "widget-parent",
                             "ic-manage-window-content-remote",
@@ -329,7 +330,8 @@ YUI(
                         path: "renderer/tile.js",
                         requires: [
                             "ic-renderer-tile-css",
-                            "ic-renderer-base"
+                            "ic-renderer-base",
+                            "cache"
                         ]
                     },
                     "ic-renderer-panel": {

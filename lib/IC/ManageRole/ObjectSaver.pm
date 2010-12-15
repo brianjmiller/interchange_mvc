@@ -59,7 +59,7 @@ sub save {
             my $object = $self->_model_object;
             unless (defined $object) {
                 if ($is_edit) {
-                    $object = $self->object_from_pk_params($params);
+                    $object = $self->object_from_params($params);
                 }
                 else {
                     $object = $_model_class->new;
@@ -309,7 +309,7 @@ sub save {
         elsif ($params->{_properties_mode} eq 'upload') {
             my $object = $self->_model_object;
             unless (defined $object) {
-                $object = $self->object_from_pk_params($params);
+                $object = $self->object_from_params($params);
                 $self->_model_object($object);
             }
 
@@ -401,7 +401,7 @@ sub save {
         elsif ($params->{_properties_mode} eq 'unlink') {
             my $object = $self->_model_object;
             unless (defined $object) {
-                $object = $self->object_from_pk_params($params);
+                $object = $self->object_from_params($params);
                 $self->_model_object($object);
             }
         }

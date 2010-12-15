@@ -19,6 +19,7 @@ YUI.add(
     "ic-manage-window-content",
     function (Y) {
         var _kind_map = {
+            // TODO: dashboard can probably just now be implemented as a Function/Record
             remote_dashboard: Y.IC.ManageWindowContentRemoteDashboard,
 
             // TODO: should these just be RemoteObject and RemoteClass?
@@ -34,17 +35,21 @@ YUI.add(
             Y.Widget,
             [ Y.WidgetParent ],
             {
-                _cache_key_to_index_map: null,
-
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
 
-                    this._cache_key_to_index_map = {};
+                    this.plug(
+                        Y.Plugin.Cache,
+                        {
+                            uniqueKeys: true,
+                            max:        100
+                        }
+                    );
+                    Y.log(Clazz.NAME + "::initializer - cache: " + this.cache);
                 },
 
                 destructor: function () {
                     Y.log(Clazz.NAME + "::destructor");
-                    this._cache_key_to_index_map = null;
                 },
 
                 renderUI: function () {
@@ -85,35 +90,49 @@ YUI.add(
                     // which does whatever it does, and then display it
                     //
                     // the showing/hiding is handled by selecting/deselecting a particular
-                    // child, there is no need to deselect the existing displayed child
-                    // as that happens automagically by selecting a different one
+                    // child, there is no need to explicitly deselect the existing displayed 
+                    // child as that happens automagically by selecting a different one
                     //
                     var cache_key = kind_class.getCacheKey(config.config)
                     Y.log(Clazz.NAME + "::_onShowContent - cache_key: " + cache_key);
 
-                    if (! Y.Lang.isValue(this._cache_key_to_index_map[cache_key])) {
+                    var cache_entry = this.cache.retrieve(cache_key);
+                    Y.log(Clazz.NAME + "::_onShowContent - cache_entry: " + Y.Object.keys(cache_entry));
+
+                    var child;
+
+                    if (! Y.Lang.isValue(cache_entry)) {
                         Y.log(Clazz.NAME + "::_onShowContent - not cached");
                         // TODO: should we clone this?
                         var new_child_config = config.config;
 
+                        // TODO: need to wire in resize stuff so that when our width/height change
+                        //       it gets passed to each of the children as well, but there needs
+                        //       to be the distinction between advisory width/height (or contained,
+                        //       or region) vs. actual width/height in the grandchildren
                         new_child_config.width  = this.get("width");
                         new_child_config.height = this.get("height");
+                        Y.log(Clazz.NAME + "::_onShowContent - new_child_config: " + Y.dump(new_child_config));
 
-                        var new_child = new kind_class (new_child_config);
+                        child = new kind_class (new_child_config);
+                        Y.log(Clazz.NAME + "::_onShowContent - child from new: " + child);
 
-                        this.add(new_child);
-                        this._cache_key_to_index_map[cache_key] = new_child.get("index");
+                        this.add(child);
+
+                        this.cache.add(cache_key, child);
+                    }
+                    else {
+                        child = cache_entry.response;
+                        Y.log(Clazz.NAME + "::_onShowContent - child from cache: " + child);
                     }
 
-                    var index = this._cache_key_to_index_map[cache_key];
-
-                    if (Y.Lang.isValue( config.config.action )) {
+                    if (Y.Lang.isValue( config.config.action ) && config.config.action !== "") {
                         Y.log(Clazz.NAME + "::_onShowContent - setting action on child: " + config.config.action);
 
-                        this.item(index).setAction(config.config.action);
+                        child.setAction(config.config.action);
                     }
 
-                    this.selectChild(index);
+                    this.selectChild(child.get("index"));
 
                     Y.log(Clazz.NAME + "::_onShowContent - done");
                 },

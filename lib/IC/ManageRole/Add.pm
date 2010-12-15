@@ -13,8 +13,8 @@ around 'ui_meta_struct' => sub {
     my $struct = $self->_ui_meta_struct;
 
     $struct->{+__PACKAGE__} = 1;
-    $struct->{label} = 'Add';
-    $struct->{renderer} = {
+    $struct->{label}        = 'Add';
+    $struct->{renderer}     = {
         type   => 'FormWrapper',
         config => {},
     };

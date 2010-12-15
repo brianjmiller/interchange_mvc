@@ -1,5 +1,5 @@
 div.yui3-ic_renderer_tree-hidden {
-    visibility: hidden;
+    display: none;
 }
 
 div.yui3-ic_renderer_tree-content ol.yui3-treeviewlite {

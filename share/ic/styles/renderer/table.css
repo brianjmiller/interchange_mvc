@@ -1,5 +1,5 @@
 div.yui3-ic_renderer_table-hidden {
-    visibility: hidden;
+    display: none;
 }
 
 div.yui3-ic_renderer_table-content table th,

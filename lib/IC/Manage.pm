@@ -37,6 +37,7 @@ has '_ui_meta_struct'        => ( is => 'rw', default => sub { {} } );
 #
 class_has '_object_ui_meta_struct' => ( is => 'rw', default => sub { {} } );
 class_has '_model_object'          => ( is => 'rw', default => undef );
+class_has '_model_object_params'   => ( is => 'rw', default => undef );
 
 #
 # TODO: the following groups still need to be factored
@@ -88,6 +89,34 @@ sub ui_meta_struct {
     return;
 };
 
+sub class_ui_meta_struct_config {
+    #warn "IC::Manage::class_ui_meta_struct_config";
+    my $self = shift;
+    my $args = { @_ };
+
+    my $struct = {};
+    $struct->{__PACKAGE__} = 1;
+
+    my $inner_result = inner();
+    $struct = $inner_result if defined $inner_result;
+
+    $self->_class_ui_meta_struct_config( $struct, %$args );
+
+    my $formatted = $struct;
+    if (! defined $args->{format}) {
+        return $formatted;
+    }
+    elsif ($args->{format} eq 'json') {
+        return JSON::encode_json($formatted);
+    }
+    else {
+        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
+    }
+
+    return;
+
+}
+
 sub _class_ui_meta_struct {
     #warn "IC::Manage::_class_ui_meta_struct";
     my $class = shift;
@@ -97,6 +126,22 @@ sub _class_ui_meta_struct {
     unless (defined $class->_class) {
         IC::Exception->throw("Sub class has not overridden _class: $class");
     }
+
+    my $renderer = $struct->{renderer} ||= {};
+
+    $renderer->{type}   = 'Tile';
+    $renderer->{config} = {};
+
+    $class->_class_ui_meta_struct_config( $renderer->{config}, %$args ),
+
+    return $struct;
+}
+
+sub _class_ui_meta_struct_config {
+    #warn "IC::Manage::_class_ui_meta_struct_config";
+    my $class  = shift;
+    my $struct = shift;
+    my $args   = { @_ };
 
     my $class_model_obj = $class->get_class_model_obj;
 
@@ -116,24 +161,22 @@ sub _class_ui_meta_struct {
         $actions->{$action_model->code} = $action->ui_meta_struct;
     }
 
-    my $renderer = $struct->{renderer} ||= {};
-    $renderer->{type}   = 'Panel';
-    $renderer->{config} = {
-        data => {
-            unique => {
-                is_default => JSON::true(),
-                content    => {
-                    type   => 'Tile',
-                    config => {
-                        title   => $class->_model_display_name_plural,
-                        actions => $actions,
-                    },
-                },
-            },
+    $struct->{title}   ||= $class->_model_display_name_plural; 
+    $struct->{actions} ||= $actions;
+    $struct->{url}     ||= $args->{_controller}->url(
+        controller => 'manage',
+        action     => 'run_action_method',
+        parameters => {
+            _class  => $class->_class,
+            _method => 'class_ui_meta_struct_config',
         },
-    };
+        get        => {
+            _format => 'json',
+        },
+        secure     => 1,
+    );
 
-    return $struct;
+    return;
 }
 
 sub object_ui_meta_struct {
@@ -141,27 +184,105 @@ sub object_ui_meta_struct {
     my $class = shift;
     my $args = { @_ };
 
-    unless (defined $class->_model_object) {
-        $class->_model_object( $class->object_from_pk_params( $args->{_controller}->parameters ) )
-    }
+    my $params = $args->{_controller}->parameters; 
 
-    my $model_object = $class->_model_object;
+    unless (defined $class->_model_object) {
+        my ($object, $used_params) = $class->object_from_params($params);
+
+        $class->_model_object($object);
+        $class->_model_object_params($used_params);
+    }
 
     my $struct = $class->_object_ui_meta_struct;
-    $struct->{+__PACKAGE__}       = 1;
-    $struct->{renderer}->{type}   = 'Tile';
-    $struct->{renderer}->{config} = {};
-
-    my $config = $struct->{renderer}->{config};
-    $config->{title}  = $class->_model_display_name . ': ' . $model_object->manage_description;
-
-    my @actions = $class->_record_actions($model_object);
-    for my $action (@actions) {
-        $config->{actions}->{$action} = {};
-    }
+    $struct->{+__PACKAGE__}                = 1;
+    $struct->{renderer}->{type}          ||= 'Tile';
+    $struct->{renderer}->{config}->{url} ||= $args->{_controller}->url(
+        controller => 'manage',
+        action     => 'run_action_method',
+        parameters => {
+            _class  => $class->_class,
+            _method => 'object_ui_meta_struct_config',
+        },
+        get        => {
+            _format => 'json',
+            %{ $class->_model_object_params },
+        },
+        secure     => 1,
+    );
 
     my $inner_result = inner();
     $struct = $inner_result if defined $inner_result;
+
+    $class->_object_ui_meta_struct_config( $struct->{renderer}->{config}, %$args );
+
+    my $formatted = $struct;
+    if (! defined $args->{format}) {
+        return $formatted;
+    }
+    elsif ($args->{format} eq 'json') {
+        return JSON::encode_json($formatted);
+    }
+    else {
+        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
+    }
+
+    return;
+}
+
+sub object_ui_meta_struct_config {
+    #warn "IC::Manage::object_ui_meta_struct_config";
+    my $class = shift;
+    my $args = { @_ };
+
+    my $params = $args->{_controller}->parameters; 
+
+    unless (defined $class->_model_object) {
+        my ($object, $used_params) = $class->object_from_params($params);
+
+        $class->_model_object($object);
+        $class->_model_object_params($used_params);
+    }
+
+    my $struct              = {};
+    $struct->{+__PACKAGE__} = 1;
+
+    my $inner_result = inner();
+    $struct = $inner_result if defined $inner_result;
+
+    $class->_object_ui_meta_struct_config( $struct, %$args );
+
+    my $formatted = $struct;
+    if (! defined $args->{format}) {
+        return $formatted;
+    }
+    elsif ($args->{format} eq 'json') {
+        return JSON::encode_json($formatted);
+    }
+    else {
+        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
+    }
+
+    return;
+}
+
+#
+# this is split out to allow getting it from the primary action,
+# as well from a config only action used for reloading the config
+#
+sub _object_ui_meta_struct_config {
+    #warn "IC::Manage::_object_ui_meta_struct_config";
+    my $class  = shift;
+    my $config = shift;
+    my $args   = { @_ };
+
+    my $model_object = $class->_model_object;
+
+    $config->{title} ||= $class->_model_display_name . ': ' . $model_object->manage_description;
+
+    my @actions = $class->_record_actions($model_object);
+    for my $action (@actions) {
+        $config->{actions}->{$action} ||= {};
+    }
 
     #
     # post process the list of actions provided by the sub class
@@ -195,17 +316,6 @@ sub object_ui_meta_struct {
         unless (defined $action_ref->{renderer}) {
             $action_ref->{renderer} = $action->ui_meta_struct; 
         }
-    }
-
-    my $formatted = $struct;
-    if (! defined $args->{format}) {
-        return $formatted;
-    }
-    elsif ($args->{format} eq 'json') {
-        return JSON::encode_json($formatted);
-    }
-    else {
-        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
     }
 
     return;
@@ -258,7 +368,7 @@ sub load_class {
     return wantarray ? ($class, $model) : [ $class, $model ];
 }
 
-sub object_from_pk_params {
+sub object_from_params {
     my $self = shift;
     my $params = shift;
 
@@ -273,7 +383,12 @@ sub object_from_pk_params {
         }
     }
 
-    my %object_params = map { $_ => $params->{"_pk_$_"} } @pk_fields;
+    my %object_params;
+    my %used_params;
+    for my $pk_field (@pk_fields) {
+        $object_params{$pk_field->name} = $params->{'_pk_' . $pk_field->name};
+        $used_params{'_pk_' . $pk_field->name} = $params->{'_pk_' . $pk_field->name};
+    }
 
     my $object = $_model_class->new( %object_params );
     unless (defined $object) {
@@ -283,7 +398,7 @@ sub object_from_pk_params {
         IC::Exception::ModelLoadFailure->throw( 'Unrecognized ' . $self->_model_display_name . ': ' . (join ' => ', %object_params) );
     }
 
-    return $object;
+    return wantarray ? ($object, \%used_params) : $object;
 }
 
 #

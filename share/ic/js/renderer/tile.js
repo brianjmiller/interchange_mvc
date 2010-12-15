@@ -28,10 +28,6 @@ YUI.add(
                 _mesg_node:   null,
                 _button_node: null,
 
-                _footer_node: null,
-
-                _action_to_index_map: null,
-
                 _initial_action: null,
 
                 initializer: function (config) {
@@ -39,11 +35,19 @@ YUI.add(
                     Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
                     this._initial_action = config.initial_action;
+                    this._config_url     = config.url;
 
                     this.set("width", this.get("advisory_width"));
                     this.set("height", this.get("advisory_height"));
 
-                    this._action_to_index_map = {};
+                    this.plug(
+                        Y.Plugin.Cache,
+                        {
+                            uniqueKeys: true,
+                            max:        100
+                        }
+                    );
+                    Y.log(Clazz.NAME + "::initializer - cache: " + this.cache);
                 },
 
                 destructor: function () {
@@ -54,41 +58,37 @@ YUI.add(
                     Y.log(Clazz.NAME + "::renderUI");
 
                     // TODO: use class manager
+
+                    this._action_buttons_node = Y.Node.create('<span class="ic_renderer_tile_header_buttons_actions"></span>');
+
                     this._title_node  = Y.Node.create('<div class="ic_renderer_tile_header_title yui3-u-1-3">Tile Title</div>');
-                    this._mesg_node   = Y.Node.create('<div class="ic_renderer_tile_header_mesg yui3-u-1-3"></div>');
-                    this._button_node = Y.Node.create('<div class="ic_renderer_tile_header_buttons yui3-u-1-3"></div>');
+                    this._button_node = Y.Node.create('<div class="ic_renderer_tile_header_buttons yui3-u-2-3"></div>');
+                    this._button_node.append(this._action_buttons_node);
+
+                    this._mesg_node   = Y.Node.create('<div class="ic_renderer_tile_header_mesg yui3-u-1"></div>');
                     this._header_node = Y.Node.create('<div class="ic_renderer_tile_header yui3-g"></div>');
 
                     this._header_node.append( this._title_node );
-                    this._header_node.append( this._mesg_node );
                     this._header_node.append( this._button_node );
+                    this._header_node.append( this._mesg_node );
 
-                    Y.each(
-                        this.get("actions"),
-                        function (v, k, obj) {
-                            Y.log(Clazz.NAME + "::renderUI - adding action button: " + v.label);
-                            var button = new Y.Button (
-                                {
-                                    render:   this._button_node,
-                                    label:    v.label,
-                                    callback: Y.bind(
-                                        function () {
-                                            Y.log(Clazz.NAME + "::renderUI - button callback: " + k);
-
-                                            this.set("action", k);
-                                        },
-                                        this
-                                    )
-                                }
-                            );
-                        },
-                        this
-                    );
+                    if (Y.Lang.isValue(this._config_url)) {
+                        var refresh_button = new Y.Button (
+                            {
+                                render:   this._button_node,
+                                label:    "Refresh",
+                                callback: Y.bind(
+                                    function () {
+                                        Y.log(Clazz.NAME + "::renderUI - refresh button callback");
+                                        this._refreshData();
+                                    },
+                                    this
+                                )
+                            }
+                        );
+                    }
 
                     this.set("headerContent", this._header_node );
-
-                    this._footer_node = Y.Node.create('<div></div>');
-                    this.set("footerContent", this._footer_node);
                 },
 
                 bindUI: function () {
@@ -114,10 +114,35 @@ YUI.add(
                     Y.log(Clazz.NAME + "::syncUI");
 
                     this._title_node.setContent( this.get("title") );
+                    this._mesg_node.setContent("Initially loaded: " + new Date ());
 
                     // needed this to make sure the body node exists
                     this.set("bodyContent", "");
 
+                    Y.log("actions: " + Y.Object.keys(this.get("actions")));
+                    if (Y.Object.keys(this.get("actions")).length > 1) {
+                        Y.each(
+                            this.get("actions"),
+                            function (v, k, obj) {
+                                Y.log(Clazz.NAME + "::renderUI - adding action button: " + v.label);
+                                var button = new Y.Button (
+                                    {
+                                        render:   this._action_buttons_node,
+                                        label:    v.label,
+                                        callback: Y.bind(
+                                            function () {
+                                                Y.log(Clazz.NAME + "::renderUI - button callback: " + k);
+    
+                                                this.set("action", k);
+                                            },
+                                            this
+                                        )
+                                    }
+                                );
+                            },
+                            this
+                        );
+                    }
 
                     // TODO: the following code has an issue such that the existing displayed
                     //       record is not hidden correctly, fix it
@@ -136,6 +161,9 @@ YUI.add(
                         //if (! found) {
                             //if (Y.Lang.isValue(this.get("actions").DetailView)) {
                                 //initial_action = "DetailView";
+                            //}
+                            //else {
+                                //initial_action = Y.Object.keys(this.get("actions"))[0];
                             //}
                         //}
                     //}
@@ -173,42 +201,46 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_afterActionChange");
                     Y.log(Clazz.NAME + "::_afterActionChange - e.prevVal: " + e.prevVal);
                     Y.log(Clazz.NAME + "::_afterActionChange - e.newVal: " + e.newVal);
+                    var action_key = e.newVal;
 
-                    if (! Y.Lang.isValue(this._action_to_index_map[e.newVal])) {
-                        this._buildActionContent(e.newVal);
+                    var cache_entry = this.cache.retrieve(action_key);;
+                    Y.log(Clazz.NAME + "::_afterActionChange - cache_entry: " + Y.dump(cache_entry));
+
+                    var child;
+
+                    if (! Y.Lang.isValue(cache_entry)) {
+                        this._uiSetFillHeight( Y.WidgetStdMod.BODY );
+
+                        var action_data = this.get("actions")[action_key];
+                        Y.log(Clazz.NAME + "::_buildActionContent - action_data: " + Y.dump(action_data));
+
+                        var child_constructor = Y.IC.Renderer.getConstructor(action_data.renderer.type);
+
+                        var body_node = this.getStdModNode( Y.WidgetStdMod.BODY );
+                        var region    = body_node.get("region");
+                        Y.log(Clazz.NAME + "::_buildActionContent - body region: " + Y.dump(region));
+                        action_data.renderer.config.render = body_node;
+                        action_data.renderer.config.advisory_width  = region.width;
+                        action_data.renderer.config.advisory_height = region.height;
+
+                        child = new child_constructor (action_data.renderer.config);
+                        Y.log(Clazz.NAME + "::_buildActionContent - child from new: " + child);
+
+                        this.add(child);
+
+                        this.cache.add(action_key, child);
+                    }
+                    else {
+                        child = cache_entry.response;
+                        Y.log(Clazz.NAME + "::_afterActionChange - child from cache: " + child);
                     }
 
                     //
                     // see comments in panel.js if this appears to break when a panel
                     // is nested directly inside of a tile
                     //
-                    this.selectChild( this._action_to_index_map[e.newVal] );
-                    //this.item( this._action_to_index_map[e.newVal] ).set("selected", 2);
-                },
-
-                _buildActionContent: function (action_key) {
-                    Y.log(Clazz.NAME + "::_buildActionContent");
-                    Y.log(Clazz.NAME + "::_buildActionContent - action_key: " + Y.dump(action_key));
-
-                    this._uiSetFillHeight(Y.WidgetStdMod.BODY);
-
-                    var action_data = this.get("actions")[action_key];
-                    Y.log(Clazz.NAME + "::_buildActionContent - action_data: " + Y.dump(action_data));
-
-                    var child_constructor = Y.IC.Renderer.getConstructor(action_data.renderer.type);
-
-                    var body_node = this.getStdModNode( Y.WidgetStdMod.BODY );
-                    var region    = body_node.get("region");
-                    Y.log(Clazz.NAME + "::_buildActionContent - body region: " + Y.dump(region));
-                    action_data.renderer.config.render = body_node;
-                    action_data.renderer.config.advisory_width  = region.width;
-                    action_data.renderer.config.advisory_height = region.height;
-
-                    var new_child = new child_constructor (action_data.renderer.config);
-
-                    this.add(new_child);
-
-                    this._action_to_index_map[action_key] = new_child.get("index");
+                    this.selectChild( child.get("index") );
+                    //child.set("selected", 2);
                 },
 
                 //
@@ -218,6 +250,68 @@ YUI.add(
                 //
                 _afterParentSelectedChange: function (e) {
                     Y.log(Clazz.NAME + "::_afterParentSelectedChange");
+                },
+
+                _refreshData: function () {
+                    Y.log(Clazz.NAME + "::_refreshData");
+
+                    this._mesg_node.setContent("Reloading...");
+
+                    Y.log(Clazz.NAME + "::_refreshData - _config_url: " + this._config_url);
+                    Y.io(
+                        this._config_url,
+                        {
+                            on: {
+                                success: Y.bind(this._onRequestSuccess, this),
+                                failure: Y.bind(this._onRequestFailure, this)
+                            }
+                        }
+                    );
+                },
+
+                _onRequestSuccess: function (txnId, response) {
+                    Y.log(Clazz.NAME + "::_onRequestSuccess");
+
+                    this._action_buttons_node.setContent("");
+                    //this.set("action", null);
+                    this.removeAll();
+
+                    // TODO: this should be handled by a removeChild handler that clears the cached record
+                    this.cache.flush();
+
+                    this._mesg_node.setContent("Parsing...");
+
+                    var new_data;
+                    try {
+                        new_data = Y.JSON.parse(response.responseText);
+                    }
+                    catch (e) {
+                        Y.log(Clazz.NAME + "::_onRequestSuccess - Can't parse JSON: " + e, "error");
+
+                        this._mesg_node.setContent("Last Tried: " + new Date () + " (Can't parse JSON response: " + e + ")");
+
+                        return;
+                    }
+                    if (new_data) {
+                        Y.log(Clazz.NAME + "::_onRequestSuccess - new_data: " + Y.dump(new_data));
+
+                        this.set("actions", new_data.actions);
+                        this.set("title", new_data.title);
+                        //this._config_url = new_data.url;
+
+                        this.syncUI();
+
+                        this._mesg_node.setContent("Last Updated: " + new Date ());
+                    }
+                    else {
+                        this._mesg_node.setContent("Last Tried: " + new Date () + " (No data in response)");
+                    }
+                },
+
+                _onRequestFailure: function (txnId, response) {
+                    Y.log(Clazz.NAME + "::_onRequestFailure");
+
+                    this._mesg_node.setContent("Last Tried: " + new Date () + " (Request failed: "  + response.status + " - " + response.statusText + ")");
                 }
             },
             {
@@ -241,7 +335,8 @@ YUI.add(
             "ic-renderer-tile-css",
             "ic-renderer-base",
             "widget-std-mod",
-            "gallery-button"
+            "gallery-button",
+            "cache"
         ]
     }
 );

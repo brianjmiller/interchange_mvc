@@ -18,7 +18,7 @@
 YUI.add(
     "ic-manage-window",
     function (Y) {
-        var MW = Y.Base.create (
+        var Clazz = Y.Base.create (
             // module identifier  
             "ic_manage_window",
 
@@ -57,9 +57,8 @@ YUI.add(
                 },
 
                 initializer: function (config) {
-                    //Y.log('manage_window::initializer');
+                    Y.log(Clazz.NAME + "::initializer");
 
-                    //Y.log("manage_window::initializer: setting contentPaneShowContent event handler");
                     this.on(
                         "contentPaneShowContent",
                         Y.bind(this._onContentPaneShowContent, this)
@@ -69,7 +68,7 @@ YUI.add(
                 },
 
                 destructor: function () {
-                    //Y.log('manage_window::destructor');
+                    Y.log(Clazz.NAME + "::destructor");
                     Y.each(
                         this._panes,
                         function (v, k, obj) {
@@ -94,17 +93,18 @@ YUI.add(
                 },
 
                 _initOuterLayout: function () {
-                    //Y.log('manage_window::_initOuterLayout');
-                    this._buildOuterLayout('outer');
-                    this._layouts['outer'].on(
-                        'render',
+                    Y.log(Clazz.NAME + "::_initOuterLayout");
+                    this._buildOuterLayout("outer");
+
+                    this._layouts.outer.on(
+                        "render",
                         Y.bind(this._onOuterLayoutRender, this)
                     );
-                    this._layouts['outer'].render();
+                    this._layouts.outer.render();
                 },
 
                 _buildOuterLayout: function (key) {
-                    //Y.log('manage_window::_buildOuterLayout');
+                    Y.log(Clazz.NAME + "::_buildOuterLayout");
                     var YAHOO = Y.YUI2;
                     this._layouts[key] = new YAHOO.widget.Layout(
                         {
@@ -123,7 +123,6 @@ YUI.add(
                                 },
                                 {
                                     position: "center",
-                                    //header:   "I'm the header, thanks",
                                     body:     "manage_window_content_pane",
                                     zIndex:   0,
                                     scroll:   false
@@ -141,29 +140,31 @@ YUI.add(
                 },
 
                 _onOuterLayoutRender: function () {
-                    //Y.log('manage_window::_onOuterLayoutRender');
-                    this._layouts['outer'].removeListener('render');
+                    Y.log(Clazz.NAME + "::_onOuterLayoutRender");
+                    this._layouts.outer.removeListener("render");
 
                     this._initLeftLayout(
                         this._layouts.outer,   // parent layout
-                        'left',                // unit
-                        'left'                 // new layout key
+                        "left",                // unit
+                        "left"                 // new layout key
                     );
 
                     this._initContentPane(
                         this._layouts.outer,
-                        'center'
+                        "center"
                     );
 
-                    //Y.log('window::_onOuterLayoutRender should fire *initial* show content event');
+                    //Y.log(Clazz.NAME + "::_onOuterLayoutRender should fire *initial* show content event");
                     this.fire(
                         "contentPaneShowContent",
-                        'remote_dashboard'
+                        "remote_dashboard",
+                        null,
+                        "primary"
                     );
                 },
 
                 _initLeftLayout: function (parent_layout, unit_name, layouts_key_name) {
-                    //Y.log('manage_window::_initLeftLayout');
+                    Y.log(Clazz.NAME + "::_initLeftLayout");
                     this._buildLeftLayout(
                         parent_layout,
                         unit_name,
@@ -171,7 +172,7 @@ YUI.add(
                     );
 
                     this._layouts[layouts_key_name].on(
-                        'render', 
+                        "render", 
                         Y.bind(this._onLeftLayoutRender, this)
                     );
 
@@ -179,7 +180,7 @@ YUI.add(
                 },
 
                 _buildLeftLayout: function (parent_layout, unit_name, layouts_key_name) {
-                    //Y.log('manage_window::_buildLeftLayout');
+                    Y.log(Clazz.NAME + "::_buildLeftLayout");
                     var YAHOO = Y.YUI2;
 
                     var left_unit = parent_layout.getUnitByPosition(unit_name).get("wrap");
@@ -209,22 +210,22 @@ YUI.add(
                 },
 
                 _onLeftLayoutRender: function () {
-                    //Y.log('manage_window::_onLeftLayoutRender');
-                    this._layouts.left.removeListener('render');
+                    Y.log(Clazz.NAME + "::_onLeftLayoutRender");
+                    this._layouts.left.removeListener("render");
 
                     this._initMenuPane(
                         this._layouts.left,  // layout
-                        'top',               // unit
-                        'vertical'           // menu orientation
+                        "top",               // unit
+                        "vertical"           // menu orientation
                     );
                     this._initToolsPane(
                         this._layouts.left,  // layout
-                        'center'             // unit
+                        "center"             // unit
                     );
                 },
 
                 _initMenuPane: function (layout, unit_position, orientation) {
-                    //Y.log('manage_window::_initMenuPane');
+                    Y.log(Clazz.NAME + "::_initMenuPane");
                     var menu_unit = layout.getUnitByPosition(unit_position).body.childNodes[0];
 
                     this._panes.menu = new Y.IC.ManageMenu(
@@ -236,8 +237,8 @@ YUI.add(
 
                     // need to let the nodemenu's dropdowns spill into the the next unit
                     var cbody = Y.one( layout.getUnitByPosition(unit_position).body );
-                    cbody.addClass('allow-overflow');
-                    Y.one( cbody._node.parentNode.parentNode.parentNode ).addClass('allow-overflow');
+                    cbody.addClass("allow-overflow");
+                    Y.one( cbody._node.parentNode.parentNode.parentNode ).addClass("allow-overflow");
 
                     // capture the menu events -
                     // 'click' is prevented by the node-menunav plugin, wtf!?
@@ -246,13 +247,13 @@ YUI.add(
                         "mousedown",
                         this._onSubmenuMousedown,
                         this._panes.menu.get("boundingBox"),
-                        'em.yui3-menuitem-content, a.yui3-menuitem-content',
+                        "em.yui3-menuitem-content, a.yui3-menuitem-content",
                         this
                     );
                 },
 
                 _initToolsPane: function (layout, unit_position) {
-                    //Y.log('manage_window::_initToolsPane');
+                    Y.log(Clazz.NAME + "::_initToolsPane");
                     var unit = layout.getUnitByPosition(unit_position);
 
                     this._panes.tools = new Y.IC.ManageTools (
@@ -266,7 +267,7 @@ YUI.add(
                 },
 
                 _initContentPane: function (layout, unit_position) {
-                    Y.log('manage_window::_initContentPane');
+                    Y.log(Clazz.NAME + "::_initContentPane");
                     var unit = layout.getUnitByPosition(unit_position);
 
                     //
@@ -278,22 +279,15 @@ YUI.add(
 
                     this._panes.content = new Y.IC.ManageWindowContent (
                         {
-                            //header_to: Y.one(unit.header.childNodes[0]),
-                            //render_to: unit.body.childNodes[0],
                             render: unit.body.childNodes[0],
                             width:  unit_body_region.width,
                             height: unit_body_region.height,
-
-                            //// we pass this so that it may be passed through
-                            //// to any layouts the pane uses so that the resize
-                            //// events get wired up automatically
-                            //containing_layout: layout
                         }
                     );
                 },
 
                 _onSubmenuMousedown: function (e) {
-                    Y.log('manage_window::_onSubmenuMousedown: ' + e.target.get("id") );
+                    Y.log(Clazz.NAME + "::_onSubmenuMousedown: " + e.target.get("id") );
 
                     // hide the submenu after a selection -- there
                     // seems to be a selection bug in here - should
@@ -317,7 +311,7 @@ YUI.add(
                     var matches = e.target.get("id").match("^manage_menu_item-([^-]+)(?:-([^-]+)-([^-]+)(?:-([^-]+)(?:-(.+))?)?)?$");
 
                     if (Y.Lang.isArray(matches)) {
-                        Y.log("manage_window::_onSubmenuMousedown - matches: " + Y.dump(matches));
+                        Y.log(Clazz.NAME + "::_onSubmenuMousedown - matches: " + Y.dump(matches));
                         var kind       = matches[1];
                         var clazz      = matches[2] || "";
                         var action     = matches[3] || "";
@@ -333,12 +327,12 @@ YUI.add(
                         );
                     }
                     else {
-                        Y.log("manage_window::_onSubmenuMousedown - Unable to parse submenu id: " + e.target.get("id"));
+                        Y.log(Clazz.NAME + "::_onSubmenuMousedown - Unable to parse submenu id: " + e.target.get("id"));
                     }
                 },
 
                 _onContentPaneShowContent: function (e, kind, clazz, action, addtl_args) {
-                    Y.log('manage_window::_onContentPaneShowContent');
+                    Y.log(Clazz.NAME + "::_onContentPaneShowContent");
                     var config = {
                         kind:   kind,
                         config: {
@@ -347,7 +341,7 @@ YUI.add(
                             addtl_args: addtl_args
                         }
                     };
-                    Y.log('manage_window::_onContentPaneShowContent: config: ' + Y.dump(config));
+                    Y.log(Clazz.NAME + "::_onContentPaneShowContent: config: " + Y.dump(config));
 
                     this._panes.content.fire(
                         "showContent",
@@ -361,10 +355,10 @@ YUI.add(
         // make all of that into a Singleton so that I can access the
         // window stuff from any module
         //
-        var ManageWindow = function () {
-            var mw = new MW (
+        Y.namespace("IC").ManageWindow = function () {
+            var mw = new Clazz (
                 {
-                    prefix: '_mw'
+                    prefix: "_mw"
                 }
             );
             this.instance = null;
@@ -384,9 +378,6 @@ YUI.add(
 
             return getInstance();
         };
-        
-        Y.namespace("IC");
-        Y.IC.ManageWindow = ManageWindow;
     },
     "@VERSION@",
     {

@@ -1,5 +1,5 @@
 div.yui3-ic_renderer_basic-hidden {
-    visibility: hidden;
+    display: none;
 }
 
 div.yui3-ic_renderer_basic-content span.title {

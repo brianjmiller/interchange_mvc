@@ -1,5 +1,5 @@
 div.yui3-ic_renderer_treeble-hidden {
-    visibility: hidden;
+    display: none;
 }
 
 div.yui3-ic_renderer_treeble-content td.treeble-nub {
