@@ -34,6 +34,51 @@ sub data {
 }
 
 sub _get_data_struct {
+    my $self = shift;
+
+    return {
+        renderer => {
+            type   => 'Tile',
+            config => $self->_get_config_struct,
+        },
+    };
+}
+
+sub config {
+    #warn "IC::C::Manage::Widget::Dashboard::config";
+    my $self = shift;
+
+    my $struct = $self->_get_config_struct;
+
+    my $response = $self->response;
+    $response->headers->status('200 OK');
+    $response->headers->content_type('text/plain');
+    #$response->headers->content_type('application/json');
+    $response->buffer( JSON::encode_json( $struct ));
+
+    return;
+}
+
+sub _get_config_struct {
+    my $self = shift;
+    return {
+        title   => 'Dashboard',
+        url     => $self->url(
+            controller => 'manage/widget/dashboard',
+            action     => 'config',
+            secure     => 1,
+        ),
+        actions => {
+            primary => {
+                label      => 'Primary',
+                is_default => JSON::true(),
+                renderer   => $self->_get_primary_renderer_struct,
+            },
+        },
+    };
+}
+
+sub _get_primary_renderer_struct {
     return {};
 }
 

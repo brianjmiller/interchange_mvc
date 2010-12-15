@@ -53,6 +53,12 @@ IC::Controller::Route->route(
 );
 
 IC::Controller::Route->route(
+    pattern     => 'manage/widget/dashboard/config',
+    controller  => 'manage/widget/dashboard',
+    action      => 'config',
+);
+
+IC::Controller::Route->route(
     pattern     => 'manage/widget/tools/common_actions/data',
     controller  => 'manage/widget/tools/common_actions',
     action      => 'data',
