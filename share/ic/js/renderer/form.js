@@ -99,9 +99,6 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_onRequestSuccess");
                     Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
 
-                    // TODO: parse response text into JS object using JSON parser
-                    //       act on contents of response object, replacing text,
-                    //       removing nodes, etc.
                     var new_data;
                     try {
                         new_data = Y.JSON.parse(response.responseText);

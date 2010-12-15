@@ -300,7 +300,6 @@ YUI.add(
                                 this.schedule_destroy(response.value.fade_out);
                             }
                         }
-
                     }
 
                     else if (response.value.destroy === 1) {
