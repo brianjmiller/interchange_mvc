@@ -21,7 +21,7 @@ YUI.add(
         var Clazz = Y.namespace("IC.ManageTool").CommonActions = Y.Base.create(
             "ic_manage_tools_common_actions",
             Y.IC.ManageTool.Base,
-            [],
+            [ Y.WidgetStdMod ],
             {
                 _data_url:     null,
                 _last_updated: null,
@@ -38,10 +38,13 @@ YUI.add(
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
+                    Y.log(Clazz.NAME + "::renderUI - height: " + this.get("height"));
 
                     // TODO: add back in buttons for refresh and toggling active
-
-                    this.get("contentBox").addClass("centered");
+                    //       which amounts to how tile works so it may make sense
+                    //       to move all of that to a plugin instead
+                    this.set("bodyContent", "");
+                    this.set("footerContent", "");
                 },
 
                 bindUI: function () {
@@ -58,14 +61,13 @@ YUI.add(
 
                 syncUI: function () {
                     Y.log(Clazz.NAME + "::syncUI");
-                    this._setInitialContent();
+
+                    this.getStdModNode( Y.WidgetStdMod.BODY ).addClass("centered");
+                    this.getStdModNode( Y.WidgetStdMod.FOOTER ).addClass("centered");
+                    this.getStdModNode( Y.WidgetStdMod.FOOTER ).addClass("micro");
+
                     this.fire("update_data");
                     this._initTimer();
-                },
-
-                _setInitialContent: function () {
-                    Y.log(Clazz.NAME + "::_setInitialContent");
-                    this.get("contentBox").setContent("Loading data from server...");
                 },
 
                 _initTimer: function () {
@@ -94,7 +96,7 @@ YUI.add(
                     var current = new Date();
                     this._last_tried = current;
 
-                    this.get("contentBox").setContent("Requesting data from server...");
+                    this.set("footerContent", "Requesting data from server...");
 
                     Y.io(
                         this._data_url,
@@ -111,7 +113,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_onRequestSuccess");
                     Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
 
-                    this.get("contentBox").setContent("Received response...");
+                    this.set("footerContent", "Received response...");
 
                     var new_data;
                     try {
@@ -120,14 +122,14 @@ YUI.add(
                     catch (e) {
                         Y.log(Clazz.NAME + "::_onRequestSuccess - Can't parse JSON: " + e, "error");
 
-                        this.get("contentBox").setContent("Last Try: " + this._last_tried + "<br />" + e);
+                        this.set("footerContent", "Last Try: " + this._last_tried + "<br />" + e);
 
                         return;
                     }
                     if (new_data) {
                         var current = new Date();
                         this._last_updated = current;
-                        this.get("contentBox").setContent("");
+                        this.set("bodyContent", "");
 
                         if (Y.Lang.isValue(new_data.buttons) && new_data.buttons.length > 0) {
                             Y.each(
@@ -135,7 +137,7 @@ YUI.add(
                                 function (config, i, a) {
                                     var button = new Y.Button (
                                         {
-                                            render:   this.get("contentBox"),
+                                            render:   this.getStdModNode(Y.WidgetStdMod.BODY),
                                             label:    config.label,
                                             width:    "160px",
                                             callback: Y.bind(
@@ -157,10 +159,10 @@ YUI.add(
                             );
                         }
 
-                        this.get("contentBox").append('<br /><span class="micro">Last Update: ' + this._last_updated + '</span>');
+                        this.set("footerContent", "Last Update: " + this._last_updated);
                     }
                     else {
-                        this.get("contentBox").setContent("No data received.");
+                        this.set("bodyContent", "No data received.");
                     }
                 },
 
@@ -168,7 +170,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_onRequestFailure");
                     Y.log(Clazz.NAME + "::_onRequestFailure - response: " + Y.dump(response));
 
-                    this.get("contentBox").setContent("Last Try: " + this._last_tried);
+                    this.set("footerContent", "Last Try: " + this._last_tried);
                 }
             },
             {
@@ -187,6 +189,7 @@ YUI.add(
         requires: [
             "ic-manage-window-tools-common_actions-css",
             "ic-manage-window-tools-base",
+            "widget-stdmod",
             "gallery-button"
         ]
     }

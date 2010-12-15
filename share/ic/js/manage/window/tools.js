@@ -94,11 +94,13 @@ YUI.add(
                             this._accordion.addItem(acc_item);
                             //Y.log(Clazz.NAME + "::renderUI - item added");
 
+                            // TODO: this means we need to listen for resize events on the accordion item
                             //Y.log(Clazz.NAME + "::renderUI - acc_item render to: " + acc_item.getStdModNode(Y.WidgetStdMod.BODY));
                             var content = new content_module.prototype.constructor (
                                 {
                                     render: acc_item.getStdModNode(Y.WidgetStdMod.BODY),
-                                    window: this.get("window")
+                                    window: this.get("window"),
+                                    height: content_height
                                 }
                             );
                         },

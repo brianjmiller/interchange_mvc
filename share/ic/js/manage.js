@@ -148,6 +148,7 @@ YUI(
                         requires: [ 
                             "ic-manage-window-tools-common_actions-css",
                             "ic-manage-window-tools-base",
+                            "widget-stdmod",
                             "gallery-button"
                         ]
                     },
