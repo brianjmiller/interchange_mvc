@@ -71,6 +71,8 @@ YUI.add(
 
                     e.preventDefault();
 
+                    this._form_node.one(".error_msg").setContent("");
+
                     Y.io(
                         this._action,
                         {
@@ -80,15 +82,43 @@ YUI.add(
                                 id: this._form_node.get("id")
                             },
                             on: {
-                                success: function () {
-                                    Y.log(Clazz.NAME + "::submit - I/O succeeded");
-                                },
-                                failure: function () {
-                                    Y.log(Clazz.NAME + "::submit - I/O failed");
-                                }
+                                success: Y.bind(this._onRequestSuccess, this),
+                                failure: Y.bind(this._onRequestFailure, this)
                             }
                         }
                     );
+                },
+
+                _onRequestFailure: function (txnId, response) {
+                    Y.log(Clazz.NAME + "::_onRequestFailure");
+                    Y.log(Clazz.NAME + "::_onRequestFailure - response: " + Y.dump(response));
+                    this._form_node.one(".error_msg").setContent("Request failed" + " (" + response.status + " - " + response.statusText + ")");
+                },
+
+                _onRequestSuccess: function (txnId, response) {
+                    Y.log(Clazz.NAME + "::_onRequestSuccess");
+                    Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
+
+                    // TODO: parse response text into JS object using JSON parser
+                    //       act on contents of response object, replacing text,
+                    //       removing nodes, etc.
+                    var new_data;
+                    try {
+                        new_data = Y.JSON.parse(response.responseText);
+                    }
+                    catch (e) {
+                        Y.log(Clazz.NAME + "::_onRequestSuccess - Can't parse JSON: " + e, "error");
+
+                        return;
+                    }
+                    if (new_data) {
+                        if (new_data.code > 0) {
+                            this.get("contentBox").setContent(new_data.value.response.content);
+                        }
+                        else {
+                            this._form_node.one(".error_msg").setContent(new_data.exception);
+                        }
+                    }
                 }
             },
             {
