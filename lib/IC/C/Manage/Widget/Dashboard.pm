@@ -62,13 +62,15 @@ sub config {
 sub _get_config_struct {
     my $self = shift;
     return {
-        title   => 'Dashboard',
-        url     => $self->url(
+        title             => 'Dashboard',
+        url               => $self->url(
             controller => 'manage/widget/dashboard',
             action     => 'config',
             secure     => 1,
         ),
-        actions => {
+        polling_interval  => 10,
+        polling_is_active => JSON::true(),
+        actions           => {
             primary => {
                 label      => 'Primary',
                 is_default => JSON::true(),
