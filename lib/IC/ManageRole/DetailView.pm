@@ -79,6 +79,9 @@ around 'ui_meta_struct' => sub {
             label        => 'Summary',
             content      => {
                 type => 'Grid',
+                config => {
+                    units => [],
+                },
             },
         };
         push @$tabs, $summary_tab;
@@ -138,12 +141,12 @@ around 'ui_meta_struct' => sub {
         ];
 
         for my $ref (@$content_to_build) {
-            my $grid_ref = $summary_tab->{content}->{config}->[$ref->{row}]->[$ref->{col}] = {
-                percent      => $ref->{percent},
-                content      => {
-                    type    => $ref->{type},
-                    config  => {
-                        label   => $ref->{label},
+            my $grid_ref = $summary_tab->{content}->{config}->{units}->[$ref->{row}]->[$ref->{col}] = {
+                percent => $ref->{percent},
+                content => {
+                    type   => $ref->{type},
+                    config => {
+                        label => $ref->{label},
                     },
                 },
             };
@@ -341,11 +344,13 @@ sub _file_resource_config {
     $panel_data->{ $node->id } = {
         content => {
             type   => 'Grid',
-            config => [],
+            config => {
+                units => [],
+            },
         },
     };
 
-    my $grid_rows = $panel_data->{ $node->id }->{content}->{config};
+    my $grid_rows = $panel_data->{ $node->id }->{content}->{config}->{units};
 
     my $file = $node->get_file_for_object( $object );
 

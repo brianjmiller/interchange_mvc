@@ -83,13 +83,13 @@ YUI.add(
                 },
 
                 _onUpdateData: function (e) {
-                    Y.log(Clazz.NAME + "::_onUpdateData");
+                    //Y.log(Clazz.NAME + "::_onUpdateData");
 
                     this.fire("request_data");
                 },
 
                 _onRequestData: function (e) {
-                    Y.log(Clazz.NAME + "::_onRequestData");
+                    //Y.log(Clazz.NAME + "::_onRequestData");
 
                     // TODO: set a loading indicator
                     // TODO: protect against more than one call at once
@@ -110,8 +110,8 @@ YUI.add(
                 },
 
                 _onRequestSuccess: function (txnId, response) {
-                    Y.log(Clazz.NAME + "::_onRequestSuccess");
-                    Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
+                    //Y.log(Clazz.NAME + "::_onRequestSuccess");
+                    //Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
 
                     this.set("footerContent", "Received response...");
 
@@ -177,7 +177,7 @@ YUI.add(
                 ATTRS: {
                     update_interval: {
                         // in number of seconds
-                        value:     "60",
+                        value:     "15",
                         validator: Y.Lang.isNumber
                     }
                 }

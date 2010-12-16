@@ -69,7 +69,7 @@ sub _get_config_struct {
             secure     => 1,
         ),
         polling_interval  => 10,
-        polling_is_active => JSON::true(),
+        polling_is_active => JSON::false(),
         actions           => {
             primary => {
                 label      => 'Primary',

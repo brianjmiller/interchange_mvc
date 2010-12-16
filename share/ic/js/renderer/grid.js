@@ -44,7 +44,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::initializer");
                     //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
-                    this._unit_config = config;
+                    this._unit_config = config.units;
                 },
 
                 destructor: function () {
