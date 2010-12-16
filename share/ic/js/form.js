@@ -248,6 +248,7 @@ YUI.add(
                     Y.log('form::_onFormSuccess');
                     var response, host;
                     try {
+                        Y.log('form::_onFormSuccess - responseText ' + Y.dump(e.response.responseText));
                         response = Y.JSON.parse(e.response.responseText);
                     }
                     catch (err) {
@@ -295,7 +296,7 @@ YUI.add(
 
                         if (this._replacement_node != null) {
                             Y.log('form::_onSuccessfulResponse(replace): replacing content');
-                            this._replacement_node.setContent(response.value.content);
+                            this._replacement_node.setContent(response.value.response.content);
                             if (response.value.fade_out != null) {
                                 this.schedule_destroy(response.value.fade_out);
                             }
@@ -372,7 +373,7 @@ YUI.add(
                         this._error_node.setContent(e.exception);
                     }
                     else {
-                        Y.log("form::_onFormFailure: Error: " + e);
+                        Y.log("form::_onFormFailure: Error: " + e.details);
                         this._error_node.setContent(e);
                     }
                     this._error_node.removeClass("hidden");
