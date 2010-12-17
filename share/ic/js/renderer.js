@@ -57,7 +57,7 @@ YUI.add(
         Y.IC.Renderer.buildContent = function (config) {
             Y.log("Y.IC.Renderer::buildContent");
             Y.log("Y.IC.Renderer::buildContent - config: " + Y.dump(config));
-            var content_node = Y.Node.create('<div class="ic-renderer-content_node"></div>');
+            var content_node = config.render || Y.Node.create('<div class="ic-renderer-content_node"></div>');
 
             if (Y.Lang.isString(config)) {
                 // the simple case, what they passed is our content
@@ -69,7 +69,10 @@ YUI.add(
                 Y.each(
                     config,
                     function (v, i, a) {
-                        this.append( Y.IC.Renderer.buildContent(v) );
+                        if (! Y.Lang.isValue(v.render)) {
+                            v.render = this;
+                        }
+                        Y.IC.Renderer.buildContent(v);
                     },
                     content_node
                 );
@@ -79,10 +82,11 @@ YUI.add(
                     Y.log("Y.IC.Renderer::buildContent - type: " + config.type);
                     var content_constructor = Y.IC.Renderer.getConstructor(config.type);
 
-                    var content = new content_constructor (config.config);
-                    content.render();
+                    if (! Y.Lang.isValue(config.config.render)) {
+                        config.config.render = content_node;
+                    }
 
-                    content_node.setContent( content.get("boundingBox") );
+                    return new content_constructor (config.config);
                 }
                 else if (Y.Lang.isArray(config.controls)) {
                     Y.log("Y.IC.Renderer::buildContent - controls: " + Y.dump(config.controls));
@@ -129,6 +133,9 @@ YUI.add(
                             content_node.append(control_node);
                         }
                     );
+                }
+                else {
+                    Y.log("Y.IC.Renderer::buildContent - unrecognized configuration: " + Y.dump(config));
                 }
             }
 

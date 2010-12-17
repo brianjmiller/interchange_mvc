@@ -296,16 +296,16 @@ YUI.add(
                         var action_data = this.get("actions")[action_key];
                         Y.log(Clazz.NAME + "::_buildActionContent - action_data: " + Y.dump(action_data));
 
-                        var child_constructor = Y.IC.Renderer.getConstructor(action_data.renderer.type);
-
                         var body_node = this.getStdModNode( Y.WidgetStdMod.BODY );
+
                         var region    = body_node.get("region");
                         Y.log(Clazz.NAME + "::_buildActionContent - body region: " + Y.dump(region));
-                        action_data.renderer.config.render = body_node;
+
+                        action_data.renderer.config.render          = body_node;
                         action_data.renderer.config.advisory_width  = region.width;
                         action_data.renderer.config.advisory_height = region.height;
 
-                        child = new child_constructor (action_data.renderer.config);
+                        child = Y.IC.Renderer.buildContent( action_data.renderer );
                         Y.log(Clazz.NAME + "::_buildActionContent - child from new: " + child);
 
                         this.add(child);
@@ -318,17 +318,17 @@ YUI.add(
                     }
 
                     //
-                    // see comments in panel.js if this appears to break when a panel
-                    // is nested directly inside of a tile
+                    // see comments in panel.js as to why this breaks when nested directly
+                    // inside of a renderer that is widget parent/child
                     //
-                    this.selectChild( child.get("index") );
-                    //child.set("selected", 2);
+                    //this.selectChild( child.get("index") );
+                    child.set("selected", 2);
                 },
 
                 //
                 // this is overriding the base provided method so that the tile's children
                 // (the actions) don't get de-selected when the parent itself is deselected
-                // as is the case when a tile is a child of a panel
+                // as is the case when a tile is a child of a panel/grid, etc.
                 //
                 _afterParentSelectedChange: function (e) {
                     Y.log(Clazz.NAME + "::_afterParentSelectedChange");

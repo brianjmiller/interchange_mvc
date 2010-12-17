@@ -55,7 +55,9 @@ YUI.add(
                                 index:     i,
                                 panelNode: Y.Node.create("<div></div>")
                             };
-                            tab_add_args.panelNode.setContent( Y.IC.Renderer.buildContent(v.content) );
+                            v.content.render = tab_add_args.panelNode;
+
+                            Y.IC.Renderer.buildContent(v.content);
 
                             this.push(tab_add_args);
                         },

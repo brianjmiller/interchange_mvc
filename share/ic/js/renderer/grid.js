@@ -34,7 +34,7 @@ YUI.add(
         var Clazz = Y.namespace("IC").RendererGrid = Y.Base.create(
             "ic_renderer_grid",
             Y.IC.RendererBase,
-            [],
+            [ Y.WidgetParent ],
             {
                 _unit_config: null,
 
@@ -83,7 +83,15 @@ YUI.add(
                             }
 
                             if (Y.Lang.isValue(row.content)) {
-                                row_unit_node.setContent( Y.IC.Renderer.buildContent(row.content) );
+                                Y.log(Clazz.NAME + "::renderUI - adding row " + i + " - basic content: " + row.content);
+                                if (Y.Lang.isString(row.content)) {
+                                    row_unit_node.setContent(row.content);
+                                }
+                                else {
+                                    row.content.render = row_unit_node;
+
+                                    Y.IC.Renderer.buildContent(row.content);
+                                }
                             }
                             else {
                                 var columns;
@@ -116,9 +124,14 @@ YUI.add(
 
                                         var unit_node = Y.Node.create('<div class="' + unit_class + '"></div>');
 
-                                        var content_node = Y.IC.Renderer.buildContent( col.content );
+                                        if (Y.Lang.isString(col.content)) {
+                                            unit_node.setContent(col.content);
+                                        }
+                                        else {
+                                            col.content.render = unit_node;
 
-                                        unit_node.setContent(content_node);
+                                            Y.IC.Renderer.buildContent( col.content );
+                                        }
 
                                         this.append(unit_node);
                                     },

@@ -140,8 +140,6 @@ YUI.add(
                             settings = data.renderer;
                         }
 
-                        var child_constructor = Y.IC.Renderer.getConstructor(settings.type);
-
                         if (Y.Lang.isValue(this._default_action) && ! Y.Lang.isValue(settings.config.action)) {
                             settings.config.action = this._default_action;
                         }
@@ -150,7 +148,7 @@ YUI.add(
                         settings.config.advisory_width  = this.get("width");
                         settings.config.advisory_height = this.get("height");
 
-                        child = new child_constructor (settings.config);
+                        child = Y.IC.Renderer.buildContent(settings);
 
                         this.add(child);
 

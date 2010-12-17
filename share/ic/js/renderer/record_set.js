@@ -72,13 +72,15 @@ YUI.add(
 
                     this._tab_view.render(this.get("contentBox"));
 
-                    var dt_constructor = Y.IC.Renderer.getConstructor("V2DataTable");
-
-                    //Y.log(Clazz.NAME + "::syncUI - panel region: " + Y.dump(this._tab_view.item(0).get("panelNode").get("region")));
+                    this._data_table_config.render = this._tab_view.item(0).get("panelNode");
                     this._data_table_config.height = this._tab_view.item(0).get("panelNode").get("region").height - 8;
 
-                    this._data_table = new dt_constructor ( this._data_table_config );
-                    this._data_table.render(this._tab_view.item(0).get("panelNode"));
+                    this._data_table = Y.IC.Renderer.buildContent(
+                        {
+                            type:   "V2DataTable",
+                            config: this._data_table_config
+                        }
+                    );
                 },
 
                 bindUI: function () {
@@ -192,8 +194,16 @@ YUI.add(
                             cached.url = record_config.meta_url;
                         }
                         else {
-                            // TODO: use renderer's buildContent
-                            tab_args.content = Y.dump(record_config.content) || "";
+                            if (Y.Lang.isString(record_config.content)) {
+                                tab_args.content = record_config.content;
+                            }
+                            else {
+                                tab_args.panelNode = Y.Node.create("<div></div>");
+
+                                record_config.content.render = tab_args.panelNode;
+
+                                Y.IC.Renderer.buildContent(record_config.content);
+                            }
                         }
 
                         var tab_list = this._tab_view.add(
@@ -243,8 +253,6 @@ YUI.add(
 
                                         var settings = config.renderer;
 
-                                        var content_constructor = Y.IC.Renderer.getConstructor(settings.type);
-
                                         if (Y.Lang.isValue(action) && ! Y.Lang.isValue(settings.config.action)) {
                                             settings.config.action = action;
                                         }
@@ -253,7 +261,7 @@ YUI.add(
                                         settings.config.advisory_width  = this.get("width");
                                         settings.config.advisory_height = this.get("height");
 
-                                        var content = new content_constructor (settings.config);
+                                        Y.IC.Renderer.buildContent(settings);
                                     },
                                     this,
                                     cache_record

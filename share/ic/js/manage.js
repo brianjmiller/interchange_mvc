@@ -300,6 +300,7 @@ YUI(
                     "ic-renderer": {
                         path: "renderer.js",
                         requires: [
+                            "ic-renderer-css",
                             "ic-renderer-basic",
                             "ic-renderer-tile",
                             "ic-renderer-panel",
@@ -489,6 +490,10 @@ YUI(
                         type: "css"
                     },
 
+                    "ic-renderer-css": {
+                        path: "renderer.css",
+                        type: "css"
+                    },
                     "ic-renderer-basic-css": {
                         path: "renderer/basic.css",
                         type: "css"

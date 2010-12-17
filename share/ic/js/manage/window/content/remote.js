@@ -148,30 +148,38 @@ YUI.add(
                     }
                     if (new_data) {
                         Y.log(Clazz.NAME + "::_onRequestSuccess - new_data: " + Y.dump(new_data));
+
+                        var settings;
+
                         if (Y.Lang.isValue(new_data.renderer)) {
+                            settings = new_data.renderer;
+                        }
+                        else {
+                            settings = new_data;
+                        }
+
+                        if (Y.Lang.isString(new_data)) {
+                            this.set("bodyContent", new_data);
+                        }
+                        else {
                             this.set("bodyContent", "");
 
-                            var constructor = Y.IC.Renderer.getConstructor(new_data.renderer.type);
-
                             var body_node = this.getStdModNode( Y.WidgetStdMod.BODY );
-                            var region    = body_node.get("region");
-                            new_data.renderer.config.render = body_node;
-                            new_data.renderer.config.advisory_width  = region.width;
-                            new_data.renderer.config.advisory_height = region.height;
+
+                            var region = body_node.get("region");
                             Y.log(Clazz.NAME + "::_onRequestSuccess - region.width: " + region.width);
                             Y.log(Clazz.NAME + "::_onRequestSuccess - region.height: " + region.height);
 
+                            settings.config.render          = body_node;
+                            settings.config.advisory_width  = region.width;
+                            settings.config.advisory_height = region.height;
+
                             var my_action = this._suggested_action;
                             if (Y.Lang.isValue(my_action) && my_action !== "") {
-                                new_data.renderer.config.action = my_action;
+                                settings.config.action = my_action;
                             }
 
-                            this._built_data = new constructor (new_data.renderer.config);
-                        }
-                        else {
-                            var content = Y.IC.Renderer.buildContent(new_data);
-
-                            this.set("bodyContent", content);
+                            this._built_data = Y.IC.Renderer.buildContent(settings);
                         }
 
                         this._last_updated = new Date ();

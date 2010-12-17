@@ -136,14 +136,19 @@ YUI.add(
                                         );
                                     }
 
-                                    var content_node = Y.IC.Renderer.buildContent( col.content );
+                                    if (Y.Lang.isString(col.content)) {
+                                        col_node.setContent(col.content);
+                                    }
+                                    else {
+                                        col.content.render = col_node;
+
+                                        Y.IC.Renderer.buildContent( col.content );
+                                    }
 
                                     if (Y.Lang.isValue(col.add_class)) {
                                         Y.log(Clazz.NAME + "::renderUI - row " + i + " add class '" + col.add_class + "'");
-                                        content_node.addClass(col.add_class);
+                                        col_node.addClass(col.add_class);
                                     }
-
-                                    col_node.setContent(content_node);
 
                                     this.append(col_node);
                                 },

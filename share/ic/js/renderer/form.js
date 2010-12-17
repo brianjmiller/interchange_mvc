@@ -49,8 +49,8 @@ YUI.add(
 
                     this._form_node = Y.Node.create('<form></form>');
 
-                    var content_node = Y.IC.Renderer.buildContent(this._content_config, this);
-                    this._form_node.setContent(content_node);
+                    this._content_config.render = this._form_node;
+                    Y.IC.Renderer.buildContent(this._content_config);
 
                     this.get("contentBox").setContent(this._form_node);
                 },

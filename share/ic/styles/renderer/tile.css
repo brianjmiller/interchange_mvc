@@ -2,6 +2,10 @@ div.yui3-ic_renderer_tile-hidden {
     display: none;
 }
 
+div.yui3-ic_renderer_tile-content div.yui3-widget-bd {
+    overflow: auto;
+}
+
 div.ic_renderer_tile_header_title {
     font-weight: bold;
     vertical-align: middle;

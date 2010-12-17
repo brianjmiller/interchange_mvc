@@ -54,17 +54,18 @@ YUI.add(
                     //
                     // tree and treeble are two examples
                     //
-                    var loader_constructor = Y.IC.Renderer.getConstructor(config.loader_config.type);
-
                     config.loader_config.config.render = this._loader_node;
 
-                    this._loader = new loader_constructor (config.loader_config.config);
-
-                    var panel_constructor = Y.IC.Renderer.getConstructor('Panel');
+                    this._loader = Y.IC.Renderer.buildContent(config.loader_config);
 
                     config.panel_config.render = this._panel_node;
 
-                    this._panel = new panel_constructor (config.panel_config);
+                    this._panel = Y.IC.Renderer.buildContent(
+                        {
+                            type:   "Panel",
+                            config: config.panel_config
+                        }
+                    );
 
                     this._grid_node   = Y.Node.create('<div class="yui3-g"></div>');
                     this._grid_node.append(this._loader_node);
