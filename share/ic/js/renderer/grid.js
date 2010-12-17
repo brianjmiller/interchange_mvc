@@ -36,27 +36,29 @@ YUI.add(
             Y.IC.RendererBase,
             [ Y.WidgetParent ],
             {
-                _unit_config: null,
+                BOUNDING_TEMPLATE: '<div class="yui3-g"></div>',
+                CONTENT_TEMPLATE:  null,
 
-                _grid_node: null,
+                _unit_config: null,
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
                     //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
                     this._unit_config = config.units;
+
+                    this.set("width", this.get("advisory_width"));
+                    this.set("height", this.get("advisory_height"));
                 },
 
                 destructor: function () {
                     Y.log(Clazz.NAME + "::destructor");
 
                     this._unit_config = null;
-                    this._grid_node   = null;
                 },
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
-                    this._grid_node = Y.Node.create('<div class="yui3-g"></div>');
 
                     Y.each(
                         this._unit_config,
@@ -141,10 +143,8 @@ YUI.add(
 
                             this.append(row_unit_node);
                         },
-                        this._grid_node
+                        this.get("contentBox")
                     );
-
-                    this.get("contentBox").setContent(this._grid_node);
                 }
             },
             {
