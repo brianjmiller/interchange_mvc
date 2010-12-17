@@ -39,7 +39,7 @@ YUI.add(
                 },
 
                 _handleNewData: function (new_data) {
-                    Y.log(Clazz.NAME + "::_handleNewData");
+                    //Y.log(Clazz.NAME + "::_handleNewData");
 
                     this.getStdModNode( Y.WidgetStdMod.BODY ).setContent("");
 
@@ -73,7 +73,11 @@ YUI.add(
                 }
             },
             {
-                ATTRS: {}
+                ATTRS: {
+                    update_interval: {
+                        value: 60,
+                    }
+                }
             }
         );
     },

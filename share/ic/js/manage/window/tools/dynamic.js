@@ -63,7 +63,9 @@ YUI.add(
                     this.getStdModNode( Y.WidgetStdMod.FOOTER ).addClass("micro");
 
                     this.fire("update_data");
-                    this._initTimer();
+                    if (this.get("update_interval") > 0) {
+                        this._initTimer();
+                    }
                 },
 
                 _initTimer: function () {
@@ -152,7 +154,7 @@ YUI.add(
                 ATTRS: {
                     update_interval: {
                         // in number of seconds
-                        value:     "60",
+                        value:     0,
                         validator: Y.Lang.isNumber
                     }
                 }

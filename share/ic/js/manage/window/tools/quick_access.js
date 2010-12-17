@@ -31,7 +31,7 @@ YUI.add(
                 },
 
                 _handleNewData: function (new_data) {
-                    Y.log(Clazz.NAME + "::_handleNewData");
+                    //Y.log(Clazz.NAME + "::_handleNewData");
                     this.getStdModNode( Y.WidgetStdMod.BODY ).setContent("");
 
                     if (Y.Lang.isValue(new_data.forms)) {
