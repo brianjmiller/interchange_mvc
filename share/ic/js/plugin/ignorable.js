@@ -45,7 +45,7 @@ YUI.add(
                     Y.log(Ignorable.NAME + "::initializer");
 
                     this._host = this.get('host');
-                    Y.log(Ignorable.NAME + "::initializer: " + Y.dump(this._host));
+                    //Y.log(Ignorable.NAME + "::initializer: _host - " + Y.dump(this._host));
 
                     var button = new Y.Button (
                         {
@@ -86,7 +86,7 @@ YUI.add(
                 },
 
                 destructor: function (el) {
-                    Y.log(Ignorable.NAME + "::destructor" + (el ? el : ''));
+                    Y.log(Ignorable.NAME + "::destructor" + (el ? Y.dump(el) : ''));
 
                     this._detachUI();
                 },
