@@ -143,12 +143,18 @@ YUI(
                             "widget"
                         ]
                     },
+                    "ic-manage-window-tools-dynamic": {
+                        path: "manage/window/tools/dynamic.js",
+                        requires: [ 
+                            "ic-manage-window-tools-dynamic-css",
+                            "widget-stdmod"
+                        ]
+                    },
                     "ic-manage-window-tools-common_actions": {
                         path: "manage/window/tools/common_actions.js",
                         requires: [ 
                             "ic-manage-window-tools-common_actions-css",
-                            "ic-manage-window-tools-base",
-                            "widget-stdmod",
+                            "ic-manage-window-tools-dynamic",
                             "gallery-button"
                         ]
                     },
@@ -215,7 +221,7 @@ YUI(
                         requires: [
                             "ic-plugin-ignorable-css",
                             "plugin",
-                            "gallery-button",
+                            "gallery-button"
                         ],
                     },
                     "ic-plugin-editable": {
@@ -339,7 +345,8 @@ YUI(
                         path: "renderer/panel.js",
                         requires: [
                             "ic-renderer-panel-css",
-                            "ic-renderer-base"
+                            "ic-renderer-base",
+                            "cache"
                         ]
                     },
                     "ic-renderer-grid": {
@@ -410,7 +417,8 @@ YUI(
                             "yui2-paginator",
                             "yui2-datatable",
                             "yui2-dragdrop",
-                            "querystring"
+                            "querystring",
+                            "ic-plugin-tablefilter"
                         ]
                     },
                     "ic-renderer-treeble": {
@@ -451,13 +459,14 @@ YUI(
                         path: "renderer/record_set.js",
                         requires: [
                             "ic-renderer-record_set-css",
-                            "ic-renderer-base"
+                            "ic-renderer-base",
+                            "cache"
                         ]
                     },
 
                     // utility functions
                     "ic-util": {
-                        path: "util.js",
+                        path: "util.js"
                     }
                 }
             },
@@ -560,6 +569,10 @@ YUI(
                         path: "manage/window/tools/base.css",
                         type: "css"
                     },
+                    "ic-manage-window-tools-dynamic-css": {
+                        path: "manage/window/tools/dynamic.css",
+                        type: "css"
+                    },
                     "ic-manage-window-tools-common_actions-css": {
                         path: "manage/window/tools/common_actions.css",
                         type: "css"
@@ -649,53 +662,12 @@ YUI(
         }
     }
 ).use(
-    // TODO: can't load console because Treeble has an infinite loop bug
-    //       when it is enabled, it has been filed here: 
-    //       http://github.com/jafl/yui3-gallery/issues#issue/1
-    //
-    "console",
     "ic-manage-window",
     function (Y) {
         Y.on(
             "domready",
             function () {
                 // Y.log("firing dom ready event");
-                if (Y.Console) {
-                    var console = new Y.Console(
-                        {
-                            logSource:   Y.Global,
-                            newestOnTop: 0,
-                            height:      "98%"
-                        }
-                    );
-                    console.render();
-                    console.hide();
-
-                    // TODO: move this to a render into the manage window footer
-                    var console_toggle = Y.one("#console_toggle");
-                    Y.on(
-                        "click",
-                        function (e, console) {
-                            //Y.log("toggle: " + this);
-                            //Y.log("value: " + this.get("value"));
-                            if (this.get("value") === "1") {
-                                //Y.log("hide console: " + console);
-                                console.hide();
-                                this.set("value", 0);
-                                this.set("innerHTML", "show");
-                            }
-                            else {
-                                //Y.log("show console: " + console);
-                                console.show();
-                                this.set("value", 1);
-                                this.set("innerHTML", "hide");
-                            }
-                        },
-                        console_toggle,
-                        console_toggle,
-                        console
-                    );
-                }
 
                 // Y.log("setting up manage window");
                 var mw = Y.IC.ManageWindow();

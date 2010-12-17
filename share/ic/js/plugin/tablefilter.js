@@ -347,7 +347,7 @@ YUI.add(
         Y.mix(
             ColumnFilter,
             {
-                NAME: "ic_manage_plugin_tablefilter_columnfilter",
+                NAME: "ic_plugin_tablefilter_columnfilter",
                 ATTRS: {
                 }
             }
@@ -384,8 +384,15 @@ YUI.add(
 
                     this._controls = [];
 
+                    var column_region = Y.YUI2.util.Dom.getRegion( this._reference_column.getThLinerEl() );
+                    Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column: " + this._reference_column);
+                    Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column: " + Y.dump(this._reference_column));
+                    Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column.getElThLiner.region: " + Y.YUI2.util.Dom.getRegion(this._reference_column.getThLinerEl()));
+
                     // TODO: need to set the width on the input type based on the column width
                     var input_node = Y.Node.create('<input type="text" name="' + name + '" />');
+                    input_node.setStyle("width", column_region.width + "px");
+
                     this._controls.push(input_node);
 
                     // TODO: can this be delegated?

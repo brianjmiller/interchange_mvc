@@ -29,15 +29,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::initializer");
                     //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
-                    var table_args = {
-                        headers: config.headers,
-                        rows:    config.rows
-                    };
-                    if (Y.Lang.isValue(config.caption)) {
-                        table_args.caption = config.caption;
-                    }
-
-                    this._table = new Y.SimpleDatatable (table_args);
+                    this._table = new Y.SimpleDatatable (config.table_config);
                 },
 
                 destructor: function () {

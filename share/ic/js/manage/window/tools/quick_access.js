@@ -20,12 +20,63 @@ YUI.add(
     function(Y) {
         var Clazz = Y.namespace("IC.ManageTool").QuickAccess = Y.Base.create(
             "ic_manage_tools_quick_access",
-            Y.IC.ManageTool.Base,
+            Y.IC.ManageTool.Dynamic,
             [],
             {
-                renderUI: function () {
-                    Y.log(Clazz.NAME + "::renderUI");
-                    this.get("contentBox").setContent( Clazz.NAME );
+                initializer: function (config) {
+                    Y.log(Clazz.NAME + "::initializer");
+
+                    this._data_url = "/manage/widget/tools/quick_access/data?_format=json";
+                    Y.log(Clazz.NAME + "::initializer - _data_url: " + this._data_url);
+                },
+
+                _handleNewData: function (new_data) {
+                    Y.log(Clazz.NAME + "::_handleNewData");
+                    this.getStdModNode( Y.WidgetStdMod.BODY ).setContent("");
+
+                    if (Y.Lang.isValue(new_data.forms)) {
+                        Y.each(
+                            new_data.forms,
+                            function (form_config, i, a) {
+                                var input_node = Y.Node.create('<input type="text" value="" />');
+                                Y.on(
+                                    "key",
+                                    function (e) {
+                                        Y.log(Clazz.NAME + "::renderUI - return key press in input node: " + e.type + ": " + e.keyCode);
+                                        Y.log(Clazz.NAME + "::renderUI - this: " + this);
+                                        Y.log(Clazz.NAME + "::renderUI - input_node: " + input_node);
+                                        Y.log(Clazz.NAME + "::renderUI - input_node value: " + input_node.get("value"));
+
+                                        e.halt();
+
+                                        var value = input_node.get("value");
+                                        if (Y.Lang.isValue(value) && value !== "") {
+                                            var addtl_args = {};
+                                            addtl_args[form_config.event_args.value_key] = value;
+
+                                            this._window.fire(
+                                                form_config.event,
+                                                form_config.event_args.kind,
+                                                form_config.event_args.clazz,
+                                                form_config.event_args.action,
+                                                addtl_args
+                                            );
+                                        }
+                                    },
+                                    input_node,
+                                    'down:13',
+                                    this
+                                );
+
+                                this.getStdModNode( Y.WidgetStdMod.BODY ).append(form_config.label);
+                                this.getStdModNode( Y.WidgetStdMod.BODY ).append(input_node);
+                            },
+                            this
+                        );
+                    }
+                    else {
+                        this.getStdModNode( Y.WidgetStdMod.BODY ).setContent("Nothing configured.");
+                    }
                 }
             },
             {
@@ -37,7 +88,7 @@ YUI.add(
     {
         requires: [
             "ic-manage-window-tools-quick_access-css",
-            "ic-manage-window-tools-base"
+            "ic-manage-window-tools-dynamic",
         ]
     }
 );

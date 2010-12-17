@@ -44,6 +44,9 @@ YUI.add(
                     Y.log(Clazz.NAME + "::initializer");
                     //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
+                    this._loader_node = Y.Node.create('<div class="yui3-u-1"></div>');
+                    this._panel_node  = Y.Node.create('<div class="yui3-u-1"></div>');
+
                     //
                     // the loader can be basically any renderer that has elements that
                     // have the "ic_renderer_panel_loader_control" class such that when
@@ -52,21 +55,16 @@ YUI.add(
                     // tree and treeble are two examples
                     //
                     var loader_constructor = Y.IC.Renderer.getConstructor(config.loader_config.type);
-                    config.loader_config.config.bodyContent = "Select a control to load content.";
+
+                    config.loader_config.config.render = this._loader_node;
 
                     this._loader = new loader_constructor (config.loader_config.config);
-                    this._loader.render();
-
-                    this._loader_node = Y.Node.create('<div class="yui3-u">Put the loader here</div>');
-                    this._loader_node.setContent( this._loader.get("boundingBox") );
 
                     var panel_constructor = Y.IC.Renderer.getConstructor('Panel');
 
-                    this._panel = new panel_constructor (config.panel_config);
-                    this._panel.render();
+                    config.panel_config.render = this._panel_node;
 
-                    this._panel_node  = Y.Node.create('<div class="yui3-u">Put the panel here</div>');
-                    this._panel_node.setContent( this._panel.get("boundingBox") );
+                    this._panel = new panel_constructor (config.panel_config);
 
                     this._grid_node   = Y.Node.create('<div class="yui3-g"></div>');
                     this._grid_node.append(this._loader_node);

@@ -29,7 +29,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::initializer");
                     //Y.log(Clazz.NAME + "::initializer - config: " + Y.dump(config));
                     var chart_args = {
-                        dataProvider: config.data,
+                        dataProvider: config.chart_config.data,
                         width:        500,
                         height:       250,
                         axes:         {

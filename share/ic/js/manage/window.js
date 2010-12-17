@@ -127,13 +127,6 @@ YUI.add(
                                     zIndex:   0,
                                     scroll:   false
                                 },
-                                {
-                                    position: "bottom",
-                                    body:     "manage_footer",
-                                    zIndex:   0,
-                                    height:   37,
-                                    resize:   false
-                                }
                             ]
                         }
                     );

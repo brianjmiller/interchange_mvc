@@ -20,167 +20,60 @@ YUI.add(
     function(Y) {
         var Clazz = Y.namespace("IC.ManageTool").CommonActions = Y.Base.create(
             "ic_manage_tools_common_actions",
-            Y.IC.ManageTool.Base,
-            [ Y.WidgetStdMod ],
+            Y.IC.ManageTool.Dynamic,
+            [],
             {
-                _data_url:     null,
-                _last_updated: null,
-                _last_tried:   null,
-                _timer:        null,
-
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
-                    Y.log(Clazz.NAME + "::initializer - update_interval: " + this.get("update_interval"));
 
                     this._data_url = "/manage/widget/tools/common_actions/data?_format=json";
                     Y.log(Clazz.NAME + "::initializer - _data_url: " + this._data_url);
                 },
 
-                renderUI: function () {
-                    Y.log(Clazz.NAME + "::renderUI");
-                    Y.log(Clazz.NAME + "::renderUI - height: " + this.get("height"));
-
-                    // TODO: add back in buttons for refresh and toggling active
-                    //       which amounts to how tile works so it may make sense
-                    //       to move all of that to a plugin instead
-                    this.set("bodyContent", "");
-                    this.set("footerContent", "");
-                },
-
-                bindUI: function () {
-                    Y.log(Clazz.NAME + "::bindUI");
-                    this.on(
-                        "update_data",
-                        Y.bind( this._onUpdateData, this )
-                    );
-                    this.on(
-                        "request_data",
-                        Y.bind( this._onRequestData, this )
-                    );
-                },
-
                 syncUI: function () {
                     Y.log(Clazz.NAME + "::syncUI");
 
+                    Clazz.superclass.syncUI.apply(this, arguments);
+
                     this.getStdModNode( Y.WidgetStdMod.BODY ).addClass("centered");
-                    this.getStdModNode( Y.WidgetStdMod.FOOTER ).addClass("centered");
-                    this.getStdModNode( Y.WidgetStdMod.FOOTER ).addClass("micro");
-
-                    this.fire("update_data");
-                    this._initTimer();
                 },
 
-                _initTimer: function () {
-                    this._timer = Y.later(
-                        (this.get("update_interval") * 1000),
-                        this,
-                        function () {
-                            this.fire("update_data");
-                        },
-                        null,
-                        true
-                    );
-                },
+                _handleNewData: function (new_data) {
+                    Y.log(Clazz.NAME + "::_handleNewData");
 
-                _onUpdateData: function (e) {
-                    //Y.log(Clazz.NAME + "::_onUpdateData");
+                    this.getStdModNode( Y.WidgetStdMod.BODY ).setContent("");
 
-                    this.fire("request_data");
-                },
-
-                _onRequestData: function (e) {
-                    //Y.log(Clazz.NAME + "::_onRequestData");
-
-                    // TODO: set a loading indicator
-                    // TODO: protect against more than one call at once
-                    var current = new Date();
-                    this._last_tried = current;
-
-                    this.set("footerContent", "Requesting data from server...");
-
-                    Y.io(
-                        this._data_url,
-                        {
-                            on: {
-                                success: Y.bind(this._onRequestSuccess, this),
-                                failure: Y.bind(this._onRequestFailure, this)
-                            }
-                        }
-                    );
-                },
-
-                _onRequestSuccess: function (txnId, response) {
-                    //Y.log(Clazz.NAME + "::_onRequestSuccess");
-                    //Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
-
-                    this.set("footerContent", "Received response...");
-
-                    var new_data;
-                    try {
-                        new_data = Y.JSON.parse(response.responseText);
+                    if (Y.Lang.isValue(new_data.buttons) && new_data.buttons.length > 0) {
+                        Y.each(
+                            new_data.buttons,
+                            function (config, i, a) {
+                                var button = new Y.Button (
+                                    {
+                                        render:   this.getStdModNode(Y.WidgetStdMod.BODY),
+                                        label:    config.label,
+                                        width:    "160px",
+                                        callback: Y.bind(
+                                            function () {
+                                                this._window.fire(
+                                                    "contentPaneShowContent",
+                                                    config.kind,
+                                                    config.clazz,
+                                                    config.action,
+                                                    config.args
+                                                );
+                                            },
+                                            this
+                                        )
+                                    }
+                                );
+                            },
+                            this
+                        );
                     }
-                    catch (e) {
-                        Y.log(Clazz.NAME + "::_onRequestSuccess - Can't parse JSON: " + e, "error");
-
-                        this.set("footerContent", "Last Try: " + this._last_tried + "<br />" + e);
-
-                        return;
-                    }
-                    if (new_data) {
-                        var current = new Date();
-                        this._last_updated = current;
-                        this.set("bodyContent", "");
-
-                        if (Y.Lang.isValue(new_data.buttons) && new_data.buttons.length > 0) {
-                            Y.each(
-                                new_data.buttons,
-                                function (config, i, a) {
-                                    var button = new Y.Button (
-                                        {
-                                            render:   this.getStdModNode(Y.WidgetStdMod.BODY),
-                                            label:    config.label,
-                                            width:    "160px",
-                                            callback: Y.bind(
-                                                function () {
-                                                    this._window.fire(
-                                                        "contentPaneShowContent",
-                                                        config.kind,
-                                                        config.clazz,
-                                                        config.action,
-                                                        config.args
-                                                    );
-                                                },
-                                                this
-                                            )
-                                        }
-                                    );
-                                },
-                                this
-                            );
-                        }
-
-                        this.set("footerContent", "Last Update: " + this._last_updated);
-                    }
-                    else {
-                        this.set("bodyContent", "No data received.");
-                    }
-                },
-
-                _onRequestFailure: function (txnId, response) {
-                    Y.log(Clazz.NAME + "::_onRequestFailure");
-                    Y.log(Clazz.NAME + "::_onRequestFailure - response: " + Y.dump(response));
-
-                    this.set("footerContent", "Last Try: " + this._last_tried);
                 }
             },
             {
-                ATTRS: {
-                    update_interval: {
-                        // in number of seconds
-                        value:     "15",
-                        validator: Y.Lang.isNumber
-                    }
-                }
+                ATTRS: {}
             }
         );
     },
@@ -188,8 +81,7 @@ YUI.add(
     {
         requires: [
             "ic-manage-window-tools-common_actions-css",
-            "ic-manage-window-tools-base",
-            "widget-stdmod",
+            "ic-manage-window-tools-dynamic",
             "gallery-button"
         ]
     }

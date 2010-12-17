@@ -18,6 +18,8 @@
 YUI.add(
     "ic-renderer-record_set",
     function(Y) {
+        var TAB_HEIGHT_MAGIC = 38;
+
         var Clazz = Y.namespace("IC").RendererRecordSet = Y.Base.create(
             "ic_renderer_record_set",
             Y.IC.RendererBase,
@@ -26,6 +28,10 @@ YUI.add(
                 _tab_view:   null,
                 _data_table: null,
 
+                //
+                // using our own home grown caching because Y.Cache doesn't provide
+                // an API for removing a single record from the cache
+                //
                 // TODO: switch for tab
                 _record_cache: null,
 
@@ -47,7 +53,7 @@ YUI.add(
                         }
                     );
 
-                    var height = (this.get("advisory_height") - 48);
+                    var height = this._getTabPanelHeight();
                     Y.log(Clazz.NAME + "::initializer - panel node height: " + height);
 
                     this._tab_view.item(0).get("panelNode").setStyle("height", height + "px");
@@ -103,6 +109,10 @@ YUI.add(
 
                 syncUI: function () {
                     Y.log(Clazz.NAME + "::syncUI");
+                },
+
+                _getTabPanelHeight: function () {
+                    return (this.get("advisory_height") - TAB_HEIGHT_MAGIC);
                 },
 
                 _afterTabRender: function (e) {
@@ -191,6 +201,9 @@ YUI.add(
                             index
                         );
                         var tab = tab_list.item(0);
+
+                        var height = this._getTabPanelHeight();
+                        tab.get("panelNode").setStyle("height", height + "px");
 
                         // TODO: need to handle case where record_config.unique doesn't exist
                         cached.tab = tab;

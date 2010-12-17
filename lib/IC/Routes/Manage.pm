@@ -64,6 +64,12 @@ IC::Controller::Route->route(
     action      => 'data',
 );
 
+IC::Controller::Route->route(
+    pattern     => 'manage/widget/tools/quick_access/data',
+    controller  => 'manage/widget/tools/quick_access',
+    action      => 'data',
+);
+
 1;
 
 __END__

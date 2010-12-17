@@ -33,11 +33,6 @@ YUI.add(
                 // needed to build the display of the specific data item
                 _data: null,
 
-                // each data item as its content is built will be created
-                // as a child of the parent, this gives us a way to determine
-                // the child index of the parent based on the data's unique key
-                _data_to_index_map: null,
-
                 // if we are constructed with an action have it passed through
                 // to the renderer that is used for the default record
                 _default_action: null,
@@ -46,20 +41,26 @@ YUI.add(
                     Y.log(Clazz.NAME + "::initializer");
                     //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
-                    this._data              = config.data;
-                    this._data_to_index_map = {};
+                    this._data = config.data;
 
                     if (Y.Lang.isValue( config.action )) {
                         this._default_action = config.action;
                         Y.log(Clazz.NAME + "::initializer - _default_action: " + this._default_action);
                     }
+
+                    this.plug(
+                        Y.Plugin.Cache,
+                        {
+                            uniqueKeys: true,
+                            max:        100
+                        }
+                    );
                 },
 
                 destructor: function () {
                     Y.log(Clazz.NAME + "::destructor");
 
-                    this._data              = null;
-                    this._data_to_index_map = null;
+                    this._data = null;
                 },
 
                 renderUI: function () {
@@ -121,9 +122,43 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_afterCurrentChange");
                     Y.log(Clazz.NAME + "::_afterCurrentChange - e.prevVal: " + e.prevVal);
                     Y.log(Clazz.NAME + "::_afterCurrentChange - e.newVal: " + e.newVal);
+                    var cache_key = e.newVal;
 
-                    if (! Y.Lang.isValue(this._data_to_index_map[e.newVal])) {
-                        this._buildDataContent(e.newVal, this._default_action);
+                    var cache_entry = this.cache.retrieve(cache_key);
+                    Y.log(Clazz.NAME + "::_afterCurrentChange - cache_entry: " + Y.dump(cache_entry));
+
+                    var child;
+
+                    if (! Y.Lang.isValue(cache_entry)) {
+                        var data = this._data[cache_key];
+
+                        var settings;
+                        if (Y.Lang.isValue(data.content)) {
+                            settings = data.content;
+                        }
+                        else if (Y.Lang.isValue(data.renderer)) {
+                            settings = data.renderer;
+                        }
+
+                        var child_constructor = Y.IC.Renderer.getConstructor(settings.type);
+
+                        if (Y.Lang.isValue(this._default_action) && ! Y.Lang.isValue(settings.config.action)) {
+                            settings.config.action = this._default_action;
+                        }
+
+                        settings.config.render          = this.get("contentBox");
+                        settings.config.advisory_width  = this.get("width");
+                        settings.config.advisory_height = this.get("height");
+
+                        child = new child_constructor (settings.config);
+
+                        this.add(child);
+
+                        this.cache.add(cache_key, child);
+                    }
+                    else {
+                        child = cache_entry.response;
+                        Y.log(Clazz.NAME + "::_afterActionChange - child from cache: " + child);
                     }
 
                     //
@@ -133,37 +168,7 @@ YUI.add(
                     // combined
                     //
                     //this.selectChild( this._data_to_index_map[e.newVal] );
-                    this.item(this._data_to_index_map[e.newVal]).set("selected", 2);
-                },
-
-                _buildDataContent: function (id, action) {
-                    Y.log(Clazz.NAME + "::_buildDataContent");
-                    Y.log(Clazz.NAME + "::_buildDataContent - id: " + id);
-                    var data = this._data[id];
-
-                    var settings;
-                    if (Y.Lang.isValue(data.content)) {
-                        settings = data.content;
-                    }
-                    else if (Y.Lang.isValue(data.renderer)) {
-                        settings = data.renderer;
-                    }
-
-                    var child_constructor = Y.IC.Renderer.getConstructor(settings.type);
-
-                    if (Y.Lang.isValue(action) && ! Y.Lang.isValue(settings.config.action)) {
-                        settings.config.action = action;
-                    }
-
-                    settings.config.render          = this.get("contentBox");
-                    settings.config.advisory_width  = this.get("width");
-                    settings.config.advisory_height = this.get("height");
-
-                    var new_child = new child_constructor (settings.config);
-
-                    this.add(new_child);
-
-                    this._data_to_index_map[id] = new_child.get("index");
+                    child.set("selected", 2);
                 }
             },
             {
@@ -180,7 +185,8 @@ YUI.add(
         requires: [
             "ic-renderer-panel-css",
             "ic-renderer-base",
-            "ic-renderer-tile"
+            "ic-renderer-tile",
+            "cache"
         ]
     }
 );

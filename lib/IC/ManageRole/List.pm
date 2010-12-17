@@ -134,10 +134,10 @@ around 'ui_meta_struct' => sub {
     }
 
     # TODO: this should be determined based off of column definitions
-    $config->{data_table_is_filterable} = 1;
+    $config->{data_table_is_filterable} = JSON::true();
 
     # TODO: provide a way to deactivate the options handling
-    $config->{data_table_include_options} = 1;
+    $config->{data_table_include_options} = JSON::true();
 
     return $self->$orig(@_);
 };

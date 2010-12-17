@@ -144,6 +144,17 @@ YUI.add(
                         this._wrapped_data_source,
                         this._data_table_config
                     );
+
+                    Y.log(Clazz.NAME + "::renderUI - data_table_is_filterable: " + this.get("data_table_is_filterable"));
+                    if (this.get("data_table_is_filterable")) {
+                        Y.log(Clazz.NAME + "::renderUI - setting up filtering");
+                        this.plug(
+                            Y.IC.Plugin.TableFilter,
+                            {
+                                prepend_to: this.get("contentBox")
+                            }
+                        );
+                    }
                 },
 
                 bindUI: function () {
@@ -379,8 +390,13 @@ YUI.add(
                     data_table_initial_sort: {
                         value: null
                     },
+                    data_table_is_filterable: {
+                        value:     false,
+                        validator: Y.Lang.isBoolean
+                    },
                     data_table_include_options: {
-                        value: null
+                        value:     false,
+                        validator: Y.Lang.isBoolean
                     },
                     paging_provider: {
                         value: null

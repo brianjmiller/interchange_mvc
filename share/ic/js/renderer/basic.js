@@ -23,32 +23,26 @@ YUI.add(
             Y.IC.RendererBase,
             [],
             {
-                _title: null,
-                _body:  null,
+                syncUI: function () {
+                    Y.log(Clazz.NAME + "::syncUI");
 
-                initializer: function (config) {
-                    Y.log(Clazz.NAME + "::initializer");
-                    this._title = config.label;
-                    this._body  = config.data;
-                },
+                    this.get("contentBox").setContent("");
 
-                destructor: function () {
-                    Y.log(Clazz.NAME + "::destructor");
-                    this._title = null;
-                    this._body  = null;
-                },
-
-                renderUI: function () {
-                    Y.log(Clazz.NAME + "::renderUI");
-
-                    if (Y.Lang.isValue(this._title)) {
-                        this.get("contentBox").append('<span class="title">' + this._title + '</span><br />');
+                    if (Y.Lang.isValue(this.get("label"))) {
+                        this.get("contentBox").append('<span class="title">' + this.get("label") + '</span><br />');
                     }
-                    this.get("contentBox").append(this._body);
+                    this.get("contentBox").append(this.get("data"));
                 }
             },
             {
-                ATTRS: {}
+                ATTRS: {
+                    label: {
+                        value: null
+                    },
+                    data: {
+                        value: ""
+                    }
+                }
             }
         );
     },

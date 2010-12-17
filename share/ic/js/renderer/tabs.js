@@ -43,7 +43,7 @@ YUI.add(
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
 
-                    this._tab_view = new Y.TabView ();
+                    var children = [];
 
                     Y.each(
                         this._config,
@@ -57,12 +57,17 @@ YUI.add(
                             };
                             tab_add_args.panelNode.setContent( Y.IC.Renderer.buildContent(v.content) );
 
-                            this.add(tab_add_args, i);
+                            this.push(tab_add_args);
                         },
-                        this._tab_view
+                        children
                     );
 
-                    this._tab_view.render( this.get("contentBox") );
+                    this._tab_view = new Y.TabView (
+                        {
+                            render:   this.get("contentBox"),
+                            children: children
+                        }
+                    );
                 }
             },
             {
