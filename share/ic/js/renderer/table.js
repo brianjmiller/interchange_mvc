@@ -18,6 +18,10 @@
 YUI.add(
     "ic-renderer-table",
     function(Y) {
+        var _plugin_name_map = {
+            ignorable: Y.IC.Plugin.Ignorable
+        };
+
         var Clazz = Y.namespace("IC").RendererTable = Y.Base.create(
             "ic_renderer_table",
             Y.IC.RendererBase,
@@ -101,7 +105,7 @@ YUI.add(
                                         Y.log(Clazz.NAME + "::renderUI - row " + i + " plugging " + plugin_item);
                                         row_node.plug(plugin);
                                    }
-                               );
+                                );
                             }
 
                             if (! Y.Lang.isValue(row.columns)) {
