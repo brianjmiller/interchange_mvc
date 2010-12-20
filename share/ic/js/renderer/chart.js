@@ -67,6 +67,7 @@ YUI.add(
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
+                    Clazz.superclass.renderUI.apply(this, arguments);
 
                     this._chart.render(this.get("contentBox"));
                 }

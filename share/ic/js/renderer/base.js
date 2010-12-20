@@ -22,7 +22,32 @@ YUI.add(
             "ic_renderer_base",
             Y.Widget,
             [ Y.WidgetChild ],
-            {},
+            {
+                renderUI: function () {
+                    Y.log(Clazz.NAME + "::renderUI");
+
+                    Y.log(Clazz.NAME + "::renderUI - adding bounding_classes: " + Y.dump(this.get("bounding_classes")));
+                    Y.each(
+                        this.get("bounding_classes"),
+                        function (class) {
+                            if (this) {
+                                this.addClass(class);
+                            }
+                        },
+                        this.get("boundingBox")
+                    );
+                    Y.log(Clazz.NAME + "::renderUI - adding content_classes: " + Y.dump(this.get("content_classes")));
+                    Y.each(
+                        this.get("content_classes"),
+                        function (class) {
+                            if (this) {
+                                this.addClass(class);
+                            }
+                        },
+                        this.get("contentBox")
+                    );
+                }
+            },
             {
                 ATTRS: {
                     advisory_width: {
@@ -30,6 +55,14 @@ YUI.add(
                     },
                     advisory_height: {
                         value: null
+                    },
+                    bounding_classes: {
+                        value:     [],
+                        validator: Y.Lang.isArray
+                    },
+                    content_classes: {
+                        value:     [],
+                        validator: Y.Lang.isArray
                     }
                 }
             }

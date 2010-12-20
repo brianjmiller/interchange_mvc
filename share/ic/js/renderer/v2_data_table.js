@@ -137,6 +137,7 @@ YUI.add(
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
+                    Clazz.superclass.renderUI.apply(this, arguments);
 
                     this._data_table = new Y.YUI2.widget.DataTable (
                         Y.Node.getDOMNode(this.get("contentBox")),

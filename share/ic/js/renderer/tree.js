@@ -51,6 +51,7 @@ YUI.add(
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
+                    Clazz.superclass.renderUI.apply(this, arguments);
 
                     this.get("contentBox").setContent( this._treeview );
                 },

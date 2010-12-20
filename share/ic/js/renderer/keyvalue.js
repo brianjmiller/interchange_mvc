@@ -82,6 +82,8 @@ YUI.add(
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
+                    Clazz.superclass.renderUI.apply(this, arguments);
+
                     this.get("contentBox").append('<span class="key_value_title">' + this._title + '</span><br />');
                     this.get("contentBox").append(this._def_list);
                 }

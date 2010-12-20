@@ -56,6 +56,7 @@ YUI.add(
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
                     Y.log(Clazz.NAME + "::renderUI - contentBox: " + this.get("contentBox"));
+                    Clazz.superclass.renderUI.apply(this, arguments);
 
                     if (this.get("caption") !== "") {
                         this.get("contentBox").setContent('<span class="ic_renderer_form_caption">' + this.get("caption") + '</span>');

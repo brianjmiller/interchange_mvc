@@ -63,10 +63,6 @@ YUI.add(
                     this._data = null;
                 },
 
-                renderUI: function () {
-                    Y.log(Clazz.NAME + "::renderUI");
-                },
-
                 bindUI: function () {
                     Y.log(Clazz.NAME + "::bindUI");
 

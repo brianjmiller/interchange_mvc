@@ -233,6 +233,7 @@ YUI.add(
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
+                    Clazz.superclass.renderUI.apply(this, arguments);
 
                     this._container_node = Y.Node.create("<div></div>");
                     this.get("contentBox").append(this._container_node);

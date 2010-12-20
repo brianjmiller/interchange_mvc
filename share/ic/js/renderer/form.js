@@ -46,6 +46,7 @@ YUI.add(
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
                     Y.log(Clazz.NAME + "::renderUI - _content_config: " + Y.dump(this._content_config));
+                    Clazz.superclass.renderUI.apply(this, arguments);
 
                     this._form_node = Y.Node.create('<form></form>');
 
