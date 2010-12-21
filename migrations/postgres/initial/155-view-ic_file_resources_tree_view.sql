@@ -29,8 +29,7 @@ CREATE VIEW ic_file_resources_tree_view AS
             'ic_file_resources'::text,
             'id'::text,
             'parent_id'::text,
-            'branch_order,
-            lookup_value'::text,
+            'branch_order, lookup_value'::text,
             (1)::text,
              0,
              '~'::text
