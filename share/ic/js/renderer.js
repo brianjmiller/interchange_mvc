@@ -56,7 +56,8 @@ YUI.add(
 
         Y.IC.Renderer.buildContent = function (config) {
             Y.log("Y.IC.Renderer::buildContent");
-            Y.log("Y.IC.Renderer::buildContent - config: " + Y.dump(config));
+            Y.log("Y.IC.Renderer::buildContent - render: " + config.render);
+            //Y.log("Y.IC.Renderer::buildContent - config: " + Y.dump(config));
             var content_node = config.render || Y.Node.create('<div class="ic-renderer-content_node"></div>');
 
             if (Y.Lang.isString(config)) {
@@ -69,10 +70,15 @@ YUI.add(
                 Y.each(
                     config,
                     function (v, i, a) {
-                        if (! Y.Lang.isValue(v.render)) {
-                            v.render = this;
+                        if (Y.Lang.isString(v)) {
+                            this.append(Y.IC.Renderer.buildContent(v));
                         }
-                        Y.IC.Renderer.buildContent(v);
+                        else {
+                            if (! Y.Lang.isValue(v.render)) {
+                                v.render = this;
+                            }
+                            Y.IC.Renderer.buildContent(v);
+                        }
                     },
                     content_node
                 );
