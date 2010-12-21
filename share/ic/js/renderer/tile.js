@@ -34,11 +34,14 @@ YUI.add(
                 _refresh_button: null,
                 _polling_button: null,
 
+                _in_refresh:     null,
                 _pending_action: null,
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
                     Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
+
+                    this._in_refresh = false;
 
                     this.set("width", this.get("advisory_width"));
                     this.set("height", this.get("advisory_height"));
@@ -273,7 +276,12 @@ YUI.add(
                         Y.log(Clazz.NAME + "::_onActionChange - action_data: " + Y.dump(action_data));
 
                         if (! action_data) {
-                            if (Y.Lang.isValue(this.get("url"))) {
+                            if (this._in_refresh) {
+                                // can only refresh once to see if we get data, then
+                                // we need to bail and go with the default
+                                e.newVal = this._getDefaultAction();
+                            }
+                            else if (Y.Lang.isValue(this.get("url"))) {
                                 // stop the setting of the attribute's value
                                 e.preventDefault();
 
@@ -350,6 +358,8 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_refreshData");
 
                     this._mesg_node.setContent("Reloading...");
+
+                    this._in_refresh = true;
 
                     Y.log(Clazz.NAME + "::_refreshData - url: " + this.get("url"));
                     Y.io(
@@ -438,12 +448,14 @@ YUI.add(
                     else {
                         this._mesg_node.setContent("Last Tried: " + new Date () + " (No data in response)");
                     }
+                    this._in_refresh = false;
                 },
 
                 _onRequestFailure: function (txnId, response) {
                     Y.log(Clazz.NAME + "::_onRequestFailure");
 
                     this._mesg_node.setContent("Last Tried: " + new Date () + " (Request failed: "  + response.status + " - " + response.statusText + ")");
+                    this._in_refresh = false;
                 },
 
                 _getDefaultAction: function () {
