@@ -34,13 +34,11 @@ YUI.add(
                 _refresh_button: null,
                 _polling_button: null,
 
-                _initial_action: null,
+                _pending_action: null,
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
                     Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
-
-                    this._initial_action = config.initial_action;
 
                     this.set("width", this.get("advisory_width"));
                     this.set("height", this.get("advisory_height"));
@@ -78,7 +76,7 @@ YUI.add(
                     this._button_node = Y.Node.create('<div class="ic_renderer_tile_header_buttons yui3-u-2-3"></div>');
                     this._button_node.append(this._action_buttons_node);
 
-                    this._mesg_node   = Y.Node.create('<div class="ic_renderer_tile_header_mesg yui3-u-1"></div>');
+                    this._mesg_node   = Y.Node.create('<div class="ic_renderer_tile_header_mesg yui3-u-1">Initially loaded: ' + new Date () + '</div>');
                     this._header_node = Y.Node.create('<div class="ic_renderer_tile_header yui3-g"></div>');
 
                     this._header_node.append( this._title_node );
@@ -124,6 +122,16 @@ YUI.add(
                     }
 
                     this.set("headerContent", this._header_node );
+
+                    //
+                    // if there is an action set, indicate that we need
+                    // to load it later during syncUI so that it is 
+                    // handled appropriately wrt Y.WidgetStdMod
+                    //
+                    if (Y.Lang.isValue(this.get("action"))) {
+                        this._initial_action = this.get("action");
+                        this.set("action", null);
+                    }
                 },
 
                 bindUI: function () {
@@ -135,9 +143,9 @@ YUI.add(
                         },
                         this
                     );
-                    this.after(
-                        "selectionChange",
-                        Y.bind( this._afterMySelectionChange, this )
+                    this.on(
+                        "actionChange",
+                        Y.bind( this._onActionChange, this )
                     );
                     this.after(
                         "actionChange",
@@ -172,27 +180,36 @@ YUI.add(
                 },
 
                 syncUI: function () {
-                    Y.log(Clazz.NAME + "::syncUI");
+                    if (! Y.Lang.isValue(this._initial_action)) {
+                        this._initial_action = this._getDefaultAction();
+                    }
+
+                    //
+                    // wrapping this so that we can call it separately later,
+                    // calling syncUI() directly was causing issues with how
+                    // WidgetStdMod handles the BODY node
+                    //
+                    this._MySyncUI();
+                },
+
+                _MySyncUI: function () {
+                    Y.log(Clazz.NAME + "::_MySyncUI");
 
                     this._title_node.setContent( this.get("title") );
-                    this._mesg_node.setContent("Initially loaded: " + new Date ());
-
-                    // needed this to make sure the body node exists
-                    this.set("bodyContent", "");
 
                     Y.log("actions: " + Y.Object.keys(this.get("actions")));
                     if (Y.Object.keys(this.get("actions")).length > 1) {
                         Y.each(
                             this.get("actions"),
                             function (v, k, obj) {
-                                Y.log(Clazz.NAME + "::renderUI - adding action button: " + v.label);
+                                Y.log(Clazz.NAME + "::_MySyncUI - adding action button: " + v.label);
                                 var button = new Y.Button (
                                     {
                                         render:   this._action_buttons_node,
                                         label:    v.label,
                                         callback: Y.bind(
                                             function () {
-                                                Y.log(Clazz.NAME + "::renderUI - button callback: " + k);
+                                                Y.log(Clazz.NAME + "::_MySyncUI - button callback: " + k);
     
                                                 this.set("action", k);
                                             },
@@ -205,53 +222,19 @@ YUI.add(
                         );
                     }
 
-                    // TODO: the following code has an issue such that the existing displayed
-                    //       record is not hidden correctly, fix it
-                    var initial_action = this.get("action");
-                    //Y.log(Clazz.NAME + "::syncUI - actions: " + Y.dump(this.get("actions")));
-                    //if (! Y.Lang.isValue( initial_action ) && Y.Lang.isValue( this.get("actions") )) {
-                        //var found = Y.some(
-                            //this.get("actions"),
-                            //function (v, k, o) {
-                                //if (Y.Lang.isValue(v.is_default) && v.is_default) {
-                                    //initial_action = k
-                                    //return true;
-                                //}
-                            //}
-                        //);
-                        //if (! found) {
-                            //if (Y.Lang.isValue(this.get("actions").DetailView)) {
-                                //initial_action = "DetailView";
-                            //}
-                            //else {
-                                //initial_action = Y.Object.keys(this.get("actions"))[0];
-                            //}
-                        //}
-                    //}
-                    //else {
-                        //// TODO: need to do this only if there is default content
-                        ////       and then handle clearing it on first display
-                        ////this.set("bodyContent", "Select an action to load content.");
-                    //}
-
-                    Y.log(Clazz.NAME + "::syncUI - initial_action: " + Y.dump(initial_action));
-                    if (Y.Lang.isValue( initial_action ) && Y.Lang.isValue(this.get("actions")[initial_action])) {
-                        // TODO: is there a more proper YUI way to do this?
-                        // get the side effect of setting action
-                        this._afterActionChange(
-                            {
-                                newVal: initial_action
-                            }
-                        );
-                    }
-
                     if (Y.Lang.isValue(this.get("url"))) {
                         // TODO: need to wire in change for polling interval,
                         //       and/or detach/attach of other handler(s)
                         if (this.get("polling_is_active") && this.get("polling_interval") > 0) {
-                            Y.log(Clazz.NAME + "::syncUI - starting polling");
+                            Y.log(Clazz.NAME + "::_MySyncUI - starting polling");
                             this._initTimer();
                         }
+                    }
+
+                    if (Y.Lang.isValue(this._initial_action)) {
+                        Y.log(Clazz.NAME + "::_MySyncUI - setting initial action: " + this._initial_action);
+                        this.set("action", this._initial_action);
+                        this._initial_action = null;
                     }
                 },
 
@@ -268,15 +251,43 @@ YUI.add(
                     );
                 },
 
-                _afterMySelectionChange: function (e) {
-                    Y.log(Clazz.NAME + "::_afterMySelectionChange");
-                    Y.log(Clazz.NAME + "::_afterMySelectionChange - e.prevVal: " + e.prevVal);
-                    Y.log(Clazz.NAME + "::_afterMySelectionChange - e.newVal: " + e.newVal);
-                    if (Y.Lang.isValue(e.prevVal)) {
-                        e.prevVal.hide();
-                    }
-                    if (Y.Lang.isValue(e.newVal)) {
-                        e.newVal.show();
+                //
+                // prevent switching to an action that doesn't have any corresponding data
+                // basically stall it, issue a refresh if possible, and have the action
+                // loaded after the refresh finishes
+                //
+                _onActionChange: function (e) {
+                    Y.log(Clazz.NAME + "::_onActionChange");
+                    Y.log(Clazz.NAME + "::_onActionChange - e.prevVal: " + e.prevVal);
+                    Y.log(Clazz.NAME + "::_onActionChange - e.newVal: " + e.newVal);
+                    var action_key = e.newVal;
+
+                    //
+                    // we set the action to null at times on purpose, we should allow that
+                    // since it is obviously not a check against data, it may be the case
+                    // that it would be used to load up a default "child" that just displays
+                    // a loading message or the like
+                    //
+                    if (Y.Lang.isValue(action_key)) {
+                        var action_data = this.get("actions")[action_key];
+                        Y.log(Clazz.NAME + "::_onActionChange - action_data: " + Y.dump(action_data));
+
+                        if (! action_data) {
+                            if (Y.Lang.isValue(this.get("url"))) {
+                                // stop the setting of the attribute's value
+                                e.preventDefault();
+
+                                this._pending_action = action_key;
+                                Y.log(Clazz.NAME + "::_onActionChange - set _pending_action:: " + this._pending_action);
+
+                                Y.log(Clazz.NAME + "::_onActionChange - refreshing data");
+                                this._refreshData();
+                            }
+                            else {
+                                Y.log(Clazz.NAME + "::_onActionChange - can't set action: no data found (" + action_key + ")", "error");
+                                // TODO: upate in UI
+                            }
+                        }
                     }
                 },
 
@@ -284,55 +295,55 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_afterActionChange");
                     Y.log(Clazz.NAME + "::_afterActionChange - e.prevVal: " + e.prevVal);
                     Y.log(Clazz.NAME + "::_afterActionChange - e.newVal: " + e.newVal);
+                    var prev_action_key = e.prevVal;
+
+                    if (Y.Lang.isValue(prev_action_key)) {
+                        var prev_cache_entry = this.cache.retrieve(prev_action_key);
+                        if (prev_cache_entry) {
+                            Y.log(Clazz.NAME + "::_afterActionChange - hiding: " + prev_cache_entry.response);
+                            prev_cache_entry.response.hide();
+                        }
+                    }
+
                     var action_key = e.newVal;
+                    if (Y.Lang.isValue(action_key)) {
+                        var cache_entry = this.cache.retrieve(action_key);;
+                        Y.log(Clazz.NAME + "::_afterActionChange - cache_entry: " + Y.dump(cache_entry));
 
-                    var cache_entry = this.cache.retrieve(action_key);;
-                    Y.log(Clazz.NAME + "::_afterActionChange - cache_entry: " + Y.dump(cache_entry));
+                        var child;
 
-                    var child;
+                        if (! Y.Lang.isValue(cache_entry)) {
+                            this._uiSetFillHeight( Y.WidgetStdMod.BODY );
 
-                    if (! Y.Lang.isValue(cache_entry)) {
-                        this._uiSetFillHeight( Y.WidgetStdMod.BODY );
+                            var action_data = this.get("actions")[action_key];
+                            Y.log(Clazz.NAME + "::_afterActionChange - action_data: " + Y.dump(action_data));
 
-                        var action_data = this.get("actions")[action_key];
-                        Y.log(Clazz.NAME + "::_buildActionContent - action_data: " + Y.dump(action_data));
+                            var body_node = this.getStdModNode( Y.WidgetStdMod.BODY );
 
-                        var body_node = this.getStdModNode( Y.WidgetStdMod.BODY );
+                            var region    = body_node.get("region");
+                            Y.log(Clazz.NAME + "::_afterActionChange - body region: " + Y.dump(region));
 
-                        var region    = body_node.get("region");
-                        Y.log(Clazz.NAME + "::_buildActionContent - body region: " + Y.dump(region));
+                            action_data.renderer.config.render          = body_node;
+                            action_data.renderer.config.advisory_width  = region.width;
+                            action_data.renderer.config.advisory_height = region.height;
 
-                        action_data.renderer.config.render          = body_node;
-                        action_data.renderer.config.advisory_width  = region.width;
-                        action_data.renderer.config.advisory_height = region.height;
+                            child = Y.IC.Renderer.buildContent( action_data.renderer );
+                            Y.log(Clazz.NAME + "::_afterActionChange - child from new: " + child);
 
-                        child = Y.IC.Renderer.buildContent( action_data.renderer );
-                        Y.log(Clazz.NAME + "::_buildActionContent - child from new: " + child);
+                            this.add(child);
+                            Y.log(Clazz.NAME + "::_afterActionChange - child added: " + child);
 
-                        this.add(child);
+                            this.cache.add(action_key, child);
+                            Y.log(Clazz.NAME + "::_afterActionChange - child cached: " + child);
+                        }
+                        else {
+                            child = cache_entry.response;
+                            Y.log(Clazz.NAME + "::_afterActionChange - child from cache: " + child);
+                        }
 
-                        this.cache.add(action_key, child);
+                        Y.log(Clazz.NAME + "::_afterActionChange - showing child: " + child);
+                        child.show();
                     }
-                    else {
-                        child = cache_entry.response;
-                        Y.log(Clazz.NAME + "::_afterActionChange - child from cache: " + child);
-                    }
-
-                    //
-                    // see comments in panel.js as to why this breaks when nested directly
-                    // inside of a renderer that is widget parent/child
-                    //
-                    //this.selectChild( child.get("index") );
-                    child.set("selected", 2);
-                },
-
-                //
-                // this is overriding the base provided method so that the tile's children
-                // (the actions) don't get de-selected when the parent itself is deselected
-                // as is the case when a tile is a child of a panel/grid, etc.
-                //
-                _afterParentSelectedChange: function (e) {
-                    Y.log(Clazz.NAME + "::_afterParentSelectedChange");
                 },
 
                 _refreshData: function () {
@@ -354,16 +365,29 @@ YUI.add(
 
                 _onRequestSuccess: function (txnId, response) {
                     Y.log(Clazz.NAME + "::_onRequestSuccess");
+                    Y.log(Clazz.NAME + "::_onRequestSuccess - _pending_action: " + this._pending_action);
+
+                    //
+                    // if there isn't a pending action store off the current action
+                    // so that it gets properly restored after parsing the data
+                    //
+                    if (! Y.Lang.isValue(this._pending_action)) {
+                        this._pending_action = this.get("action");
+                        Y.log(Clazz.NAME + "::_onRequestSuccess - _pending_action now: " + this._pending_action);
+                    }
+                    this.set("action", null);
 
                     // TODO: this could be attached to a handler on "actions"
                     this._action_buttons_node.setContent("");
 
-                    //this.set("action", null);
+                    // TODO: this should be handled by a removeChild handler that clears the cached record
+                    //       but at least for the moment we always clear them all and cache doesn't provide
+                    //       an easy API method for removing a single cache record
+                    //       http://yuilibrary.com/projects/yui3/ticket/2529662
+                    //
+                    this.cache.flush();
 
                     this.removeAll();
-
-                    // TODO: this should be handled by a removeChild handler that clears the cached record
-                    this.cache.flush();
 
                     this._mesg_node.setContent("Parsing...");
 
@@ -390,7 +414,24 @@ YUI.add(
                         // TODO: should this get updated?
                         //this.set("url", new_data.url);
 
-                        this.syncUI();
+                        var set_action;
+                        if (Y.Lang.isValue(this._pending_action)) {
+                            Y.log(Clazz.NAME + "::_onRequestSuccess - setting action from pending action: " + this.get("action") + ", " + this._pending_action);
+                            set_action = this._pending_action;
+                            this._pending_action = null;
+                        }
+                        else {
+                            // in the case of no pending action that means that one
+                            // has not been specifically requested and there wasn't
+                            // a previous one, so we should find the default and
+                            // use it
+                            set_action = this._getDefaultAction();
+                        }
+                        if (Y.Lang.isValue(set_action)) {
+                            this.set("action", set_action);
+                        }
+
+                        this._MySyncUI();
 
                         this._mesg_node.setContent("Last Updated: " + new Date ());
                     }
@@ -403,10 +444,40 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_onRequestFailure");
 
                     this._mesg_node.setContent("Last Tried: " + new Date () + " (Request failed: "  + response.status + " - " + response.statusText + ")");
+                },
+
+                _getDefaultAction: function () {
+                    Y.log(Clazz.NAME + "::_getDefaultAction");
+                    var return_value;
+
+                    var found = Y.some(
+                        this.get("actions"),
+                        function (v, k, o) {
+                            if (Y.Lang.isValue(v.is_default) && v.is_default) {
+                                return_value = k;
+                                return true;
+                            }
+                        }
+                    );
+                    if (! found) {
+                        if (Y.Lang.isValue(this.get("actions").DetailView)) {
+                            return_value = "DetailView";
+                        }
+                        else {
+                            return_value = Y.Object.keys(this.get("actions"))[0];
+                        }
+                    }
+
+                    return return_value;
                 }
             },
             {
                 ATTRS: {
+                    // needed this to make sure the body node exists
+                    bodyContent: {
+                        value: ""
+                    },
+
                     //
                     // if a URL has been specified this tile can reload its configuration data
                     // from the specified URL and hence automagically provides a refresh button 
@@ -428,7 +499,8 @@ YUI.add(
                         validator: Y.Lang.isNumber
                     },
                     actions: {
-                        value: {}
+                        value: {},
+                        validator: Y.Lang.isObject
                     },
                     action: {
                         value: null
