@@ -28,6 +28,10 @@ YUI.add(
                 _last_tried:   null,
                 _timer:        null,
 
+                _footer_node:  null,
+                _button_node:  null,
+                _mesg_node:    null,
+
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
                     Y.log(Clazz.NAME + "::initializer - update_interval: " + this.get("update_interval"));
@@ -40,8 +44,30 @@ YUI.add(
                     // TODO: add back in buttons for refresh and toggling active
                     //       which amounts to how tile works so it may make sense
                     //       to move all of that to a plugin instead
-                    this.set("bodyContent", "");
-                    this.set("footerContent", "");
+                    this._button_node = Y.Node.create('<div></div>');
+                    this._refresh_button = new Y.Button (
+                        {
+                            render:   this._button_node,
+                            label:    "Refresh",
+                            callback: Y.bind(
+                                function () {
+                                    Y.log(Clazz.NAME + "::renderUI - refresh button callback");
+                                    this.getStdModNode( Y.WidgetStdMod.BODY ).setContent("Manual Refresh...");
+                                    this.fire("update_data");
+                                },
+                                this
+                            )
+                        }
+                    );
+
+                    this._mesg_node = Y.Node.create('<div>Initial Load: ' + new Date () + '</div>');
+                    this._mesg_node.addClass("micro");
+
+                    this._footer_node = Y.Node.create('<div></div>');
+                    this._footer_node.append(this._button_node);
+                    this._footer_node.append(this._mesg_node);
+
+                    this.set("footerContent", this._footer_node);
                 },
 
                 bindUI: function () {
@@ -60,7 +86,6 @@ YUI.add(
                     Y.log(Clazz.NAME + "::syncUI");
 
                     this.getStdModNode( Y.WidgetStdMod.FOOTER ).addClass("centered");
-                    this.getStdModNode( Y.WidgetStdMod.FOOTER ).addClass("micro");
 
                     this.fire("update_data");
                     if (this.get("update_interval") > 0) {
@@ -93,7 +118,7 @@ YUI.add(
                     // TODO: protect against more than one call at once
                     this._last_tried = new Date ();
 
-                    this.set("footerContent", "Requesting data from server...");
+                    this._mesg_node.setContent("Requesting data from server...");
 
                     Y.io(
                         this._data_url,
@@ -110,7 +135,7 @@ YUI.add(
                     //Y.log(Clazz.NAME + "::_onRequestSuccess");
                     //Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
 
-                    this.set("footerContent", "Received response...");
+                    this._mesg_node.setContent("Received response...");
 
                     var new_data;
                     try {
@@ -119,7 +144,7 @@ YUI.add(
                     catch (e) {
                         Y.log(Clazz.NAME + "::_onRequestSuccess - Can't parse JSON: " + e, "error");
 
-                        this.set("footerContent", "Last Try: " + this._last_tried + "<br />" + e);
+                        this._mesg_node.setContent("Last Try: " + this._last_tried + "<br />" + e);
 
                         return;
                     }
@@ -128,7 +153,7 @@ YUI.add(
 
                         this._handleNewData(new_data);
 
-                        this.set("footerContent", "Last Update: " + this._last_updated);
+                        this._mesg_node.setContent("Last Update: " + this._last_updated);
                     }
                     else {
                         this._handleEmptyData();
@@ -139,7 +164,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_onRequestFailure");
                     Y.log(Clazz.NAME + "::_onRequestFailure - response: " + Y.dump(response));
 
-                    this.set("footerContent", "Last Try: " + this._last_tried);
+                    this._mesg_node.setContent("Last Try: " + this._last_tried);
                 },
 
                 _handleNewData: function (new_data) {
@@ -152,6 +177,12 @@ YUI.add(
             },
             {
                 ATTRS: {
+                    bodyContent: {
+                        value: ""
+                    },
+                    footerContent: {
+                        value: ""
+                    },
                     update_interval: {
                         // in number of seconds
                         value:     0,
@@ -166,7 +197,8 @@ YUI.add(
         requires: [
             //"ic-manage-window-tools-dynamic-css",
             "ic-manage-window-tools-base",
-            "widget-stdmod"
+            "widget-stdmod",
+            "gallery-button"
         ]
     }
 );

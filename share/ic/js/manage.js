@@ -147,7 +147,8 @@ YUI(
                         path: "manage/window/tools/dynamic.js",
                         requires: [ 
                             "ic-manage-window-tools-dynamic-css",
-                            "widget-stdmod"
+                            "widget-stdmod",
+                            "gallery-button"
                         ]
                     },
                     "ic-manage-window-tools-common_actions": {
