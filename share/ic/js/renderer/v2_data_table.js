@@ -18,6 +18,10 @@
 YUI.add(
     "ic-renderer-v2_data_table",
     function(Y) {
+        var ROW_HEIGHT   = 17;
+        var MAGIC        = 39; // table header (17) + 1 paginator (22) height
+        var FILTER_MAGIC = 25;
+
         var Clazz = Y.namespace("IC").RendererV2DataTable = Y.Base.create(
             "ic_renderer_v2_data_table",
             Y.IC.RendererBase,
@@ -283,14 +287,16 @@ YUI.add(
                     var unit_height = this.get("height");
                     Y.log(Clazz.NAME + "::_initMaxRows - unit_height: " + unit_height);
 
-                    var magic       = 39; // table header (17) + 1 paginator (22) height
-                    //magic          += 21;
                     var total_recs  = this.get("total_objects");
-                    var row_height  = 17;
+
+                    var filter_magic = 0;
+                    if (this.get("data_table_is_filterable")) {
+                        filter_magic = FILTER_MAGIC;
+                    }
 
                     // how many rows will fit in my unit?
                     var num_rows = Math.floor(
-                        (unit_height - magic) / row_height
+                        (unit_height - (MAGIC + filter_magic)) / ROW_HEIGHT
                     );
                     //Y.log(Clazz.NAME + "::getMaxNumRows - calculatd rows: " + num_rows);
 
