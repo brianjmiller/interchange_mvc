@@ -1,0 +1,9 @@
+[submodule "share/ic/vendor/yui3"]
+	path = share/ic/vendor/yui3
+	url = https://github.com/yui/yui3.git
+[submodule "share/ic/vendor/yui3-gallery"]
+	path = share/ic/vendor/yui3-gallery
+	url = https://github.com/yui/yui3-gallery.git
+[submodule "share/ic/vendor/yui-2in3"]
+	path = share/ic/vendor/yui-2in3
+	url = https://github.com/yui/2in3.git

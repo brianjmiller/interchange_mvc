@@ -31,11 +31,8 @@ sub index {
     return $self->forbid unless $self->check_right('access_site_mgmt');
 
     $self->render(
-        layout => '',
-        context => {
-            #yui_version => '3.1.2',
-            yui_version => '3.2.0',
-        },
+        layout  => '',
+        context => {},
     );
 
     return;

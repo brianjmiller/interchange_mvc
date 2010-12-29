@@ -15,40 +15,63 @@
     along with this program. If not, see: http://www.gnu.org/licenses/ 
 */
 
-//var _yui_gallery_version = 'gallery-2010.10.06-18-55';
-var _yui_gallery_version = 'gallery-2010.11.17-21-32';
-
 YUI(
     {
-        gallery:      _yui_gallery_version,
         filter:       "raw",
-        //filter:       "debug",
-        comboBase:    "http://yui.yahooapis.com/combo?",
-        //combine:      false,
+        comboBase:    "/combo?",
+        root:         "ic/vendor/yui3/build/",
+        combine:      true,
         insertBefore: "styleoverrides",
         groups:       {
-            // this is for modules not on the CDN, for now,
-            // eventually we'll want to come up with something
-            // better as far as handling them
-            localgallery: {
-                combine: false,
-                //comboBase: "/combo?",
-                //root:    "ic/js/static/",
-                base:    "/ic/js/static/",
-                charset: "utf-8",
-                modules: {
-                    // TODO: local copy of gallery-form to adjust button namespace
-                    //       so as not to collide with gallery-button
-                    "gallery-form": {
-                        path: "gallery-form.js",
-                        requires: [
-                            "node",
-                            "widget-base",
-                            "widget-htmlparser",
-                            "io-form"
-                        ]
+            // set up for locally served gallery
+            gallery: {
+                combine:   true,
+                base:      "/ic/vendor/yui3-gallery/build/",
+                root:      "ic/vendor/yui3-gallery/build/",
+                comboBase: "/combo?",
+                update:    function(tag) {
+                    //var root = "/ic/vendor/yui3-gallery/";
+                    //groups.gallery.base = root;
+                    //groups.gallery.root = root;
+                },
+                patterns: {
+                    "gallery-":    {},
+                    "gallerycss-": { type: "css" }
+                }
+            },
+            //
+            // Don't know why this is needed but it was confirmed as of 2010/08/23 with 3.2.0pr1
+            // and caused an odd error with Y.Lang when not included
+            //
+            gallerycss: {
+                combine:   true,
+                comboBase: "/combo?",
+                root:      "ic/vendor/yui3-gallery/build/",
+                modules:   {
+                    "gallery-accordion-css": {
+                        path: "gallery-accordion/assets/skins/sam/gallery-accordion.css",
+                        type: "css"
                     },
-
+                    "gallery-treeviewlite-core-css": {
+                        path: "gallery-treeviewlite/assets/gallery-treeviewlite-core.css",
+                        type: "css"
+                    },
+                    "gallery-treeviewlite-skin-css": {
+                        path: "gallery-treeviewlite/assets/skins/sam/gallery-treeviewlite-skin.css",
+                        type: "css"
+                    }
+                }
+            },
+            // TODO: switch to updated gallery version that includes
+            //       apipkin's Xarno Calendar and use it instead
+            // this is for modules not on the CDN, for now
+            localgallery: {
+                combine:     false,
+                //comboBase:   "/combo?",
+                //root:        "ic/js/static/",
+                base:        "/ic/js/static/",
+                charset:     "utf-8",
+                modules:     {
                     // default skin
                     "calendar-skin":{
                         path: "skin.css",
@@ -63,6 +86,33 @@ YUI(
                         ]
                     }
                 } 
+            },
+            localgallerycss: {
+                combine: false,
+                modules: {
+                    "gallery-simple-datatable-css": {
+                        path: "gallery-simple-datatable/assets/skins/gallery-simple-datatable.css",
+                        type: "css"
+                    },
+                }
+            },
+            // set up for locally served 2in3
+            yui2: {
+                base:      "/ic/vendor/yui-2in3/dist/2.8.2/build/",
+                combine:   true,
+                comboBase: "/combo?",
+                root:      "ic/vendor/yui-2in3/dist/2.8.2/build/",
+                patterns:  {
+                    "yui2-": {
+                        configFn: function (me) {
+                            if(/-skin|reset|fonts|grids|base/.test(me.name)) {
+                                me.type = "css";
+                                me.path = me.path.replace(/\.js/, ".css");
+                                me.path = me.path.replace(/\/yui2-skin/, "/assets/skins/sam/yui2-skin");
+                            }
+                        }
+                    }
+                }
             },
             icjs: {
                 combine:   true,
@@ -223,7 +273,7 @@ YUI(
                             "ic-plugin-ignorable-css",
                             "plugin",
                             "gallery-button"
-                        ],
+                        ]
                     },
                     "ic-plugin-editable": {
                         path: "plugin/editable.js",
@@ -232,13 +282,13 @@ YUI(
                             "plugin",
                             "json-parse",
                             "ic-form"
-                        ],
+                        ]
                     },
                     "ic-plugin-editable-in_place": {
                         path: "plugin/editable/in_place.js",
                         requires: [
                             "ic-plugin-editable"
-                        ],
+                        ]
                     },
                     "ic-plugin-tablefilter": {
                         path: "plugin/tablefilter.js",
@@ -246,7 +296,7 @@ YUI(
                             "ic-plugin-tablefilter-css",
                             "plugin",
                             "event-key"
-                        ],
+                        ]
                     },
 
                     //
@@ -273,7 +323,7 @@ YUI(
                             "ic-formfield-calendar",
                             "ic-formfield-calendar_with_time",
                             "ic-formfield-radio"
-                        ],
+                        ]
                     },
 
                     // custom form fields
@@ -282,19 +332,19 @@ YUI(
                         requires: [
                             "gallery-form",
                             "gallery-calendar"
-                        ],
+                        ]
                     },
                     "ic-formfield-calendar_with_time": {
                         path: "form_field/calendar_with_time.js",
                         requires: [
                             "ic-formfield-calendar"
-                        ],
+                        ]
                     },
                     "ic-formfield-radio": {
                         path: "form_field/radio.js",
                         requires: [
                             "gallery-form"
-                        ],
+                        ]
                     },
 
                     // helper class used to request a kind of renderer
@@ -318,7 +368,7 @@ YUI(
                             "ic-renderer-chart",
                             "ic-renderer-panel_loader",
                             "ic-renderer-record_set"
-                        ],
+                        ]
                     },
 
                     // renderers
@@ -326,7 +376,7 @@ YUI(
                         path: "renderer/base.js",
                         requires: [
                             "widget"
-                        ],
+                        ]
                     },
                     "ic-renderer-basic": {
                         path: "renderer/basic.js",
@@ -638,32 +688,6 @@ YUI(
                         type: "css"
                     }
                 }
-            },
-            //
-            // Don't know why this is needed but it was confirmed as of 2010/08/23 with 3.2.0pr1
-            // and caused an odd error with Y.Lang when not included
-            //
-            gallerycss: {
-                // TODO: combine this
-                base: "http://yui.yahooapis.com/" + _yui_gallery_version + "/build/",
-                modules: {
-                    "gallery-accordion-css": {
-                        path: "gallery-accordion/assets/skins/sam/gallery-accordion.css",
-                        type: "css"
-                    },
-                    "gallery-simple-datatable-css": {
-                        path: "gallery-simple-datatable/assets/skins/gallery-simple-datatable.css",
-                        type: "css"
-                    },
-                    "gallery-treeviewlite-core-css": {
-                        path: "gallery-treeviewlite/assets/gallery-treeviewlite-core.css",
-                        type: "css"
-                    },
-                    "gallery-treeviewlite-skin-css": {
-                        path: "gallery-treeviewlite/assets/skins/sam/gallery-treeviewlite-skin.css",
-                        type: "css"
-                    }
-                }
             }
         }
     }
@@ -680,11 +704,11 @@ YUI(
 
                 // remove our loading screen
                 Y.on(
-                    'contentready',
+                    "contentready",
                     function () {
-                        Y.one('#application-loading').remove();
+                        Y.one("#application-loading").remove();
                     },
-                    '#manage_window_content_pane'
+                    "#manage_window_content_pane"
                 );
             }
         );

@@ -3,7 +3,7 @@
 <head>
     <title>IC: Management Area</title>
 
-    <link rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/combo?<%= $yui_version %>/build/cssreset/reset-min.css&<%= $yui_version %>/build/cssfonts/fonts-min.css&<%= $yui_version %>/build/cssgrids/grids-min.css&<%= $yui_version %>/build/cssbase/base-min.css">
+    <link rel="stylesheet" type="text/css" href="/combo?ic/vendor/yui3/build/cssreset/reset-min.css&ic/vendor/yui3/build/cssfonts/fonts-min.css&ic/vendor/yui3/build/cssgrids/grids-min.css&ic/vendor/yui3/build/cssbase/base-min.css">
 
     <style id="styleoverrides">
         /* ideally these would go in a CSS module but I couldn't get it loaded after the ones provided by the core */
@@ -42,8 +42,7 @@
 </div>
 
 <!-- YUI Seed -->
-<script type="text/javascript" src="http://yui.yahooapis.com/combo?<%= $yui_version %>/build/yui/yui.js&<%= $yui_version %>/build/loader/loader.js"></script>
-<script type="text/javascript" src="/ic/js/manage.js"></script>
+<script type="text/javascript" src="/combo?ic/vendor/yui3/build/yui/yui.js&ic/vendor/yui3/build/loader/loader.js&ic/js/manage.js"></script>
 
 </body>
 </html>
