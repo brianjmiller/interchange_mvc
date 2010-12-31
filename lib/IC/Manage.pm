@@ -26,19 +26,6 @@ class_has '_role_class'                => ( is => 'ro', default => 'IC::M::Role'
 # happens
 class_has '_default_record_actions'    => ( is => 'ro', default => sub { [ qw( DetailView Drop ) ] } );
 
-has '_controller'            => ( is => 'rw', required => 1 );
-has '_ui_meta_struct'        => ( is => 'rw', default => sub { {} } );
-
-#
-# TODO: I don't particularly like this but without a way to pass them through
-#       inner() I'm not sure how else to go about it, we could have made a Record
-#       ManageRole but then we'd need a model object (aka DB row) for every class
-#       that wants to use it which seems silly cause that is basically all of them
-#
-class_has '_object_ui_meta_struct' => ( is => 'rw', default => sub { {} } );
-class_has '_model_object'          => ( is => 'rw', default => undef );
-class_has '_model_object_params'   => ( is => 'rw', default => undef );
-
 #
 # TODO: the following groups still need to be factored
 #
@@ -57,91 +44,121 @@ class_has '_upload_requires_object'    => ( is => 'ro', default => undef );
 class_has '_parent_manage_class'       => ( is => 'ro', default => undef );
 class_has '_parent_model_link_field'   => ( is => 'ro', default => undef );
 
-sub ui_meta_struct {
-    #warn "IC::Manage::ui_meta_struct";
+#
+# make sure that the context which is provided as part of the argument list
+# includes an 'object' and the 'used_params' properties, if not then use the
+# controller (either argument or self) to build those and put them in the
+# context literal
+#
+my $setup_object = sub {
+    #warn "IC::Manage::object_ui_meta_struct|config(before)";
     my $self = shift;
-    my $args = { @_ };
+    my %args = @_;
 
-    my $struct = {};
-    if (ref $self) {
-        $struct = $self->_ui_meta_struct;
-        $struct->{+__PACKAGE__} = 1;
+    my $context = $args{context};
 
-        my $inner_result = inner();
-
-        $struct = $inner_result if defined $inner_result;
+    if (defined $context->{object}) {
+        unless (defined $context->{used_params}) {
+            # set used_params based on PK which we know will always work
+            for my $pk_field (@{ $context->{object}->meta->primary_key_columns }) {
+                my $field_name = $pk_field->name;
+                $context->{used_params}->{"_pk_$field_name"} = $context->{object}->$field_name . '';
+            }
+        }
     }
     else {
-        $self->_class_ui_meta_struct($struct, @_);
-    }
+        my $params;
+        if (defined $context->{params}) {
+            $params = $context->{params};
+        }
+        else {
+            if (defined $context->{controller}) {
+                $params = $context->{controller}->parameters; 
+            }
+            else {
+                IC::Exception->throw("Can't determine controller to access parameters (and not passed)");
+            }
+        }
 
-    my $formatted = $struct;
-    if (! defined $args->{format}) {
-        return $formatted;
-    }
-    elsif ($args->{format} eq 'json') {
-        return JSON::encode_json($formatted);
-    }
-    else {
-        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
+        my ($object, $used_params) = $self->object_from_params($params);
+
+        $context->{object}      = $object;
+        $context->{used_params} = $used_params;
     }
 
     return;
 };
+
+#
+# newer Moose's can take an array as the first arg to before,
+# so switch this when we've upgraded
+#
+before 'object_ui_meta_struct'        => $setup_object;
+before 'object_ui_meta_struct_config' => $setup_object;
+
+sub ui_meta_struct {
+    #warn "IC::Manage::ui_meta_struct";
+    my $self = shift;
+    my %args = @_;
+
+    $args{context}->{struct}->{'IC::Manage::ui_meta_struct'} = 1;
+
+    if (ref $self) {
+        inner();
+    }
+    else {
+        $self->_class_ui_meta_struct(@_);
+    }
+
+    return;
+}
 
 sub class_ui_meta_struct_config {
     #warn "IC::Manage::class_ui_meta_struct_config";
     my $self = shift;
     my $args = { @_ };
 
-    my $struct = {};
-    $struct->{__PACKAGE__} = 1;
+    my $struct = $args->{context}->{struct};
 
-    my $inner_result = inner();
-    $struct = $inner_result if defined $inner_result;
+    $struct->{'IC::Manage::class_ui_meta_struct_config'} = 1;
 
-    $self->_class_ui_meta_struct_config( $struct, %$args );
+    inner();
 
-    my $formatted = $struct;
-    if (! defined $args->{format}) {
-        return $formatted;
-    }
-    elsif ($args->{format} eq 'json') {
-        return JSON::encode_json($formatted);
-    }
-    else {
-        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
-    }
+    # this is one case where we pass the struct we want used as opposed
+    # to getting it from the context args
+    $self->_class_ui_meta_struct_config( $struct, @_ );
 
     return;
-
 }
 
 sub _class_ui_meta_struct {
     #warn "IC::Manage::_class_ui_meta_struct";
     my $class = shift;
-    my $struct = shift;
-    my $args  = { @_ };
+    my %args  = @_;
 
     unless (defined $class->_class) {
         IC::Exception->throw("Sub class has not overridden _class: $class");
     }
 
-    my $renderer = $struct->{renderer} ||= {};
+    $args{context}->{struct}->{'IC::Manage::_class_ui_meta_struct'} = 1;
+
+    my $renderer = $args{context}->{struct}->{renderer} ||= {};
 
     $renderer->{type}   = 'Tile';
     $renderer->{config} = {};
 
-    $class->_class_ui_meta_struct_config( $renderer->{config}, %$args ),
+    # this is one case where we pass the struct we want used as opposed
+    # to getting it from the context args
+    $class->_class_ui_meta_struct_config( $renderer->{config}, @_ ),
 
-    return $struct;
+    return;
 }
 
 sub _class_ui_meta_struct_config {
     #warn "IC::Manage::_class_ui_meta_struct_config";
     my $class  = shift;
     my $struct = shift;
-    my $args   = { @_ };
+    my %args   = @_;
 
     my $class_model_obj = $class->get_class_model_obj;
 
@@ -154,16 +171,22 @@ sub _class_ui_meta_struct_config {
     my $actions = {};
     for my $action_model (@$action_models) {
         my $action_class = $action_model->load_lib;
-        my $action       = $action_class->new(
-            _controller => $args->{_controller},
-        );
+        my $action       = $action_class->new();
 
-        $actions->{$action_model->code} = $action->ui_meta_struct;
+        my $sub_struct = $actions->{$action_model->code} = {};
+        $action->ui_meta_struct(
+            context => {
+                struct     => $sub_struct,
+                controller => $args{context}->{controller}
+            },
+        );
     }
+
+    $struct->{'IC::Manage::_class_ui_meta_struct_config'} = 1;
 
     $struct->{title}   ||= $class->_model_display_name_plural; 
     $struct->{actions} ||= $actions;
-    $struct->{url}     ||= $args->{_controller}->url(
+    $struct->{url}     ||= $args{context}->{controller}->url(
         controller => 'manage',
         action     => 'run_action_method',
         parameters => {
@@ -171,6 +194,7 @@ sub _class_ui_meta_struct_config {
             _method => 'class_ui_meta_struct_config',
         },
         get        => {
+            # TODO: need to pass format through from params
             _format => 'json',
         },
         secure     => 1,
@@ -182,21 +206,15 @@ sub _class_ui_meta_struct_config {
 sub object_ui_meta_struct {
     #warn "IC::Manage::object_ui_meta_struct";
     my $class = shift;
-    my $args = { @_ };
+    my %args  = @_;
 
-    my $params = $args->{_controller}->parameters; 
+    my $used_params = $args{context}->{used_params};
+    my $struct      = $args{context}->{struct};
 
-    unless (defined $class->_model_object) {
-        my ($object, $used_params) = $class->object_from_params($params);
+    $struct->{'IC::Manage::object_ui_meta_struct'} = 1;
 
-        $class->_model_object($object);
-        $class->_model_object_params($used_params);
-    }
-
-    my $struct = $class->_object_ui_meta_struct;
-    $struct->{+__PACKAGE__}                = 1;
     $struct->{renderer}->{type}          ||= 'Tile';
-    $struct->{renderer}->{config}->{url} ||= $args->{_controller}->url(
+    $struct->{renderer}->{config}->{url} ||= $args{context}->{controller}->url(
         controller => 'manage',
         action     => 'run_action_method',
         parameters => {
@@ -204,27 +222,18 @@ sub object_ui_meta_struct {
             _method => 'object_ui_meta_struct_config',
         },
         get        => {
+            # TODO: need to pass format through from params
             _format => 'json',
-            %{ $class->_model_object_params },
+            %{ $used_params },
         },
         secure     => 1,
     );
 
-    my $inner_result = inner();
-    $struct = $inner_result if defined $inner_result;
+    inner();
 
-    $class->_object_ui_meta_struct_config( $struct->{renderer}->{config}, %$args );
-
-    my $formatted = $struct;
-    if (! defined $args->{format}) {
-        return $formatted;
-    }
-    elsif ($args->{format} eq 'json') {
-        return JSON::encode_json($formatted);
-    }
-    else {
-        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
-    }
+    # this is one case where we pass the struct we want used as opposed
+    # to getting it from the context args
+    $class->_object_ui_meta_struct_config( $struct->{renderer}->{config}, @_ );
 
     return;
 }
@@ -232,35 +241,17 @@ sub object_ui_meta_struct {
 sub object_ui_meta_struct_config {
     #warn "IC::Manage::object_ui_meta_struct_config";
     my $class = shift;
-    my $args = { @_ };
+    my %args  = @_;
 
-    my $params = $args->{_controller}->parameters; 
+    my $struct = $args{context}->{struct};
 
-    unless (defined $class->_model_object) {
-        my ($object, $used_params) = $class->object_from_params($params);
+    $struct->{'IC::Manage::object_ui_meta_struct_config'} = 1;
 
-        $class->_model_object($object);
-        $class->_model_object_params($used_params);
-    }
+    inner();
 
-    my $struct              = {};
-    $struct->{+__PACKAGE__} = 1;
-
-    my $inner_result = inner();
-    $struct = $inner_result if defined $inner_result;
-
-    $class->_object_ui_meta_struct_config( $struct, %$args );
-
-    my $formatted = $struct;
-    if (! defined $args->{format}) {
-        return $formatted;
-    }
-    elsif ($args->{format} eq 'json') {
-        return JSON::encode_json($formatted);
-    }
-    else {
-        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
-    }
+    # this is one case where we pass the struct we want used as opposed
+    # to getting it from the context args
+    $class->_object_ui_meta_struct_config( $struct, @_ );
 
     return;
 }
@@ -273,9 +264,11 @@ sub _object_ui_meta_struct_config {
     #warn "IC::Manage::_object_ui_meta_struct_config";
     my $class  = shift;
     my $config = shift;
-    my $args   = { @_ };
+    my %args   = @_;
 
-    my $model_object = $class->_model_object;
+    $args{context}->{struct}->{'IC::Manage::_object_ui_meta_struct_config'} = 1;
+
+    my $model_object = $args{context}->{object};
 
     $config->{title} ||= $class->_model_display_name . ': ' . $model_object->manage_description;
 
@@ -305,16 +298,21 @@ sub _object_ui_meta_struct_config {
 
     for my $action_model (@$action_models) {
         my $action_class = $action_model->load_lib;
-        my $action       = $action_class->new(
-            _controller => $args->{_controller},
-        );
+        my $action       = $action_class->new();
 
         my $action_ref = $config->{actions}->{ $action_model->code } ||= {};
         unless (defined $action_ref->{label}) {
             $action_ref->{label} = $action_model->display_label; 
         }
         unless (defined $action_ref->{renderer}) {
-            $action_ref->{renderer} = $action->ui_meta_struct; 
+            my $sub_struct = $action_ref->{renderer} = {};
+            $action->ui_meta_struct(
+                context => {
+                    object     => $model_object,
+                    struct     => $sub_struct,
+                    controller => $args{context}->{controller}
+                },
+            );
         }
     }
 
@@ -413,9 +411,6 @@ sub check_priv {
     my $check_role;
     if (defined $args->{role} and $args->{role}->isa($self->_role_class)) {
         $check_role = $args->{role};
-    }
-    elsif (defined $self->_controller->role) {
-        $check_role = $self->_controller->role;
     }
     else {
         my ($package, $filename, $line) = caller(1);
@@ -641,6 +636,7 @@ sub _fields_to_field_form_defs {
             # force stringification, can't do this with only objects because
             # to the JSON encoder an integer is encoded differently if it
             # hasn't been stringified too
+            $control_ref->{value} ||= '';
             $control_ref->{value} = $control_ref->{value} . '';
 
             if (grep { $control_ref->{type} eq $_ } qw( Radio CheckboxField SelectField )) {

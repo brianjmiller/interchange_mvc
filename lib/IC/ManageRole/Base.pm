@@ -2,8 +2,6 @@ package IC::ManageRole::Base;
 
 use Moose::Role;
 
-requires '_ui_meta_struct';
-
 no Moose;
 
 1;

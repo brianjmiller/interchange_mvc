@@ -5,22 +5,25 @@ use Moose::Role;
 with 'IC::ManageRole::Base';
 with 'IC::ManageRole::ObjectSaver';
 
-around 'ui_meta_struct' => sub {
-    #warn "IC::ManageRole::Add::ui_meta_struct";
-    my $orig = shift;
+after 'ui_meta_struct' => sub {
+    warn "IC::ManageRole::Add::ui_meta_struct(after)";
     my $self = shift;
+    my %args = @_;
 
-    my $struct = $self->_ui_meta_struct;
+    warn "IC::ManageRole::Add::ui_meta_struct(after) - args keys: " . join(', ', keys %args);
 
-    $struct->{+__PACKAGE__} = 1;
-    $struct->{label}        = 'Add';
+    my $struct = $args{context}->{struct};
+
+    $struct->{'IC::ManageRole::Add::ui_meta_struct(after)'} = 1;
+
+    $struct->{label}        ||= 'Add';
     $struct->{renderer}     = {
         type   => 'FormWrapper',
         config => {},
     };
 
     my $form_def = $struct->{renderer}->{config}->{form_config} = {
-        action         => $self->_controller->url(
+        action         => $args{context}->{controller}->url(
             controller => 'manage',
             action     => 'run_action_method',
             parameters => {
@@ -75,7 +78,8 @@ around 'ui_meta_struct' => sub {
         push @{ $form_def->{field_defs} }, $ref;
     }
 
-    return $self->$orig(@_);
+    #return $self->$orig(@_);
+    return;
 };
 
 no Moose;

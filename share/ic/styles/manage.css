@@ -24,13 +24,14 @@
 }
 
 #application-loading {
-    border: 1px dashed #d7d7d7;
-    width: 400px;
-    height: 100px;
-    line-height: 100px;
+    position: absolute;
+    top: 40%;
+    left: 40%;
+    margin: auto;
+    font-size: 182%;
+    text-shadow: 0px 1px 1px #D7D7D7;
     text-align: center;
     vertical-align: middle;
-    margin: 4em auto;
 }
 
 #manage_header {
@@ -42,11 +43,7 @@
     font-weight: bold;
 }
 
-#manage_footer {
-    padding: 5px;
-    font-size: 85%;
-}
-
+/*
 #yui-history-iframe {
     position: absolute;
     top: 0;
@@ -55,3 +52,4 @@
     height: 1px;
     visibility: hidden;
 }
+*/

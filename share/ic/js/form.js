@@ -137,7 +137,17 @@ YUI.add(
                     ];
                 }
 
+                var _misc_fields = [];
+                _misc_fields.push(
+                    {
+                        name:  '_format',
+                        value: 'json',
+                        type: 'HiddenField'
+                    }
+                );
+
                 var fields = [].concat(
+                    _misc_fields,
                     _pk_fields,
                     _fields_present,
                     _controls,

@@ -82,6 +82,9 @@ YUI.add(
                             form: {
                                 id: this._form_node.get("id")
                             },
+                            data: {
+                                _format: "json"
+                            },
                             on: {
                                 success: Y.bind(this._onRequestSuccess, this),
                                 failure: Y.bind(this._onRequestFailure, this)

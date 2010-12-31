@@ -15,21 +15,6 @@ class_has '+_model_class_mgr'           => ( default => __PACKAGE__->_root_model
 class_has '+_model_display_name'        => ( default => 'Time Zone' );
 class_has '+_model_display_name_plural' => ( default => 'Time Zones' );
 
-augment 'object_ui_meta_struct' => sub {
-    #warn "IC::Manage::TimeZones::object_ui_meta_struct";
-    #warn "IC::Manage::TimeZones::object_ui_meta_struct - @_";
-    my $self = shift;
-
-    my $struct       = $self->_object_ui_meta_struct;
-    my $model_object = $self->_model_object;
-
-    $struct->{+__PACKAGE__} = 1;
-
-    my $inner_result = inner();
-
-    return defined $inner_result ? $inner_result : $struct;
-};
-
 no Moose;
 no MooseX::ClassAttribute;
 

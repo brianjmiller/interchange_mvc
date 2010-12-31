@@ -9,6 +9,8 @@ extends 'IC::Manage::Roles';
 # TODO: my hunch is that a new Moose wouldn't require us to make these separate,
 #       and really the first shouldn't be necessary at all
 with 'IC::ManageRole::Base';
+with 'IC::ManageRole::ObjectAdjuster::Simple';
+with 'IC::ManageRole::ObjectAdjuster';
 with 'IC::ManageRole::Drop';
 
 no Moose;

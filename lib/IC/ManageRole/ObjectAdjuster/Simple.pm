@@ -16,25 +16,22 @@ has '_save_method' => (
     default => 'save',
 );
 
-around 'ui_meta_struct' => sub {
-    warn "IC::ManageRole::ObjectAdjuster::Simple::ui_meta_struct";
-    my $orig = shift;
+after 'ui_meta_struct' => sub {
+    #warn "IC::ManageRole::ObjectAdjuster::Simple::ui_meta_struct(after)";
     my $self = shift;
+    my %args = @_;
 
-    my $params = $self->_controller->parameters;
-
-    my $object = $self->_model_object;
-    unless (defined $object) {
-        $object = $self->object_from_params($params);
-        $self->_model_object($object);
-    }
+    my $params = $args{context}->{controller}->parameters;
+    my $object = $args{context}->{object};
+    my $struct = $args{context}->{struct};
 
     my $_model_class = $self->_model_class;
 
-    my $struct = $self->_ui_meta_struct;
-    $struct->{+__PACKAGE__} = 1;
-    $struct->{label}        = $self->_object_adjust_simple_label;
+    $struct->{'IC::ManageRole::ObjectAdjuster::Simple::ui_meta_struct(after)'} = 1;
 
+    $struct->{label} ||= $self->_object_adjust_simple_label;
+
+    # TODO: is this still needed after the context restructure?
     # provide a hook into the subclass to let it override what it needs to
     $self->_simple_object_adjust_ui_meta_struct($struct, $object);
 
@@ -56,7 +53,7 @@ around 'ui_meta_struct' => sub {
             $struct->{config}->{form_config}->{pk} = $_pk_settings;
         }
         unless (defined $struct->{config}->{form_config}->{action}) {
-            $struct->{config}->{form_config}->{action} = $self->_controller->url(
+            $struct->{config}->{form_config}->{action} = $args{context}->{controller}->url(
                 controller => 'manage',
                 action     => 'run_action_method',
                 parameters => {
@@ -69,7 +66,7 @@ around 'ui_meta_struct' => sub {
         }
     }
 
-    return $self->$orig(@_);
+    return;
 };
 
 no Moose;

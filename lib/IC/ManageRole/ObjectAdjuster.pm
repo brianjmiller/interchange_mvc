@@ -2,35 +2,30 @@ package IC::ManageRole::ObjectAdjuster;
 
 use Moose::Role;
 
-has '_response_struct' => (
-    is      => 'rw',
-    default => sub { {} },
-);
-
 sub save {
-    warn "IC::ManageRole::ObjectAdjuster::save";
+    #warn "IC::ManageRole::ObjectAdjuster::save";
     my $self = shift;
-    my $args = { @_ };
+    my %args = @_;
 
-    my $params = $self->_controller->parameters;
-    $params->{_format} ||= 'json';
-
-    my $struct = $self->_response_struct;
+    my $params = $args{context}->{controller}->parameters;
+    my $struct = $args{context}->{struct};
 
     my $response_value = eval {
         my $result;
 
-        my $object = $self->_model_object;
-        unless (defined $object) {
-            $object = $self->object_from_params($params);
-            $self->_model_object($object);
-        }
+        my $object = $self->object_from_params($params);
 
         my $db = $object->db;
         $db->begin_work;
 
+        my $modified_by = $args{context}->{controller}->role->id;
+
         eval {
-            $result = $self->_save_object_adjust($object, $params);
+            $result = $self->_save_object_adjust(
+                $object,
+                $params,
+                 modified_by => $modified_by,
+             );
         };
         my $e;
         if ($e = Exception::Class->caught) {
@@ -52,23 +47,16 @@ sub save {
         $struct->{value} = $response_value;
     }
 
-    my $formatted = $struct;
-    if (! defined $args->{format}) {
-        return $formatted;
-    }
-    elsif ($args->{format} eq 'json') {
-        return JSON::encode_json($formatted);
-    }
-    else {
-        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
-    }
-
     return;
 }
 
-sub _save_object_adjust {
-    IC::Exception->throw('_save_object_adjust should be overridden by subclass');
-}
+#
+# Moose Role rules state we can't provide the following method or there will be
+# a collision if another role (such as Drop) provides the method as well
+#
+#sub _save_object_adjust {
+    #IC::Exception->throw('_save_object_adjust should be overridden by subclass');
+#}
 
 no Moose;
 

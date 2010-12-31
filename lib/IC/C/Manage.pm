@@ -38,6 +38,9 @@ sub index {
     return;
 }
 
+#
+# "action" here is a bit of a misnomer, it is really any function of a manage class/action
+#
 sub run_action_method {
     my $self = shift;
 
@@ -66,7 +69,6 @@ sub run_action_method {
     }
 
     my $invokee;
-    my %args;
     if (defined $params->{_subclass}) {
         # TODO: need to check privilege
         #my $function_obj = IC::M::ManageFunction->new( code => $function )->load;
@@ -75,9 +77,7 @@ sub run_action_method {
         #}
 
         eval {
-            $invokee = $class->new(
-                _controller => $self,
-            );
+            $invokee = $class->new();
         };
         if (my $e = Exception::Class->caught) {
             IC::Exception->throw("Can't instantiate manage class ($class): $e");
@@ -86,7 +86,6 @@ sub run_action_method {
     else {
         # TODO: do we need to restrict privs on class method invocations?
         $invokee = $class;
-        $args{_controller} = $self;
     }
 
     unless (defined $invokee) {
@@ -94,16 +93,36 @@ sub run_action_method {
     }
 
     my $result = eval {
-        my $struct = $invokee->$_method(
-            format => 'json',
-            %args,
+        #
+        # we use a hash reference here so that method modifiers
+        # have a location where they can munge arguments that get
+        # seen further down the processing chain
+        #
+        my $context = {
+            controller => $self,
+        };
+        my $struct = $context->{struct} = {};
+
+        $invokee->$_method(
+            context => $context,
         );
+
+        my $formatted;
+        if (! defined $params->{_format}) {
+            $formatted = $struct;
+        }
+        elsif ($params->{_format} eq 'json') {
+            $formatted = JSON::encode_json($struct);
+        }
+        else {
+            IC::Exception->throw("Unrecognized struct format: '$params->{_format}'");
+        }
 
         my $response = $self->response;
         $response->headers->status('200 OK');
         $response->headers->content_type('text/plain');
         #$response->headers->content_type('application/json');
-        $response->buffer( $struct );
+        $response->buffer( $formatted );
     };
     if (my $e = IC::Exception->caught()) {
         IC::Exception->throw("Failed manage method ($_method) execution (explicitly): $e (" . $e->trace . ')');

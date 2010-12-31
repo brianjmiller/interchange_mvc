@@ -2,22 +2,14 @@ package IC::ManageRole::ObjectSaver;
 
 use Moose::Role;
 
-has '_response_struct' => (
-    is      => 'rw',
-    default => sub { {} },
-);
-
 sub save {
-    warn "IC::ManageRole::ObjectSaver::save";
+    #warn "IC::ManageRole::ObjectSaver::save";
     my $self = shift;
-    my $args = { @_ };
+    my %args = @_;
 
-    my $params = $self->_controller->parameters;
-    $params->{_format} ||= 'json';
-
-    my $modified_by = $self->_controller->user->id;
-
-    my $struct = $self->_response_struct;
+    my $struct      = $args{context}->{struct};
+    my $params      = $args{context}->{controller}->parameters;
+    my $modified_by = $args{context}->{controller}->user->id;
 
     my $response_value = eval {
         #
@@ -56,15 +48,12 @@ sub save {
             #
             my $is_edit = grep { defined $params->{$_} } @_pk_field_names;
 
-            my $object = $self->_model_object;
-            unless (defined $object) {
-                if ($is_edit) {
-                    $object = $self->object_from_params($params);
-                }
-                else {
-                    $object = $_model_class->new;
-                }
-                $self->_model_object($object);
+            my $object;
+            if ($is_edit) {
+                $object = $self->object_from_params($params);
+            }
+            else {
+                $object = $_model_class->new;
             }
 
             my $field_form_defs = $self->_fields_to_field_form_defs(
@@ -125,25 +114,26 @@ sub save {
                     #       get passed values from the parameters?
                     #
                     my $additional_updates;
-                    ($value, $additional_updates) = $adjustment->{value_builder}->{code}->($self, $object);
+                    ($value, $additional_updates) = $adjustment->{value_builder}->{code}->($self, $object, $params);
 
                     push @non_present_updates, @$additional_updates;
                 }
-
-                #
-                # if there is more than one control we can't handle things automagically
-                # as we have no way to determine which should be used to set the value
-                # in the DB itself, and one of the adjustments listed above should have
-                # provided us with a value if we are requiring one
-                #
-                if (not defined $value and @{ $field_form_defs->{ $field_name }->{controls} } == 1) {
+                else {
                     #
-                    # determine the control name used, check for definedness in the form
-                    # which may be field type dependent
+                    # if there is more than one control we can't handle things automagically
+                    # as we have no way to determine which should be used to set the value
+                    # in the DB itself, and one of the adjustments listed above should have
+                    # provided us with a value if we are requiring one
                     #
-                    my $control = (@{ $field_form_defs->{ $field_name }->{controls} })[0];
+                    if (not defined $value and @{ $field_form_defs->{ $field_name }->{controls} } == 1) {
+                        #
+                        # determine the control name used, check for definedness in the form
+                        # which may be field type dependent
+                        #
+                        my $control = (@{ $field_form_defs->{ $field_name }->{controls} })[0];
 
-                    $value = $params->{ $control->{name} };
+                        $value = $params->{ $control->{name} };
+                    }
                 }
 
                 if (defined $value and $rdbo_fields_by_name->{$field_name}->type eq 'boolean') {
@@ -307,11 +297,7 @@ sub save {
             return $result;
         }
         elsif ($params->{_properties_mode} eq 'upload') {
-            my $object = $self->_model_object;
-            unless (defined $object) {
-                $object = $self->object_from_params($params);
-                $self->_model_object($object);
-            }
+            my $object = $self->object_from_params($params);
 
             unless (defined $params->{resource} and $params->{resource} ne '') {
                 IC::Exception->throw('Required argument missing: resource');
@@ -399,11 +385,7 @@ sub save {
             };
         }
         elsif ($params->{_properties_mode} eq 'unlink') {
-            my $object = $self->_model_object;
-            unless (defined $object) {
-                $object = $self->object_from_params($params);
-                $self->_model_object($object);
-            }
+            my $object = $self->object_from_params($params);
         }
         else {
             IC::Exception->throw("Unrecognized _properties_mode: $params->{_properties_mode}");
@@ -416,17 +398,6 @@ sub save {
     else {
         $struct->{code}  = 1;
         $struct->{value} = $response_value;
-    }
-
-    my $formatted = $struct;
-    if (! defined $args->{format}) {
-        return $formatted;
-    }
-    elsif ($args->{format} eq 'json') {
-        return JSON::encode_json($formatted);
-    }
-    else {
-        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
     }
 
     return;

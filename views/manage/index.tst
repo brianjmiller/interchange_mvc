@@ -2,6 +2,11 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
     <title>IC: Management Area</title>
+    <style>
+        .hide-while-loading {
+            display: none;
+        }
+    </style>
 
     <link rel="stylesheet" type="text/css" href="/combo?ic/vendor/yui3/build/cssreset/reset-min.css&ic/vendor/yui3/build/cssfonts/fonts-min.css&ic/vendor/yui3/build/cssgrids/grids-min.css&ic/vendor/yui3/build/cssbase/base-min.css">
 
@@ -31,9 +36,6 @@
     <div id="manage_left_layout">
         <div id="manage_tools_pane"></div>
         <div id="manage_menu_pane"></div>
-    </div>
-    <div id="manage_footer">
-        Console: <button id="console_toggle" class="" type="button" value="0">show</button>
     </div>
 </div>
 

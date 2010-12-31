@@ -36,6 +36,20 @@ class_has '+_field_adjustments'           => (
 
                     return $options;
                 },
+                value_builder => {
+                    code => sub {
+                        my $self = shift;
+                        my $object = shift;
+                        my $params = shift;
+
+                        if ($params->{target_kind_code} eq '') {
+                            return undef, [];
+                        }
+                        else {
+                            return $params->{target_kind_code}, [];
+                        }
+                    },
+                },
             },
         },
     },

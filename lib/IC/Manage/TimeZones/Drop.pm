@@ -6,22 +6,11 @@ use warnings;
 use Moose;
 extends 'IC::Manage::TimeZones';
 
-augment 'ui_meta_struct' => sub {
-    #warn "IC::Manage::TimeZones::Drop::ui_meta_struct";
-    my $self = shift;
-
-    my $struct = $self->_ui_meta_struct;
-
-    $struct->{+__PACKAGE__} = 1;
-
-    my $inner_result = inner();
-
-    return defined $inner_result ? $inner_result : $struct;
-};
-
 # TODO: my hunch is that a new Moose wouldn't require us to make these separate,
 #       and really the second shouldn't be necessary at all
 with 'IC::ManageRole::Base';
+with 'IC::ManageRole::ObjectAdjuster::Simple';
+with 'IC::ManageRole::ObjectAdjuster';
 with 'IC::ManageRole::Drop';
 
 no Moose;

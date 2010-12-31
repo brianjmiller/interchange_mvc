@@ -52,20 +52,21 @@ has '_paging_provider' => (
     default => 'client',
 );
 
-around 'ui_meta_struct' => sub {
-    #warn "IC::ManageRole::List::ui_meta_struct";
-    my $orig = shift;
+after 'ui_meta_struct' => sub {
+    #warn "IC::ManageRole::List::ui_meta_struct(after)";
     my $self = shift;
+    my %args = @_;
 
-    my $struct = $self->_ui_meta_struct;
+    my $struct = $args{context}->{struct};
 
-    $struct->{+__PACKAGE__}       = 1;
-    $struct->{label}              = 'List';
-    $struct->{renderer}->{type}   = 'RecordSet';
-    $struct->{renderer}->{config} = {};
+    $struct->{'IC::ManageRole::List::ui_meta_struct(after)'} = 1;
+
+    $struct->{label}              ||= 'List';
+    $struct->{renderer}->{type}   ||= 'RecordSet';
+    $struct->{renderer}->{config} ||= {};
 
     my $config = $struct->{renderer}->{config}->{data_table} = {
-        data_url => $self->_controller->url(
+        data_url => $args{context}->{controller}->url(
             controller => 'manage',
             action     => 'run_action_method',
             parameters => {
@@ -74,6 +75,7 @@ around 'ui_meta_struct' => sub {
                 _method   => $self->_data_method,
             },
             get => {
+                # TODO: need to pass _format through from parameters
                 _format => 'json',
             },
             secure     => 1,
@@ -139,20 +141,20 @@ around 'ui_meta_struct' => sub {
     # TODO: provide a way to deactivate the options handling
     $config->{data_table_include_options} = JSON::true();
 
-    return $self->$orig(@_);
+    return;
 };
 
 sub data {
     #warn "IC::ManageRole::List::data";
     my $self = shift;
-    my $args = { @_ };
+    my %args = @_;
 
-    my $struct = $self->_data_struct;
+    my $struct = $args{context}->{struct};
+    my $params = $args{context}->{controller}->parameters;
 
     my $_model_class     = $self->_model_class;
     my $_model_class_mgr = $self->_model_class_mgr;
 
-    my $params = $self->_controller->parameters;
 
     $params->{filter_mode} ||= 'listall';
 
@@ -292,7 +294,7 @@ sub data {
             _record_config => {
                 unique   => $object->as_hashkey . '',
                 label    => $object->manage_description . '',
-                meta_url => $self->_controller->url(
+                meta_url => $args{context}->{controller}->url(
                     controller => 'manage',
                     action     => 'run_action_method',
                     parameters => {
@@ -326,17 +328,6 @@ sub data {
         }
 
         push @{ $struct->{rows} }, $details;
-    }
-
-    my $formatted = $struct;
-    if (! defined $args->{format}) {
-        return $formatted;
-    }
-    elsif ($args->{format} eq 'json') {
-        return JSON::encode_json($formatted);
-    }
-    else {
-        IC::Exception->throw("Unrecognized struct format: '$args->{format}'");
     }
 
     return;

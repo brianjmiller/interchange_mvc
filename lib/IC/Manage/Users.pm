@@ -54,8 +54,7 @@ class_has '+_field_adjustments'           => (
                     code => sub {
                         my $self = shift;
                         my $object = shift;
-
-                        my $params = $self->_controller->parameters;
+                        my $params = shift;
 
                         my $role;
                         if ($params->{role_id} eq '_new') {
@@ -82,7 +81,7 @@ class_has '+_field_adjustments'           => (
                             }
                         }
 
-                        return $role->id;
+                        return ($role->id, []);
                     },
                 },
             },
@@ -140,19 +139,19 @@ class_has '+_field_adjustments'           => (
                     {
                         label => 'New',
                         name  => 'new_password',
-                        type  => 'password',
+                        type  => 'PasswordField',
                     },
                     {
                         label => 'Confirm',
                         name  => 'con_password',
-                        type  => 'password',
+                        type  => 'PasswordField',
                     },
                 ],
                 value_builder => {
                     code => sub {
                         my $self = shift;
-
-                        my $params = $self->_controller->parameters;
+                        my $object = shift;
+                        my $params = shift;
 
                         unless (defined $params->{new_password} and defined $params->{con_password} and $params->{new_password} ne '') {
                             IC::Exception->throw('Password field missing.');
@@ -202,11 +201,6 @@ class_has '+_field_adjustments'           => (
 
                     return $options;
                 },
-            },
-
-            # TODO: remove this once the calendar is fixed for adds
-            password_expires_on => {
-                is_addable => 0,
             },
         };
     },

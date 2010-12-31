@@ -2,8 +2,6 @@ package IC::ManageRole::Drop;
 
 use Moose::Role;
 
-requires '_ui_meta_struct';
-
 with 'IC::ManageRole::Base';
 with 'IC::ManageRole::ObjectAdjuster::Simple';
 

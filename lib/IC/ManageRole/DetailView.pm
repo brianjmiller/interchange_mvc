@@ -4,8 +4,6 @@ use Image::Size;
 
 use Moose::Role;
 
-requires '_ui_meta_struct';
-
 with 'IC::ManageRole::Base';
 
 has '_use_default_summary_tab' => (
@@ -19,12 +17,16 @@ has '_action_log_configuration' => (
 
 my $edit_action = 'Properties';
 
-around 'ui_meta_struct' => sub {
-    #warn "IC::ManageRole::DetailView::ui_meta_struct";
-    my $orig = shift;
+# TODO: parts of this probably ought to be in an after, while other parts should stay before,
+#       split those out appropriately
+before 'ui_meta_struct' => sub {
+    #warn "IC::ManageRole::DetailView::ui_meta_struct(before)";
     my $self = shift;
+    my %args = @_;
 
-    my $params = $self->_controller->parameters;
+    my $params = $args{context}->{controller}->parameters;
+    my $struct = $args{context}->{struct};
+    my $object = $args{context}->{object};
 
     my $_model_class = $self->_model_class;
     my @pk_fields    = @{ $_model_class->meta->primary_key_columns };
@@ -37,13 +39,7 @@ around 'ui_meta_struct' => sub {
         map { $_->name => $_ } @fields
     };
 
-    my $object = $self->_model_object;
-    unless (defined $object) {
-        $object = $self->object_from_params($params);
-        $self->_model_object($object);
-    }
-
-    my $can_edit    = $self->check_priv($edit_action);
+    my $can_edit = $self->check_priv($edit_action, role => $args{context}->{controller}->role);
 
     my $_pk_settings;
     if ($can_edit) {
@@ -55,9 +51,9 @@ around 'ui_meta_struct' => sub {
         }
     }
 
-    my $struct = $self->_ui_meta_struct;
-    $struct->{+__PACKAGE__} = 1;
-    $struct->{type}         = 'Tabs';
+    $struct->{'IC::ManageRole::DetailView::ui_meta_struct(after)'} = 1;
+
+    $struct->{type} = 'Tabs';
 
     my $tabs = $struct->{config}->{data} = [];
 
@@ -155,7 +151,7 @@ around 'ui_meta_struct' => sub {
 
                 if (defined $field_form_defs->{$field->name}) {
                     $data_ref->{form} = {
-                        action         => $self->_controller->url(
+                        action         => $args{context}->{controller}->url(
                             controller => 'manage',
                             action     => 'run_action_method',
                             parameters => {
@@ -222,6 +218,7 @@ around 'ui_meta_struct' => sub {
                     $panel_data,
                     $object,
                     {
+                        controller  => $args{context}->{controller},
                         pk_settings => $_pk_settings,
                         can_edit    => $can_edit,
                     },
@@ -279,7 +276,7 @@ around 'ui_meta_struct' => sub {
             my $seen = [];
             if (exists $configuration->{action_code_handlers}->{$entry->action_code}) {
                 my $custom_sub = $configuration->{action_code_handlers}->{$entry->action_code};
-                my ($custom_details, $custom_seen) = $custom_sub->($entry, $self->_controller->role);
+                my ($custom_details, $custom_seen) = $custom_sub->($entry, $args{context}->{controller}->role);
 
                 if (defined $custom_details) {
                     push @$details, @$custom_details;
@@ -322,10 +319,7 @@ around 'ui_meta_struct' => sub {
         }
     }
 
-    # TODO: need to post process the tabs to set the indexes?
-    #       can this be done on the client side?
-
-    return $self->$orig(@_);
+    return;
 };
 
 no Moose;
@@ -426,7 +420,7 @@ sub _file_resource_config {
             if (defined $file and defined $args->{can_edit} and $args->{can_edit}) {
                 # TODO: restore ACL on file properties
                 $kv->{form} = {
-                    action         => $self->_controller->url(
+                    action         => $args->{controller}->url(
                         controller => 'manage',
                         action     => 'run_action_method',
                         parameters => {
@@ -497,7 +491,7 @@ sub _file_resource_config {
                             # TODO: improve the handling of this on the client side
                             encodingType   => 2,
 
-                            action         => $self->_controller->url(
+                            action         => $args->{controller}->url(
                                 controller => 'manage',
                                 action     => 'run_action_method',
                                 secure     => 1,
