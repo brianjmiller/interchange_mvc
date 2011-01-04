@@ -126,6 +126,8 @@ YUI.add(
                 ATTRS: {}
             }
         );
+
+        Y.IC.Renderer.registerConstructor("Form", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

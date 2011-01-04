@@ -73,6 +73,8 @@ YUI.add(
                 }
             }
         );
+
+        Y.IC.Renderer.registerConstructor("Chart", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

@@ -92,6 +92,8 @@ YUI.add(
                 ATTRS: {}
             }
         );
+
+        Y.IC.Renderer.registerConstructor("KeyValue", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

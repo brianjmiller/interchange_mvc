@@ -168,6 +168,8 @@ YUI.add(
                 ATTRS: {}
             }
         );
+
+        Y.IC.Renderer.registerConstructor("Table", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

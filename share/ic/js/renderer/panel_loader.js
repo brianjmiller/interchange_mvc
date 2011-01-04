@@ -116,6 +116,8 @@ YUI.add(
                 ATTRS: {}
             }
         );
+
+        Y.IC.Renderer.registerConstructor("PanelLoader", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

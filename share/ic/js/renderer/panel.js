@@ -173,6 +173,8 @@ YUI.add(
                 }
             }
         );
+
+        Y.IC.Renderer.registerConstructor("Panel", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

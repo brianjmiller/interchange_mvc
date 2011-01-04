@@ -19,24 +19,13 @@ YUI.add(
     "ic-renderer",
     function(Y) {
         Y.namespace("IC.Renderer");
-        var _constructor_map = {
-            Basic:       Y.IC.RendererBasic.prototype.constructor,
-            Tile:        Y.IC.RendererTile.prototype.constructor,
-            Panel:       Y.IC.RendererPanel.prototype.constructor,
-            Grid:        Y.IC.RendererGrid.prototype.constructor,
-            Form:        Y.IC.RendererForm.prototype.constructor,
-            FormWrapper: Y.IC.RendererFormWrapper.prototype.constructor,
-            Tabs:        Y.IC.RendererTabs.prototype.constructor,
-            Tree:        Y.IC.RendererTree.prototype.constructor,
-            Table:       Y.IC.RendererTable.prototype.constructor,
-            DataTable:   Y.IC.RendererDataTable.prototype.constructor,
-            V2DataTable: Y.IC.RendererV2DataTable.prototype.constructor,
-            Treeble:     Y.IC.RendererTreeble.prototype.constructor,
-            KeyValue:    Y.IC.RendererKeyValue.prototype.constructor,
-            Chart:       Y.IC.RendererChart.prototype.constructor,
-            PanelLoader: Y.IC.RendererPanelLoader.prototype.constructor,
-            RecordSet:   Y.IC.RendererRecordSet.prototype.constructor
-        };
+
+        //
+        // renderers register themselves with us, which populates
+        // the below mapping to be used when getting a constructor
+        // for a given renderer
+        //
+        var _constructor_map = {};
 
         var _control_template_map = {
             TextField:     '<input />',
@@ -45,6 +34,17 @@ YUI.add(
             TextareaField: '<textarea></textarea>',
             SelectField:   '<select></select>',
             Button:        '<button></button>'
+        };
+
+        Y.IC.Renderer.registerConstructor = function (key, func) {
+            Y.log("Y.IC.Renderer::registerConstructor");
+            Y.log("Y.IC.Renderer::registerConstructor - key: " + key);
+
+            if (Y.Lang.isValue(_constructor_map[key])) {
+                Y.log("Y.IC.Renderer::registerConstructor - constructor already registered: " + key, "warn");
+            }
+
+            _constructor_map[key] = func;
         };
 
         Y.IC.Renderer.getConstructor = function (key) {
@@ -151,20 +151,7 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
-            "ic-renderer-basic",
-            "ic-renderer-grid",
-            "ic-renderer-form",
-            "ic-renderer-form_wrapper",
-            "ic-renderer-tabs",
-            "ic-renderer-tree",
-            "ic-renderer-table",
-            "ic-renderer-data_table",
-            "ic-renderer-v2_data_table",
-            "ic-renderer-treeble",
-            "ic-renderer-keyvalue",
-            "ic-renderer-chart",
-            "ic-renderer-panel_loader",
-            "ic-renderer-record_set"
+            "ic-renderer-css"
         ]
     }
 );

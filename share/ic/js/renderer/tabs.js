@@ -77,6 +77,8 @@ YUI.add(
                 ATTRS: {}
             }
         );
+
+        Y.IC.Renderer.registerConstructor("Tabs", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

@@ -127,6 +127,10 @@ YUI.add(
 
                                         var unit_node = Y.Node.create('<div class="' + unit_class + '"></div>');
 
+                                        if (Y.Lang.isValue(col.add_class)) {
+                                            unit_node.addClass(col.add_class);
+                                        }
+
                                         if (Y.Lang.isString(col.content)) {
                                             unit_node.setContent(col.content);
                                         }
@@ -152,6 +156,8 @@ YUI.add(
                 ATTRS: {}
             }
         );
+
+        Y.IC.Renderer.registerConstructor("Grid", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

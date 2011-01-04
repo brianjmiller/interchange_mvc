@@ -417,6 +417,8 @@ YUI.add(
                 }
             }
         );
+
+        Y.IC.Renderer.registerConstructor("V2DataTable", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

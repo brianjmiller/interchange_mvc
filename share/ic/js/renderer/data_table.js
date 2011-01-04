@@ -46,6 +46,8 @@ YUI.add(
                 }
             }
         );
+
+        Y.IC.Renderer.registerConstructor("DataTable", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

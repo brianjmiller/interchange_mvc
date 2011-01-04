@@ -520,6 +520,8 @@ YUI.add(
                 }
             }
         );
+
+        Y.IC.Renderer.registerConstructor("Tile", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

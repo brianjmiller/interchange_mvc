@@ -286,6 +286,8 @@ YUI.add(
                 ATTRS: {}
             }
         );
+
+        Y.IC.Renderer.registerConstructor("RecordSet", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

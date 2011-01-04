@@ -19,6 +19,15 @@ extends qw( IC::C );
 
 has +layout => ( default => 'layouts/standard' );
 
+has custom_js => (
+    is      => 'rw',
+    default => sub { {} },
+);
+has custom_css => (
+    is      => 'rw',
+    default => sub { {} },
+);
+
 no Moose;
 
 # the application subclass should register itself as the provider of the 'manage' controller
@@ -30,9 +39,17 @@ sub index {
     # TODO: move this check into an 'around'
     return $self->forbid unless $self->check_right('access_site_mgmt');
 
+    my $context = {};
+
+    for my $method qw( custom_js custom_css ) {
+        if (keys %{ $self->$method }) {
+            $context->{$method} = $self->$method;
+        }
+    }
+
     $self->render(
         layout  => '',
-        context => {},
+        context => $context,
     );
 
     return;

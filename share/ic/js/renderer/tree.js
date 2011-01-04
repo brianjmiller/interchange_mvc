@@ -88,6 +88,8 @@ YUI.add(
                 ATTRS: {}
             }
         );
+
+        Y.IC.Renderer.registerConstructor("Tree", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

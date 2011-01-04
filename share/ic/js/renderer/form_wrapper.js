@@ -86,6 +86,8 @@ YUI.add(
                 }
             }
         );
+
+        Y.IC.Renderer.registerConstructor("FormWrapper", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {

@@ -380,6 +380,8 @@ YUI.add(
                 }
             }
         );
+
+        Y.IC.Renderer.registerConstructor("Treeble", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {
