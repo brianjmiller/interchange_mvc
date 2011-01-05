@@ -81,7 +81,7 @@ YUI.add(
         requires: [
             "ic-renderer-chart-css",
             "ic-renderer-base",
-            "gallery-chart"
+            "charts"
         ]
     }
 );

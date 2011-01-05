@@ -24,12 +24,29 @@ eval {
     my $content_type;
     my @buffer;
     for my $file (@files) {
-        if ($file =~ q{\A(.+\.)(js|css)\z}) {
+        if ($file =~ q{\A(.+)\.(js|css)\z}) {
             my $name = $1;
             my $type = $2;
-            my $path = File::Spec->catfile($htdocs_path, $name . $type);
+            my $path = File::Spec->catfile($htdocs_path, sprintf('%s.%s', $name, $type));
 
-            push @buffer, File::Slurp::read_file($path);
+            my @raw = File::Slurp::read_file($path);
+
+            if ($type eq 'css') {
+                # TODO: handle nested referencing of CSS files
+                # need to correct for image paths
+                my @dirs = File::Spec->splitdir($name);
+                splice @dirs, -1;
+
+                my $back_one_dir = File::Spec->catdir(@dirs);
+
+                for (@raw) {
+                    s/((url\()([^\.\.|^http]\S+)(\)))/$2$back_one_dir\/$3$4/;
+
+                    # TODO: add in the other handlers from phploader's version
+                }
+            }
+
+            push @buffer, @raw;
 
             if (! exists $type_map->{$type}) {
                 die "Unrecognized file type: $type\n";
