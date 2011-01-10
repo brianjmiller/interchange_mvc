@@ -244,9 +244,7 @@ before 'ui_meta_struct' => sub {
             content => {
                 type   => 'DataTable',
                 config => {
-                    table_config => {
-                        caption => 'This happens to be the log.',
-                    },
+                    table_config => {},
                 },
             },
         };
@@ -254,18 +252,33 @@ before 'ui_meta_struct' => sub {
 
         my $configuration = $self->_action_log_configuration;
         if (defined $configuration->{description}) {
-            $log_tab->{content}->{description} = $configuration->{description};
+            $log_tab->{content}->{config}->{table_config}->{caption} = $configuration->{description};
         }
 
-        $log_tab->{content}->{config}->{table_config}->{headers} = {
-            action       => 'Action',
-            performed_by => 'Performed By',
-            performed_at => 'Performed At',
-            details      => 'Details',
-            content      => 'Content',
-        };
+        $log_tab->{content}->{config}->{table_config}->{columnset} = [
+            {
+                key => 'action',
+                label => 'Action',
+            },
+            {
+                key => 'performed_by',
+                label => 'Performed By',
+            },
+            {
+                key => 'performed_at',
+                label => 'Performed At',
+            },
+            {
+                key => 'details',
+                label => 'Details',
+            },
+            {
+                key => 'content',
+                label => 'Content',
+            },
+        ];
 
-        my $rows = $log_tab->{content}->{config}->{table_config}->{rows} = [];
+        my $rows = $log_tab->{content}->{config}->{table_config}->{recordset} = [];
 
         for my $entry (@{ $object->action_log }) {
             my $details = [];

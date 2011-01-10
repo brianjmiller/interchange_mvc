@@ -23,26 +23,26 @@ YUI.add(
             Y.IC.RendererBase,
             [],
             {
-                _table: null,
+                _data_table: null,
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
                     //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
-                    this._table = new Y.SimpleDatatable (config.table_config);
+                    this._data_table = new Y.DataTable.Base (config.table_config);
                 },
 
                 destructor: function () {
                     Y.log(Clazz.NAME + "::destructor");
 
-                    this._table = null;
+                    this._data_table = null;
                 },
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
                     Clazz.superclass.renderUI.apply(this, arguments);
 
-                    this._table.render(this.get("contentBox"));
+                    this._data_table.render( this.get("contentBox") );
                 }
             }
         );
@@ -54,8 +54,7 @@ YUI.add(
         requires: [
             "ic-renderer-data_table-css",
             "ic-renderer-base",
-            "gallery-simple-datatable",
-            "gallery-simple-datatable-css"
+            "datatable"
         ]
     }
 );

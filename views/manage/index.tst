@@ -121,16 +121,6 @@
                     }
                 } 
             },
-            localcss: {
-                combine: false,
-                base:    "/ic/styles/static/",
-                modules: {
-                    "gallery-simple-datatable-css": {
-                        path: "gallery-simple-datatable/assets/skins/gallery-simple-datatable.css",
-                        type: "css"
-                    },
-                }
-            },
             // set up for locally served 2in3
             yui2: {
                 base:      "/ic/vendor/yui-2in3/dist/2.8.2/build/",
@@ -504,8 +494,7 @@
                         requires: [
                             "ic-renderer-data_table-css",
                             "ic-renderer-base",
-                            "gallery-simple-datatable",
-                            "gallery-simple-datatable-css"
+                            "datatable"
                         ]
                     },
                     "ic-renderer-v2_data_table": {
