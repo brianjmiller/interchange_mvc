@@ -412,6 +412,7 @@
                     "ic-renderer-base": {
                         path: "renderer/base.js",
                         requires: [
+                            "ic-renderer-base-css",
                             "widget"
                         ]
                     },
@@ -579,6 +580,10 @@
 
                     "ic-renderer-css": {
                         path: "renderer.css",
+                        type: "css"
+                    },
+                    "ic-renderer-base-css": {
+                        path: "renderer/base.css",
                         type: "css"
                     },
                     "ic-renderer-basic-css": {

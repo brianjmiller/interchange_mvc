@@ -56,9 +56,14 @@ YUI.add(
                                 index:     i,
                                 panelNode: Y.Node.create("<div></div>")
                             };
-                            v.content.render = tab_add_args.panelNode;
+                            if (Y.Lang.isString(v.content)) {
+                                tab_add_args.panelNode.setContent(v.content);
+                            }
+                            else {
+                                v.content.render = tab_add_args.panelNode;
 
-                            Y.IC.Renderer.buildContent(v.content);
+                                Y.IC.Renderer.buildContent(v.content);
+                            }
 
                             this.push(tab_add_args);
                         },
