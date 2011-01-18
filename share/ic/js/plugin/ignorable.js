@@ -47,23 +47,18 @@ YUI.add(
                     this._host = this.get('host');
                     //Y.log(Ignorable.NAME + "::initializer: _host - " + Y.dump(this._host));
 
-                    var button = new Y.Button (
-                        {
-                            label:  config.label || 'Ignore',
-                            render: this._host
-                        }
-                    );
-                    button.set(
-                        'callback',
-                        Y.bind(
-                            function () {
-                                Y.log(Ignorable.NAME + ' button callback');
+                    var button = Y.Node.create('<button>' + (config.label || 'Ignore') + '</button>');
+                    button.on(
+                        "click",
+                        function (e) {
+                            Y.log(Ignorable.NAME + " button callback");
+                            e.preventDefault();
 
-                                this.schedule_destroy();
-                            },
-                            this
-                        )
+                            this.schedule_destroy();
+                        },
+                        this
                     );
+                    this._host.append(button);
 
                     this._bindUI();
                 }, 
@@ -108,8 +103,7 @@ YUI.add(
     {
         requires: [
             "ic-plugin-ignorable-css",
-            "plugin",
-            "gallery-button"
+            "plugin"
         ]
     }
 );

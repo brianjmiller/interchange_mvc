@@ -47,25 +47,22 @@ YUI.add(
                         Y.each(
                             new_data.buttons,
                             function (config, i, a) {
-                                var button = new Y.Button (
-                                    {
-                                        render:   this.getStdModNode(Y.WidgetStdMod.BODY),
-                                        label:    config.label,
-                                        width:    "160px",
-                                        callback: Y.bind(
-                                            function () {
-                                                this._window.fire(
-                                                    "contentPaneShowContent",
-                                                    config.kind,
-                                                    config.clazz,
-                                                    config.action,
-                                                    config.args
-                                                );
-                                            },
-                                            this
-                                        )
-                                    }
+                                var button = Y.Node.create('<button>' + config.label + '</button>');
+                                button.on(
+                                    "click",
+                                    function (e) {
+                                        e.preventDefault();
+                                        this._window.fire(
+                                            "contentPaneShowContent",
+                                            config.kind,
+                                            config.clazz,
+                                            config.action,
+                                            config.args
+                                        );
+                                    },
+                                    this
                                 );
+                                this.getStdModNode(Y.WidgetStdMod.BODY).append(button);
                             },
                             this
                         );
@@ -85,8 +82,7 @@ YUI.add(
     {
         requires: [
             "ic-manage-window-tools-common_actions-css",
-            "ic-manage-window-tools-dynamic",
-            "gallery-button"
+            "ic-manage-window-tools-dynamic"
         ]
     }
 );

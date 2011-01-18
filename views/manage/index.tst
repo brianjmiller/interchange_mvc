@@ -222,16 +222,14 @@
                         path: "manage/window/tools/dynamic.js",
                         requires: [ 
                             "ic-manage-window-tools-dynamic-css",
-                            "widget-stdmod",
-                            "gallery-button"
+                            "widget-stdmod"
                         ]
                     },
                     "ic-manage-window-tools-common_actions": {
                         path: "manage/window/tools/common_actions.js",
                         requires: [ 
                             "ic-manage-window-tools-common_actions-css",
-                            "ic-manage-window-tools-dynamic",
-                            "gallery-button"
+                            "ic-manage-window-tools-dynamic"
                         ]
                     },
                     "ic-manage-window-tools-quick_access": {
@@ -327,8 +325,7 @@
                         path: "plugin/ignorable.js",
                         requires: [
                             "ic-plugin-ignorable-css",
-                            "plugin",
-                            "gallery-button"
+                            "plugin"
                         ]
                     },
                     "ic-plugin-editable": {

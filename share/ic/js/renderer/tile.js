@@ -88,40 +88,37 @@ YUI.add(
 
                     if (Y.Lang.isValue(this.get("url"))) {
                         if (this.get("polling_interval") > 0) {
-                            this._polling_button = new Y.Button (
-                                {
-                                    render:   this._button_node,
-                                    label:    (this.get("polling_is_active") ? BUTTON_POLLING_IS_ACTIVE_TOGGLE_ON : BUTTON_POLLING_IS_ACTIVE_TOGGLE_OFF),
-                                    callback: Y.bind(
-                                        function () {
-                                            Y.log(Clazz.NAME + "::renderUI - polling button callback");
+                            this._polling_button = Y.Node.create('<button>' + (this.get("polling_is_active") ? BUTTON_POLLING_IS_ACTIVE_TOGGLE_ON : BUTTON_POLLING_IS_ACTIVE_TOGGLE_OFF) + '</button>');
+                            this._polling_button.on(
+                                "click",
+                                function (e) {
+                                    Y.log(Clazz.NAME + "::renderUI - polling button callback");
+                                    e.preventDefault();
 
-                                            Y.log(Clazz.NAME + "::renderUI - polling_is_active: " + this.get("polling_is_active"));
-                                            if (this.get("polling_is_active")) {
-                                                this.set("polling_is_active", false);
-                                            }
-                                            else {
-                                                this.set("polling_is_active", true);
-                                            }
-                                        },
-                                        this
-                                    )
-                                }
+                                    Y.log(Clazz.NAME + "::renderUI - polling_is_active: " + this.get("polling_is_active"));
+                                    if (this.get("polling_is_active")) {
+                                        this.set("polling_is_active", false);
+                                    }
+                                    else {
+                                        this.set("polling_is_active", true);
+                                    }
+                                },
+                                this
                             );
+                            this._button_node.append(this._polling_button);
                         }
-                        this._refresh_button = new Y.Button (
-                            {
-                                render:   this._button_node,
-                                label:    "Refresh",
-                                callback: Y.bind(
-                                    function () {
-                                        Y.log(Clazz.NAME + "::renderUI - refresh button callback");
-                                        this._refreshData();
-                                    },
-                                    this
-                                )
-                            }
+                        this._refresh_button = Y.Node.create('<button>Refresh</button>');
+                        this._refresh_button.on(
+                            "click",
+                            function (e) {
+                                Y.log(Clazz.NAME + "::renderUI - refresh button callback");
+                                e.preventDefault();
+
+                                this._refreshData();
+                            },
+                            this
                         );
+                        this._button_node.append(this._refresh_button);
                     }
 
                     this.set("headerContent", this._header_node );
@@ -164,12 +161,12 @@ YUI.add(
                                 function (e) {
                                     Y.log(Clazz.NAME + "::renderUI - polling_is_active change: " + e.newVal);
                                     if (e.newVal) {
-                                        this._polling_button.set("label", BUTTON_POLLING_IS_ACTIVE_TOGGLE_ON);
+                                        this._polling_button.setContent(BUTTON_POLLING_IS_ACTIVE_TOGGLE_ON);
 
                                         this._initTimer();
                                     }
                                     else {
-                                        this._polling_button.set("label", BUTTON_POLLING_IS_ACTIVE_TOGGLE_OFF);
+                                        this._polling_button.setContent(BUTTON_POLLING_IS_ACTIVE_TOGGLE_OFF);
 
                                         if (this._timer) {
                                             this._timer.cancel();
@@ -206,20 +203,18 @@ YUI.add(
                             this.get("actions"),
                             function (v, k, obj) {
                                 Y.log(Clazz.NAME + "::_MySyncUI - adding action button: " + v.label);
-                                var button = new Y.Button (
-                                    {
-                                        render:   this._action_buttons_node,
-                                        label:    v.label,
-                                        callback: Y.bind(
-                                            function () {
-                                                Y.log(Clazz.NAME + "::_MySyncUI - button callback: " + k);
+                                var button = Y.Node.create('<button>' + v.label + '</button>');
+                                button.on(
+                                    "click",
+                                    function (e) {
+                                        Y.log(Clazz.NAME + "::_MySyncUI - button callback: " + k);
+                                        e.preventDefault();
     
-                                                this.set("action", k);
-                                            },
-                                            this
-                                        )
-                                    }
+                                        this.set("action", k);
+                                    },
+                                    this
                                 );
+                                this._action_buttons_node.append(button);
                             },
                             this
                         );
@@ -528,8 +523,7 @@ YUI.add(
         requires: [
             "ic-renderer-tile-css",
             "ic-renderer-base",
-            "widget-std-mod",
-            "gallery-button",
+            "widget-stdmod",
             "cache"
         ]
     }

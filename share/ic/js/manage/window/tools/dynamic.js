@@ -45,20 +45,19 @@ YUI.add(
                     //       which amounts to how tile works so it may make sense
                     //       to move all of that to a plugin instead
                     this._button_node = Y.Node.create('<div></div>');
-                    this._refresh_button = new Y.Button (
-                        {
-                            render:   this._button_node,
-                            label:    "Refresh",
-                            callback: Y.bind(
-                                function () {
-                                    Y.log(Clazz.NAME + "::renderUI - refresh button callback");
-                                    this.getStdModNode( Y.WidgetStdMod.BODY ).setContent("Manual Refresh...");
-                                    this.fire("update_data");
-                                },
-                                this
-                            )
-                        }
+                    this._refresh_button = Y.Node.create('<button>Refresh</button>');
+                    this._refresh_button.on(
+                        "click",
+                        function (e) {
+                            Y.log(Clazz.NAME + "::renderUI - refresh button callback");
+                            e.preventDefault();
+
+                            this.getStdModNode( Y.WidgetStdMod.BODY ).setContent("Manual Refresh...");
+                            this.fire("update_data");
+                        },
+                        this
                     );
+                    this._button_node.append(this._refresh_button);
 
                     this._mesg_node = Y.Node.create('<div>Initial Load: ' + new Date () + '</div>');
                     this._mesg_node.addClass("micro");
@@ -197,8 +196,7 @@ YUI.add(
         requires: [
             //"ic-manage-window-tools-dynamic-css",
             "ic-manage-window-tools-base",
-            "widget-stdmod",
-            "gallery-button"
+            "widget-stdmod"
         ]
     }
 );
