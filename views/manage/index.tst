@@ -160,6 +160,11 @@
                             "ic-manage-window-tools",
                             "ic-manage-window-content",
 
+                            // our custom ones which we can be reasonably sure we'll use
+                            <% if (defined $custom_js) { %>
+                                <%= join ', ', map { qq{"$_->{name}"} } @{ $custom_js->{modules} } %>,
+                            <% } %>
+
                             // for debugging
                             "dump"
                         ]
@@ -284,9 +289,6 @@
                             "ic-renderer-chart",
                             "ic-renderer-panel_loader",
                             "ic-renderer-record_set",
-
-                            // our custom ones which we can be reasonably sure we'll use
-                            "custom-manage-orders-create"
                         ]
                     },
                     "ic-manage-window-content-remote": {
