@@ -68,6 +68,10 @@ YUI.add(
                     li_node.append(span_node);
 
                     if (data_node.branches) {
+                        if (! Y.Lang.isValue(data_node.default_open) || ! data_node.default_open) {
+                            li_node.addClass("yui3-treeviewlite-collapsed");
+                        }
+
                         var ul_node = Y.Node.create('<ul></ul>');
                         li_node.append(ul_node);
 

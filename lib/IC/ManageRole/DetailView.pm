@@ -198,8 +198,9 @@ before 'ui_meta_struct' => sub {
                     config => {
                         data => [
                             {
-                                id    => '_top',
-                                label => 'Resources',
+                                id           => '_top',
+                                label        => 'Resources',
+                                default_open => JSON::true(),
                             },
                         ],
                     },

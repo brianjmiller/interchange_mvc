@@ -49,6 +49,7 @@ after 'ui_meta_struct' => sub {
             $top,
             $panel_data,
             $args{context}->{controller},
+            (@$tops == 1 ? (default_open => 1) : ()),
         );
         push @$node_refs, $config;
     }
@@ -63,6 +64,7 @@ sub _node_config {
     my $node = shift;
     my $panel_data = shift;
     my $controller = shift;
+    my %args = @_;
 
     my $ref = {
         id        => $node->id,
@@ -70,6 +72,9 @@ sub _node_config {
         label     => $node->label,
         add_class => 'ic_renderer_panel_loader_control',
     };
+    if (defined $args{default_open} and $args{default_open}) {
+        $ref->{default_open} = JSON::true();
+    }
 
     my $sub_struct = $panel_data->{ $node->id } = {};
 
