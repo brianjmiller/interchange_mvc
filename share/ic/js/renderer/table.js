@@ -85,87 +85,97 @@ YUI.add(
                     var tbody_node = Y.Node.create('<tbody></tbody>');
                     this._table_node.append(tbody_node);
 
-                    Y.each(
-                        this._rows,
-                        function (row, i, a) {
-                            Y.log(Clazz.NAME + "::renderUI - adding row: " + i);
-                            Y.log(Clazz.NAME + "::renderUI - row " + i + " config: " + Y.dump(row));
-                            var row_node = Y.Node.create('<tr></tr>');
+                    if (Y.Lang.isValue(this._rows) && this._rows.length > 0) {
+                        Y.each(
+                            this._rows,
+                            function (row, i, a) {
+                                Y.log(Clazz.NAME + "::renderUI - adding row: " + i);
+                                Y.log(Clazz.NAME + "::renderUI - row " + i + " config: " + Y.dump(row));
+                                var row_node = Y.Node.create('<tr></tr>');
 
-                            if (Y.Lang.isValue(row.add_class)) {
-                                Y.log(Clazz.NAME + "::renderUI - row " + i + " add class '" + row.add_class + "'");
-                                row_node.addClass(row.add_class);
-                            }
+                                if (Y.Lang.isValue(row.add_class)) {
+                                    Y.log(Clazz.NAME + "::renderUI - row " + i + " add class '" + row.add_class + "'");
+                                    row_node.addClass(row.add_class);
+                                }
 
-                            if (Y.Lang.isValue(row.plugins)) {
-                                Y.log(Clazz.NAME + "::renderUI - row " + i + " has plugins");
+                                if (Y.Lang.isValue(row.plugins)) {
+                                    Y.log(Clazz.NAME + "::renderUI - row " + i + " has plugins");
+                                    Y.each(
+                                        row.plugins,
+                                        function (plugin_item) {
+                                            var plugin = _plugin_name_map[plugin_item];
+                                            Y.log(Clazz.NAME + "::renderUI - row " + i + " plugging " + plugin_item);
+                                            row_node.plug(plugin);
+                                    }
+                                    );
+                                }
+
+                                if (! Y.Lang.isValue(row.columns)) {
+                                    row.columns = row;
+                                }
+
                                 Y.each(
-                                    row.plugins,
-                                    function (plugin_item) {
-                                        var plugin = _plugin_name_map[plugin_item];
-                                        Y.log(Clazz.NAME + "::renderUI - row " + i + " plugging " + plugin_item);
-                                        row_node.plug(plugin);
-                                   }
+                                    row.columns,
+                                    function (col, ii, ia) {
+                                        Y.log(Clazz.NAME + "::renderUI - row " + i + " adding col " + ii);
+                                        Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " config: " + Y.dump(col));
+
+                                        var col_node = Y.Node.create('<td></td>');
+                                        if (Y.Lang.isValue(col.attributes)) {
+                                            Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " attributes: " + Y.dump(col.attributes));
+                                            //
+                                            // TODO: .setAttrs wouldn't work for colspan,
+                                            //       see http://yuilibrary.com/projects/yui3/ticket/2529526
+                                            //       when it has been fixed this should be able to leverage .setAttrs
+                                            //
+                                            //col_node.setAttrs(col.attributes);
+                                            Y.each(
+                                                col.attributes,
+                                                function (val, attr, o) {
+                                                    this.setAttribute(attr, val);
+                                                },
+                                                col_node
+                                            );
+                                        }
+
+                                        if (Y.Lang.isString(col.content)) {
+                                            col_node.setContent(col.content);
+                                        }
+                                        else {
+                                            col.content.render = col_node;
+
+                                            Y.IC.Renderer.buildContent( col.content );
+                                        }
+
+                                        if (Y.Lang.isValue(col.add_class)) {
+                                            Y.log(Clazz.NAME + "::renderUI - row " + i + " add class '" + col.add_class + "'");
+                                            col_node.addClass(col.add_class);
+                                        }
+
+                                        this.append(col_node);
+                                    },
+                                    row_node
                                 );
-                            }
 
-                            if (! Y.Lang.isValue(row.columns)) {
-                                row.columns = row;
-                            }
-
-                            Y.each(
-                                row.columns,
-                                function (col, ii, ia) {
-                                    Y.log(Clazz.NAME + "::renderUI - row " + i + " adding col " + ii);
-                                    Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " config: " + Y.dump(col));
-
-                                    var col_node = Y.Node.create('<td></td>');
-                                    if (Y.Lang.isValue(col.attributes)) {
-                                        Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " attributes: " + Y.dump(col.attributes));
-                                        //
-                                        // TODO: .setAttrs wouldn't work for colspan,
-                                        //       see http://yuilibrary.com/projects/yui3/ticket/2529526
-                                        //       when it has been fixed this should be able to leverage .setAttrs
-                                        //
-                                        //col_node.setAttrs(col.attributes);
-                                        Y.each(
-                                            col.attributes,
-                                            function (val, attr, o) {
-                                                this.setAttribute(attr, val);
-                                            },
-                                            col_node
-                                        );
-                                    }
-
-                                    if (Y.Lang.isString(col.content)) {
-                                        col_node.setContent(col.content);
-                                    }
-                                    else {
-                                        col.content.render = col_node;
-
-                                        Y.IC.Renderer.buildContent( col.content );
-                                    }
-
-                                    if (Y.Lang.isValue(col.add_class)) {
-                                        Y.log(Clazz.NAME + "::renderUI - row " + i + " add class '" + col.add_class + "'");
-                                        col_node.addClass(col.add_class);
-                                    }
-
-                                    this.append(col_node);
-                                },
-                                row_node
-                            );
-
-                            this.append(row_node);
-                        },
-                        tbody_node
-                    );
+                                this.append(row_node);
+                            },
+                            tbody_node
+                        );
+                    }
+                    else if (Y.Lang.isValue(this.get("no_rows_content"))) {
+                        var no_rows_node = Y.Node.create('<tr><td>' + this.get("no_rows_content") + '</td></tr>');
+                        tbody_node.append(no_rows_node);
+                    }
 
                     this.get("contentBox").setContent(this._table_node);
                 }
             },
             {
-                ATTRS: {}
+                ATTRS: {
+                    no_rows_content: {
+                        value: null
+                    }
+                }
             }
         );
 
