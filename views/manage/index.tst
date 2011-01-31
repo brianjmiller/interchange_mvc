@@ -555,6 +555,13 @@
                         ]
                     },
 
+                    "ic-autocomplete": {
+                        path: "autocomplete.js",
+                        requires: [
+                            "autocomplete-base"
+                        ]
+                    },
+
                     // utility functions
                     "ic-util": {
                         path: "util.js"
