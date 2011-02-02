@@ -18,24 +18,10 @@
 YUI.add(
     "ic-manage-window-menu",
     function(Y) {
-        var ManageMenu;
-
-        ManageMenu = function (config) {
-            ManageMenu.superclass.constructor.apply(this, arguments);
-        };
-
-        Y.mix(
-            ManageMenu,
-            {
-                NAME: "ic_manage_menu",
-                ATTRS: {
-                }
-            }
-        );
-
-        Y.extend(
-            ManageMenu,
+        var Clazz = Y.namespace("IC").ManageMenu = Y.Base.create(
+            "ic_manage_menu",
             Y.Widget,
+            [],
             {
                 sections: null,
 
@@ -184,11 +170,11 @@ YUI.add(
                 syncUI: function () {
                     // Y.log('menu syncUI...');
                 }
+            },
+            {
+                ATTRS: {}
             }
         );
-
-        Y.namespace("IC");
-        Y.IC.ManageMenu = ManageMenu;
     },
     "@VERSION@",
     {
