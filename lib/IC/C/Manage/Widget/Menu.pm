@@ -24,11 +24,10 @@ __PACKAGE__->registered_name('manage/widget/menu');
 sub config {
     my $self = shift;
 
-    #
-    # build a structure that represents the menu items and sub items
-    # that can be recursively walked to build a menu
-    #
-    my $struct = [];
+    my $struct = {
+        click_to_activate => JSON::true(),
+        nodes             => [],
+    };
 
     #
     # all actions associated with a given menu item node will need to be
@@ -81,7 +80,7 @@ sub config {
             my $config = _node_config($node, $privileged_by_id, $branch_sort_map);
             next unless defined $config;
 
-            push @$struct, $config;
+            push @{ $struct->{nodes} }, $config;
         }
     }
 

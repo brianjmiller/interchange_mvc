@@ -23,17 +23,17 @@ YUI.add(
             Y.Widget,
             [],
             {
-                sections: null,
+                _menu_config:                null,
 
                 DASHBOARD_MENUITEM_TEMPLATE: '<li class="yui3-menuitem"><em id="manage_menu_item-remote_dashboard" class="yui3-menuitem-content">Dashboard</em></li>',
-                SUBMENU_LABEL_TEMPLATE:      '<li><a class="yui3-menu-label"><{menu_item_content_wrapper}>{display_label}<{menu_item_content_wrapper}></a>',
+                SUBMENU_LABEL_TEMPLATE:      '<li><a class="yui3-menu-label" href="#manage_menu-{display_label}"><{menu_item_content_wrapper}>{display_label}<{menu_item_content_wrapper}></a>',
                 SUBMENU_TEMPLATE:            '<div id="manage_menu-{code}" class="yui3-menu"><div class="yui3-menu-content"><ul>',
                 SUBMENU_ITEM_TEMPLATE:       '<li class="yui3-menuitem"><a id="manage_menu_item-remote_function-{clazz}-{action}" class="yui3-menuitem-content">{display_label}</a></li>',
                 SUBMENU_CLOSE_TEMPLATE:      '</ul></div></div></li>',
 
                 // setup a vertical orientation as the default
-                orientation_class:         '',
-                menu_item_content_wrapper: 'span',
+                orientation_class:           '',
+                menu_item_content_wrapper:   'span',
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
@@ -52,7 +52,7 @@ YUI.add(
                             on: {
                                 success: function (txnId, response) {
                                     try {
-                                        menu_config = Y.JSON.parse(response.responseText);
+                                        menu._menu_config = Y.JSON.parse(response.responseText);
                                     }
                                     catch (e) {
                                         Y.log(Clazz.NAME + "::initializer - io success handler - Can't parse JSON: " + e, "error");
@@ -86,7 +86,7 @@ YUI.add(
                     );
 
                     Y.each(
-                        menu_config,
+                        this._menu_config.nodes,
                         function (v, i, list) {
                             item_html += this._compileMenuNode(v);
                         },
@@ -94,8 +94,17 @@ YUI.add(
                     );
 
                     this.get("contentBox").setContent("<ul>" + item_html + "</ul>");
+
+                    Y.log(Clazz.NAME + "::renderUI - _menu_config.click_to_activate: " + this._menu_config.click_to_activate);
+                    var plug_config = {};
+                    if (this._menu_config.click_to_activate) {
+                        plug_config.autoSubmenuDisplay = false;
+                        plug_config.mouseOutHideDelay  = 0;
+                    }
+
                     this.get("boundingBox").plug(
-                        Y.Plugin.NodeMenuNav
+                        Y.Plugin.NodeMenuNav,
+                        plug_config
                     );
                 },
 
