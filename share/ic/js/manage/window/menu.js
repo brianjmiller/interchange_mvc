@@ -25,40 +25,21 @@ YUI.add(
             {
                 sections: null,
 
-                DASHBOARD_MENUITEM_TEMPLATE: '\
-<li class="yui3-menuitem">\
-  <em id="manage_menu_item-remote_dashboard"\
-    class="yui3-menuitem-content">Dashboard</em>\
-</li>',
-                SUBMENU_LABEL_TEMPLATE: '\
-<li>\
-  <a class="yui3-menu-label">\
-    <{menu_item_content_wrapper}>{display_label}<{menu_item_content_wrapper}>\
-  </a>',
-                SUBMENU_TEMPLATE: '\
-<div id="manage_menu-{code}"\
-     class="yui3-menu">\
-  <div class="yui3-menu-content">\
-    <ul>',
-                SUBMENU_ITEM_TEMPLATE: '\
-<li class="yui3-menuitem">\
-  <a id="manage_menu_item-remote_function-{clazz}-{action}"\
-     class="yui3-menuitem-content">{display_label}</a>\
-</li>',
-// it would be preferred to use custom properties. ex:
-// <a kind="function" sub_kind="list" args="arg1=foo&arg2=bar&arg3=baz">Item Label</a>
-
-                SUBMENU_CLOSE_TEMPLATE: '</ul></div></div></li>',
+                DASHBOARD_MENUITEM_TEMPLATE: '<li class="yui3-menuitem"><em id="manage_menu_item-remote_dashboard" class="yui3-menuitem-content">Dashboard</em></li>',
+                SUBMENU_LABEL_TEMPLATE:      '<li><a class="yui3-menu-label"><{menu_item_content_wrapper}>{display_label}<{menu_item_content_wrapper}></a>',
+                SUBMENU_TEMPLATE:            '<div id="manage_menu-{code}" class="yui3-menu"><div class="yui3-menu-content"><ul>',
+                SUBMENU_ITEM_TEMPLATE:       '<li class="yui3-menuitem"><a id="manage_menu_item-remote_function-{clazz}-{action}" class="yui3-menuitem-content">{display_label}</a></li>',
+                SUBMENU_CLOSE_TEMPLATE:      '</ul></div></div></li>',
 
                 // setup a vertical orientation as the default
-                orientation_class: '',
+                orientation_class:         '',
                 menu_item_content_wrapper: 'span',
 
                 initializer: function (config) {
-                    //Y.log("manage_menu::initializer");
+                    Y.log(Clazz.NAME + "::initializer");
 
                     if (config.orientation === 'horizontal') {
-                        this.orientation_class         =  'yui3-menu-horizontal yui3-menubuttonnav';
+                        this.orientation_class         = 'yui3-menu-horizontal yui3-menubuttonnav';
                         this.menu_item_content_wrapper = 'em';
                     }
 
@@ -74,7 +55,7 @@ YUI.add(
                                         menu_config = Y.JSON.parse(response.responseText);
                                     }
                                     catch (e) {
-                                        Y.log("Can't parse JSON: " + e, "error");
+                                        Y.log(Clazz.NAME + "::initializer - io success handler - Can't parse JSON: " + e, "error");
                                         return;
                                     }
 
@@ -84,7 +65,7 @@ YUI.add(
                                 },
 
                                 failure: function (txnId, response) {
-                                    Y.log("Failed to get menu options", "error");
+                                    Y.log(Clazz.NAME + "::initializer - io failure handler - Failed to get menu options", "error");
                                 }
                             }
                         }
@@ -92,7 +73,8 @@ YUI.add(
                 },
 
                 renderUI: function () {
-                    //Y.log('manage_menu::renderUI...');
+                    Y.log(Clazz.NAME + "::renderUI");
+
                     this.get("boundingBox").addClass("yui3-menu " + this.orientation_class);
                     this.get("contentBox").addClass("yui3-menu-content");
 
@@ -103,7 +85,6 @@ YUI.add(
                         }
                     );
 
-                    //var _this = this;
                     Y.each(
                         menu_config,
                         function (v, i, list) {
@@ -115,17 +96,14 @@ YUI.add(
                     this.get("contentBox").setContent("<ul>" + item_html + "</ul>");
                     this.get("boundingBox").plug(
                         Y.Plugin.NodeMenuNav
-                        //{
-                            //autoSubmenuDisplay: false,
-                        //}
                     );
                 },
 
                 _compileMenuNode: function (node) {
+                    //Y.log(Clazz.NAME + "::_compileMenuNode");
                     var return_html;
 
                     if (node.action) {
-                        //Y.log("manage_menu::_compileMenuNode as item: " + node.label);
                         return_html = Y.substitute(
                             this.SUBMENU_ITEM_TEMPLATE,
                             {
@@ -136,7 +114,6 @@ YUI.add(
                         );
                     }
                     else {
-                        //Y.log("manage_menu::_compileMenuNode as submenu: " + node.label);
                         return_html = Y.substitute(
                             this.SUBMENU_LABEL_TEMPLATE, 
                             {
@@ -165,10 +142,6 @@ YUI.add(
                     }
 
                     return return_html;
-                },
-
-                syncUI: function () {
-                    // Y.log('menu syncUI...');
                 }
             },
             {
