@@ -177,10 +177,9 @@ YUI.add(
                         totalRecordsReturnExpr: '.meta.totalRecords'
                     };
 
-                    var data = config.data;
                     var root_data_source = new Y.DataSource.Local (
                         {
-                            source: data
+                            source: this.get("data")
                         }
                     );
                     root_data_source.treeble_config = Y.clone(treeble_config, true);
@@ -243,6 +242,38 @@ YUI.add(
                     //this._pg.render(this.get("contentBox"));
 
                     this.reloadTable();
+                    this.toggleDefaultOpens();
+                },
+
+                toggleDefaultOpens: function () {
+                    Y.log(Clazz.NAME + "::toggleDefaultOpens");
+
+                    Y.each(
+                        this.get("data"),
+                        function (node) {
+                            Y.log(Clazz.NAME + "::toggleDefaultOpens - each - node: " + Y.dump(node));
+                            this._checkNodeOpenToggle(node);
+                        },
+                        this
+                    );
+                },
+
+                _checkNodeOpenToggle: function (node) {
+                    Y.log(Clazz.NAME + "::_checkNodeOpenToggle");
+
+                    if (Y.Lang.isValue(node._default_open) && node._default_open) {
+                        this.toggleRow(node._path);
+                    }
+
+                    if (Y.Lang.isArray(node._children) && node._children.length > 0) {
+                        Y.each(
+                            node._children,
+                            function (child) {
+                                this._checkNodeOpenToggle(child);
+                            },
+                            this
+                        );
+                    }
                 },
 
                 updatePaginator: function (state) {
@@ -368,7 +399,7 @@ YUI.add(
                 },
 
                 toggleRow: function (path) {
-                    Y.log(Clazz.NAME + "::toggleRow - path: " + path);
+                    Y.log(Clazz.NAME + "::toggleRow - path: '" + Y.dump(path) + "'");
                     this._data_source.toggle(path, {}, Y.bind(this.reloadTable, this));
                 }
             },
