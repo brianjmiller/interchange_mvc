@@ -44,7 +44,7 @@ eval {
 
                 for (@raw) {
                     # just filename or subdirs/filename (e.g) url(foo.png), url(foo/foo.png)
-                    s/(url\()\s*([^\/|\.\.|^http]\S+)\s*(\))/$1$this_dir\/$2$3/g;
+                    s/(url\()\s*(?!\/|(?:\.\.)|(?:http))([^\)]+)\s*(\))/$1\/$this_dir\/$2$3/g;
 
                     # relative paths (e.g.) url(../../foo.png)
                     s!(url\()\s*((?:\.\./)+)(\S+)\s*(\))!
