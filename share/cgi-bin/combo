@@ -33,16 +33,31 @@ eval {
 
             if ($type eq 'css') {
                 # TODO: handle nested referencing of CSS files
-                # need to correct for image paths
+
+                # correct for image paths
                 my @dirs = File::Spec->splitdir($name);
+
+                # remove the file portion of the path (it looks like a dir)
                 splice @dirs, -1;
 
-                my $back_one_dir = File::Spec->catdir(@dirs);
+                my $this_dir = File::Spec->catdir(@dirs);
 
                 for (@raw) {
-                    s/((url\()([^\.\.|^http]\S+)(\)))/$2$back_one_dir\/$3$4/;
+                    # just filename or subdirs/filename (e.g) url(foo.png), url(foo/foo.png)
+                    s/(url\()\s*([^\/|\.\.|^http]\S+)\s*(\))/$1$this_dir\/$2$3/g;
 
-                    # TODO: add in the other handlers from phploader's version
+                    # slash filename (e.g.) url(/whatever)
+                    s/(url\()(\/)/$1$this_dir/g;
+
+                    # relative paths (e.g.) url(../../foo.png)
+                    s!(url\()\s*((?:\.\./)+)(\S+)\s*(\))!
+                        my @splits = split /\.\./, $2;
+
+                        my $dir = File::Spec->catdir(
+                            @dirs[0..(@dirs - @splits)]
+                        );
+                        "$1$dir/$3$4";
+                    !ge;
                 }
             }
 
