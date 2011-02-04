@@ -46,9 +46,6 @@ eval {
                     # just filename or subdirs/filename (e.g) url(foo.png), url(foo/foo.png)
                     s/(url\()\s*([^\/|\.\.|^http]\S+)\s*(\))/$1$this_dir\/$2$3/g;
 
-                    # slash filename (e.g.) url(/whatever)
-                    s/(url\()(\/)/$1$this_dir/g;
-
                     # relative paths (e.g.) url(../../foo.png)
                     s!(url\()\s*((?:\.\./)+)(\S+)\s*(\))!
                         my @splits = split /\.\./, $2;
