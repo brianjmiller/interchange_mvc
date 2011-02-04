@@ -9,7 +9,7 @@
 }
 
 .yui3-skin-sam .yui3-accordion-item .yui3-widget-hd {
-  background-image: url(http://yui.yahooapis.com/2.8.0r4/build/assets/skins/sam/sprite.png) !important;
+  background-image: url(/ic/vendor/yui-2in3/dist/2.8.2/build/assets/skins/sam/sprite.png) !important;
   background-position: 0 0 !important;
   border-top: 1px solid #7f7f7f !important;
   border-bottom: 1px solid #7f7f7f !important;
@@ -20,22 +20,22 @@
 
 .yui3-skin-sam .yui3-accordion-item-iconexpanded, 
 .yui3-skin-sam .yui3-accordion-item-iconexpanded-off {
-  background-image: url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/vertical-menu-submenu-indicator.png) !important;
+  background-image: url(/ic/vendor/yui3/build/node-menunav/assets/skins/sam/vertical-menu-submenu-indicator.png) !important;
   background-position: 8px 6px !important;
 }
 
 .yui3-skin-sam .yui3-accordion-item-iconexpanded-off:hover {
-  background-image: url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/vertical-menu-submenu-indicator.png) !important;
+  background-image: url(/ic/vendor/yui3/build/node-menunav/assets/skins/sam/vertical-menu-submenu-indicator.png) !important;
   background-position: 9px 6px !important;
 }
 
 .yui3-skin-sam .yui3-accordion-item-iconexpanded-on {
-  background-image: url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/horizontal-menu-submenu-indicator.png) !important;
+  background-image: url(/ic/vendor/yui3/build/node-menunav/assets/skins/sam/horizontal-menu-submenu-indicator.png) !important;
   background-position: 6px 7px !important;
 }
 
 .yui3-skin-sam .yui3-accordion-item-iconexpanded-on:hover {
-  background-image: url(http://yui.yahooapis.com/3.1.1/build/node-menunav/assets/skins/sam/horizontal-menu-submenu-indicator.png) !important;
+  background-image: url(/ic/vendor/yui3/build/node-menunav/assets/skins/sam/horizontal-menu-submenu-indicator.png) !important;
   background-position: 6px 8px !important;
 }
 
