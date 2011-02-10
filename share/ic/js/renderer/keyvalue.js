@@ -47,7 +47,7 @@ YUI.add(
                                         form_config:             v.form,
                                         updated_content_handler: function (response) {
                                             Y.log(Clazz.NAME + "::initializer - updated_content_handler: " + this);
-                                            Y.log(Clazz.NAME + "::initializer - updated_content_handler - " + v.label + ": " + Y.dump(response));
+                                            //Y.log(Clazz.NAME + "::initializer - updated_content_handler - " + v.label + ": " + Y.dump(response));
 
                                             // we know by virtue of being an edit in place form
                                             // on a key value pair that we'll get back one key

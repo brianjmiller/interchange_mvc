@@ -35,7 +35,7 @@ YUI.add(
 
         Clazz.getCacheKey = function (config) {
             Y.log(Clazz.NAME + "::getCacheKey");
-            Y.log(Clazz.NAME + "::getCacheKey - config: " + Y.dump(config));
+            //Y.log(Clazz.NAME + "::getCacheKey - config: " + Y.dump(config));
 
             return "base";
         };

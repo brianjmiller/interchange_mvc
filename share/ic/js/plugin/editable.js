@@ -158,7 +158,7 @@ YUI.add(
                     Y.log('plugin_editable::_createForm');
                     this._clearError();
 
-                    Y.log("plugin_editable::_createForm - form_config: " + Y.dump(form_config));
+                    //Y.log("plugin_editable::_createForm - form_config: " + Y.dump(form_config));
                     var form_config = this.get("form_config");
 
                     // TODO: should this be turned off?

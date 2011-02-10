@@ -32,7 +32,7 @@ YUI.add(
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
-                    Y.log(Clazz.NAME + "::initializer - config: " + Y.dump(config));
+                    //Y.log(Clazz.NAME + "::initializer - config: " + Y.dump(config));
                     this._config = config;
 
                     if (! Y.Lang.isValue(config.form_kind)) {
@@ -63,7 +63,7 @@ YUI.add(
                     }
 
                     if (Y.Lang.isValue(this._config.plugins)) {
-                        Y.log(Clazz.NAME + "::renderUI has plugins - " + Y.dump(this._config.plugins));
+                        //Y.log(Clazz.NAME + "::renderUI has plugins - " + Y.dump(this._config.plugins));
                         Y.each(
                                this._config.plugins,
                                function (plugin_item) {

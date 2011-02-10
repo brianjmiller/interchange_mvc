@@ -81,7 +81,7 @@ YUI.add(
                 },
 
                 destructor: function (el) {
-                    Y.log(Ignorable.NAME + "::destructor" + (el ? Y.dump(el) : ''));
+                    //Y.log(Ignorable.NAME + "::destructor" + (el ? Y.dump(el) : ''));
 
                     this._detachUI();
                 },

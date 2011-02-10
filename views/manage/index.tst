@@ -55,6 +55,7 @@
         filter:       "raw",
         comboBase:    "/combo?",
         root:         "ic/vendor/yui3/build/",
+        base:         "/ic/vendor/yui3/build/",
         combine:      true,
         insertBefore: "styleoverrides",
         groups:       {
@@ -64,11 +65,6 @@
                 base:      "/ic/vendor/yui3-gallery/build/",
                 root:      "ic/vendor/yui3-gallery/build/",
                 comboBase: "/combo?",
-                update:    function(tag) {
-                    //var root = "/ic/vendor/yui3-gallery/";
-                    //groups.gallery.base = root;
-                    //groups.gallery.root = root;
-                },
                 patterns: {
                     "gallery-":    {},
                     "gallerycss-": { type: "css" }
@@ -82,6 +78,7 @@
                 combine:   true,
                 comboBase: "/combo?",
                 root:      "ic/vendor/yui3-gallery/build/",
+                base:      "/ic/vendor/yui3-gallery/build/",
                 modules:   {
                     "gallery-accordion-css": {
                         path: "gallery-accordion/assets/skins/sam/gallery-accordion.css",

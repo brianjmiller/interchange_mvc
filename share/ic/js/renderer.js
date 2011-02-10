@@ -95,7 +95,7 @@ YUI.add(
                     return new content_constructor (config.config);
                 }
                 else if (Y.Lang.isArray(config.controls)) {
-                    Y.log("Y.IC.Renderer::buildContent - controls: " + Y.dump(config.controls));
+                    //Y.log("Y.IC.Renderer::buildContent - controls: " + Y.dump(config.controls));
                     Y.each(
                         config.controls,
                         function (control, i, a) {
@@ -141,7 +141,7 @@ YUI.add(
                     );
                 }
                 else {
-                    Y.log("Y.IC.Renderer::buildContent - unrecognized configuration: " + Y.dump(config));
+                    //Y.log("Y.IC.Renderer::buildContent - unrecognized configuration: " + Y.dump(config));
                 }
             }
 

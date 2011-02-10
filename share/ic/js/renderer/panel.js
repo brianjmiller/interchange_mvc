@@ -121,7 +121,7 @@ YUI.add(
                     var cache_key = e.newVal;
 
                     var cache_entry = this.cache.retrieve(cache_key);
-                    Y.log(Clazz.NAME + "::_afterCurrentChange - cache_entry: " + Y.dump(cache_entry));
+                    //Y.log(Clazz.NAME + "::_afterCurrentChange - cache_entry: " + Y.dump(cache_entry));
 
                     var child;
 

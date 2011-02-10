@@ -25,7 +25,7 @@ YUI.add(
             {
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
-                    Y.log(Clazz.NAME + "::initializer - config: " + Y.dump(config));
+                    //Y.log(Clazz.NAME + "::initializer - config: " + Y.dump(config));
 
                     this._data_url = "/manage/" + config.clazz + "/object_ui_meta_struct?_format=json&" + Y.QueryString.stringify(config.addtl_args);
                     Y.log(Clazz.NAME + "::initializer - _data_url: " + this._data_url);
@@ -36,7 +36,7 @@ YUI.add(
 
                 getCacheKey: function (config) {
                     Y.log(Clazz.NAME + "::getCacheKey");
-                    Y.log(Clazz.NAME + "::getCacheKey - config: " + Y.dump(config));
+                    //Y.log(Clazz.NAME + "::getCacheKey - config: " + Y.dump(config));
                     return "remote-record-" + config.clazz + "-" + Y.QueryString.stringify(config.addtl_args);
                 }
             }

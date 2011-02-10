@@ -386,7 +386,7 @@ YUI.add(
 
                     var column_region = Y.YUI2.util.Dom.getRegion( this._reference_column.getThLinerEl() );
                     Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column: " + this._reference_column);
-                    Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column: " + Y.dump(this._reference_column));
+                    //Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column: " + Y.dump(this._reference_column));
                     Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column.getElThLiner.region: " + Y.YUI2.util.Dom.getRegion(this._reference_column.getThLinerEl()));
 
                     // TODO: need to set the width on the input type based on the column width

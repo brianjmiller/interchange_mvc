@@ -290,21 +290,11 @@ YUI.add(
                     var menuNav = menu_nav_node.menuNav;
                     menuNav._hideAllSubmenus(menu_nav_node);
 
-                    // clear the selection
-                    Y.later(
-                        500,
-                        this,
-                        function () {
-                            var sel = window.getSelection();
-                            sel.removeAllRanges();
-                        }
-                    );
-
                     // .split doesn't return "the rest" with a limit, so use a capturing regex
                     var matches = e.target.get("id").match("^manage_menu_item-([^-]+)(?:-([^-]+)-([^-]+)(?:-([^-]+)(?:-(.+))?)?)?$");
 
                     if (Y.Lang.isArray(matches)) {
-                        Y.log(Clazz.NAME + "::_onSubmenuMousedown - matches: " + Y.dump(matches));
+                        //Y.log(Clazz.NAME + "::_onSubmenuMousedown - matches: " + Y.dump(matches));
                         var kind       = matches[1];
                         var clazz      = matches[2] || "";
                         var action     = matches[3] || "";
@@ -334,7 +324,7 @@ YUI.add(
                             addtl_args: addtl_args
                         }
                     };
-                    Y.log(Clazz.NAME + "::_onContentPaneShowContent: config: " + Y.dump(config));
+                    //Y.log(Clazz.NAME + "::_onContentPaneShowContent: config: " + Y.dump(config));
 
                     this._panes.content.fire(
                         "showContent",

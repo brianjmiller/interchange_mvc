@@ -37,9 +37,9 @@ YUI.add(
                         "valueChange",
                         function (e) {
                             Y.log("ic-renderer-treeeble formatter::text - valueChange handler - this: " + this);
-                            Y.log("ic-renderer-treeeble formatter::text - valueChange handler - oData:  " + Y.dump(oData));
+                            //Y.log("ic-renderer-treeeble formatter::text - valueChange handler - oData:  " + Y.dump(oData));
                             oData.value = e.newVal;
-                            Y.log("ic-renderer-treeeble formatter::text - valueChange handler - oData:  " + Y.dump(oData));
+                            //Y.log("ic-renderer-treeeble formatter::text - valueChange handler - oData:  " + Y.dump(oData));
                         },
                         this
                     );
@@ -63,7 +63,7 @@ YUI.add(
                         "click",
                         function (e) {
                             Y.log("ic-renderer-treeeble formatter::checkbox - click handler - this: " + this);
-                            Y.log("ic-renderer-treeeble formatter::checkbox - click handler - oData:  " + Y.dump(oData));
+                            //Y.log("ic-renderer-treeeble formatter::checkbox - click handler - oData:  " + Y.dump(oData));
                             if (oData.checked) {
                                 oData.checked = false;
                             }
@@ -251,7 +251,7 @@ YUI.add(
                     Y.each(
                         this.get("data"),
                         function (node) {
-                            Y.log(Clazz.NAME + "::toggleDefaultOpens - each - node: " + Y.dump(node));
+                            //Y.log(Clazz.NAME + "::toggleDefaultOpens - each - node: " + Y.dump(node));
                             this._checkNodeOpenToggle(node);
                         },
                         this
@@ -293,7 +293,7 @@ YUI.add(
                         resultCount: this._pg.getRowsPerPage(),
                         extra: window.treeble_request_extra
                     };
-                    Y.log(Clazz.NAME + "::reloadTable - request: " + Y.dump(request));
+                    //Y.log(Clazz.NAME + "::reloadTable - request: " + Y.dump(request));
 
                     this._data_source.sendRequest(
                         {
@@ -399,7 +399,7 @@ YUI.add(
                 },
 
                 toggleRow: function (path) {
-                    Y.log(Clazz.NAME + "::toggleRow - path: '" + Y.dump(path) + "'");
+                    //Y.log(Clazz.NAME + "::toggleRow - path: '" + Y.dump(path) + "'");
                     this._data_source.toggle(path, {}, Y.bind(this.reloadTable, this));
                 }
             },

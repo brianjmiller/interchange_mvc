@@ -26,22 +26,22 @@ YUI.add(
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
 
-                    Y.log(Clazz.NAME + "::renderUI - adding bounding_classes: " + Y.dump(this.get("bounding_classes")));
+                    //Y.log(Clazz.NAME + "::renderUI - adding bounding_classes: " + Y.dump(this.get("bounding_classes")));
                     Y.each(
                         this.get("bounding_classes"),
-                        function (class) {
+                        function (clazz) {
                             if (this) {
-                                this.addClass(class);
+                                this.addClass(clazz);
                             }
                         },
                         this.get("boundingBox")
                     );
-                    Y.log(Clazz.NAME + "::renderUI - adding content_classes: " + Y.dump(this.get("content_classes")));
+                    //Y.log(Clazz.NAME + "::renderUI - adding content_classes: " + Y.dump(this.get("content_classes")));
                     Y.each(
                         this.get("content_classes"),
-                        function (class) {
+                        function (clazz) {
                             if (this) {
-                                this.addClass(class);
+                                this.addClass(clazz);
                             }
                         },
                         this.get("contentBox")

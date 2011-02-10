@@ -116,7 +116,7 @@ YUI.add(
                                 Y.each(
                                     columns,
                                     function (col, ii, ia) {
-                                        Y.log(Clazz.NAME + "::renderUI - row " + i + ", col " + ii + ": " + Y.dump(col));
+                                        //Y.log(Clazz.NAME + "::renderUI - row " + i + ", col " + ii + ": " + Y.dump(col));
                                         var unit_class = "yui3-u-";
                                         if (Y.Lang.isValue(col.percent)) {
                                             unit_class += _percent_to_unit_map[col.percent];

@@ -39,7 +39,7 @@ YUI.add(
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
-                    Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
                     this._in_refresh = false;
 
@@ -268,7 +268,7 @@ YUI.add(
                     //
                     if (Y.Lang.isValue(action_key)) {
                         var action_data = this.get("actions")[action_key];
-                        Y.log(Clazz.NAME + "::_onActionChange - action_data: " + Y.dump(action_data));
+                        //Y.log(Clazz.NAME + "::_onActionChange - action_data: " + Y.dump(action_data));
 
                         if (! action_data) {
                             if (this._in_refresh) {
@@ -311,7 +311,7 @@ YUI.add(
                     var action_key = e.newVal;
                     if (Y.Lang.isValue(action_key)) {
                         var cache_entry = this.cache.retrieve(action_key);;
-                        Y.log(Clazz.NAME + "::_afterActionChange - cache_entry: " + Y.dump(cache_entry));
+                        //Y.log(Clazz.NAME + "::_afterActionChange - cache_entry: " + Y.dump(cache_entry));
 
                         var child;
 
@@ -319,12 +319,12 @@ YUI.add(
                             this._uiSetFillHeight( Y.WidgetStdMod.BODY );
 
                             var action_data = this.get("actions")[action_key];
-                            Y.log(Clazz.NAME + "::_afterActionChange - action_data: " + Y.dump(action_data));
+                            //Y.log(Clazz.NAME + "::_afterActionChange - action_data: " + Y.dump(action_data));
 
                             var body_node = this.getStdModNode( Y.WidgetStdMod.BODY );
 
                             var region    = body_node.get("region");
-                            Y.log(Clazz.NAME + "::_afterActionChange - body region: " + Y.dump(region));
+                            //Y.log(Clazz.NAME + "::_afterActionChange - body region: " + Y.dump(region));
 
                             action_data.renderer.config.render          = body_node;
                             action_data.renderer.config.advisory_width  = region.width;
@@ -408,7 +408,7 @@ YUI.add(
                         return;
                     }
                     if (new_data) {
-                        Y.log(Clazz.NAME + "::_onRequestSuccess - new_data: " + Y.dump(new_data));
+                        //Y.log(Clazz.NAME + "::_onRequestSuccess - new_data: " + Y.dump(new_data));
 
                         if (this._timer) {
                             this._timer.cancel();

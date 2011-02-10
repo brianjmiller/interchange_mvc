@@ -131,7 +131,7 @@ YUI.add(
 
                 _onRequestSuccess: function (txnId, response) {
                     Y.log(Clazz.NAME + "::_onRequestSuccess");
-                    Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
+                    //Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
 
                     this.set("bodyContent", "Received response...");
 
@@ -147,7 +147,7 @@ YUI.add(
                         return;
                     }
                     if (new_data) {
-                        Y.log(Clazz.NAME + "::_onRequestSuccess - new_data: " + Y.dump(new_data));
+                        //Y.log(Clazz.NAME + "::_onRequestSuccess - new_data: " + Y.dump(new_data));
 
                         var settings;
 
@@ -200,7 +200,7 @@ YUI.add(
 
                 getCacheKey: function (config) {
                     Y.log(Clazz.NAME + "::getCacheKey");
-                    Y.log(Clazz.NAME + "::getCacheKey - config: " + Y.dump(config));
+                    //Y.log(Clazz.NAME + "::getCacheKey - config: " + Y.dump(config));
 
                     return "remote-" + config.clazz;
                 }

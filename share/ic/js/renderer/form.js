@@ -45,7 +45,7 @@ YUI.add(
 
                 renderUI: function () {
                     Y.log(Clazz.NAME + "::renderUI");
-                    Y.log(Clazz.NAME + "::renderUI - _content_config: " + Y.dump(this._content_config));
+                    //Y.log(Clazz.NAME + "::renderUI - _content_config: " + Y.dump(this._content_config));
                     Clazz.superclass.renderUI.apply(this, arguments);
 
                     this._form_node = Y.Node.create('<form></form>');
@@ -95,13 +95,13 @@ YUI.add(
 
                 _onRequestFailure: function (txnId, response) {
                     Y.log(Clazz.NAME + "::_onRequestFailure");
-                    Y.log(Clazz.NAME + "::_onRequestFailure - response: " + Y.dump(response));
+                    //Y.log(Clazz.NAME + "::_onRequestFailure - response: " + Y.dump(response));
                     this._form_node.one(".error_msg").setContent("Request failed" + " (" + response.status + " - " + response.statusText + ")");
                 },
 
                 _onRequestSuccess: function (txnId, response) {
                     Y.log(Clazz.NAME + "::_onRequestSuccess");
-                    Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
+                    //Y.log(Clazz.NAME + "::_onRequestSuccess - response: " + Y.dump(response));
 
                     var new_data;
                     try {

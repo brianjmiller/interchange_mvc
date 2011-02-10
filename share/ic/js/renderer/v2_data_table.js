@@ -39,7 +39,7 @@ YUI.add(
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
-                    Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
+                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
 
                     //
                     // set up a YUI3 data source that we will then wrap in a YUI2 
@@ -66,7 +66,7 @@ YUI.add(
                             }
                         );
                     }
-                    Y.log(Clazz.NAME + "::initializer - source_fields: " + Y.dump(source_fields));
+                    //Y.log(Clazz.NAME + "::initializer - source_fields: " + Y.dump(source_fields));
 
                     this._data_source = new Y.DataSource.IO (
                         {
@@ -359,7 +359,7 @@ YUI.add(
                 // it is installed as a bounded function in the data table itself
                 _dynamicDataGenerateRequest: function (oState, oSelf) {
                     Y.log(Clazz.NAME + "::_dynamicDataGenerateRequest");
-                    Y.log(Clazz.NAME + "::_dynamicDataGenerateRequest - oState: " + Y.dump(oState));
+                    //Y.log(Clazz.NAME + "::_dynamicDataGenerateRequest - oState: " + Y.dump(oState));
                     Y.log(Clazz.NAME + "::_dynamicDataGenerateRequest - oSelf: " + oSelf);
 
                     var sort, dir, startIndex, results;

@@ -90,7 +90,7 @@ YUI.add(
                             this._rows,
                             function (row, i, a) {
                                 Y.log(Clazz.NAME + "::renderUI - adding row: " + i);
-                                Y.log(Clazz.NAME + "::renderUI - row " + i + " config: " + Y.dump(row));
+                                //Y.log(Clazz.NAME + "::renderUI - row " + i + " config: " + Y.dump(row));
                                 var row_node = Y.Node.create('<tr></tr>');
 
                                 if (Y.Lang.isValue(row.add_class)) {
@@ -118,11 +118,11 @@ YUI.add(
                                     row.columns,
                                     function (col, ii, ia) {
                                         Y.log(Clazz.NAME + "::renderUI - row " + i + " adding col " + ii);
-                                        Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " config: " + Y.dump(col));
+                                        //Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " config: " + Y.dump(col));
 
                                         var col_node = Y.Node.create('<td></td>');
                                         if (Y.Lang.isValue(col.attributes)) {
-                                            Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " attributes: " + Y.dump(col.attributes));
+                                            //Y.log(Clazz.NAME + "::renderUI - row " + i + " col " + ii + " attributes: " + Y.dump(col.attributes));
                                             //
                                             // TODO: .setAttrs wouldn't work for colspan,
                                             //       see http://yuilibrary.com/projects/yui3/ticket/2529526

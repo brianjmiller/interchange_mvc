@@ -54,7 +54,7 @@ YUI.add(
                     //if (config.caption) {
                         //chart_args.caption = config.caption;
                     //}
-                    Y.log(Clazz.NAME + "::initializer - chart_args: " + Y.dump(chart_args));
+                    //Y.log(Clazz.NAME + "::initializer - chart_args: " + Y.dump(chart_args));
 
                     this._chart = new Y.Chart (chart_args);
                 },

@@ -154,7 +154,7 @@ YUI.add(
                 onRecordSelected: function (e) {
                     Y.log(Clazz.NAME + "::onRecordSelected");
                     Y.log(Clazz.NAME + "::onRecordSelected - this: " + this);
-                    Y.log(Clazz.NAME + "::onRecordSelected - record: " + Y.dump(e.details[0]));
+                    //Y.log(Clazz.NAME + "::onRecordSelected - record: " + Y.dump(e.details[0]));
 
                     var record = e.details[0];
 
@@ -231,7 +231,7 @@ YUI.add(
 
                 _loadTabContent: function (cache_record, action) {
                     Y.log(Clazz.NAME + "::_loadTabContent");
-                    Y.log(Clazz.NAME + "::_loadTabContent - cache_record: " + Y.dump(cache_record));
+                    //Y.log(Clazz.NAME + "::_loadTabContent - cache_record: " + Y.dump(cache_record));
                     //Y.log(Clazz.NAME + "::_loadTabContent - tab: " + Y.dump(tab.get("data")));
                     Y.io(
                         cache_record.url,

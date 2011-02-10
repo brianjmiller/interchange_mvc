@@ -21,7 +21,7 @@ YUI.add(
         var Form;
 
         Form = function (config) {
-            Y.log("form constructor: " + Y.dump(config));
+            //Y.log("form constructor: " + Y.dump(config));
 
             if (config && ! config.children) {
                 //
@@ -35,7 +35,7 @@ YUI.add(
                 // server side
                 var _pk_fields = [];
                 if (config.pk) {
-                    Y.log("form constructor - pk: " + Y.dump(config.pk));
+                    //Y.log("form constructor - pk: " + Y.dump(config.pk));
                     Y.each(
                         config.pk,
                         function (v) {
@@ -62,7 +62,7 @@ YUI.add(
                 //
                 var _fields_present = [];
                 if (config.fields_present) {
-                    Y.log("form constructor - fields_present: " + Y.dump(config.fields_present));
+                    //Y.log("form constructor - fields_present: " + Y.dump(config.fields_present));
                     Y.each(
                         config.fields_present,
                         function (v) {
@@ -79,14 +79,14 @@ YUI.add(
 
                 var _controls = [];
                 if (config.field_defs) {
-                    Y.log("form constructor - field_defs: " + Y.dump(config.field_defs));
+                    //Y.log("form constructor - field_defs: " + Y.dump(config.field_defs));
                     Y.each(
                         config.field_defs,
                         function (field_def, fdi, fda) {
                             Y.each(
                                 field_def.controls,
                                 function (control, i, a) {
-                                    Y.log("control label: " + Y.dump(control["label"]));
+                                    //Y.log("control label: " + Y.dump(control["label"]));
                                     if (! Y.Lang.isValue(control["label"])) {
                                         // TODO: should this check to see if we've already used the field def label?
                                         if (i === 0) {
@@ -154,7 +154,7 @@ YUI.add(
                     _buttons
                 );
 
-                Y.log("form constructor - fields: " + Y.dump(fields));
+                //Y.log("form constructor - fields: " + Y.dump(fields));
                 config.children = fields;
             }
 
@@ -258,7 +258,7 @@ YUI.add(
                     Y.log('form::_onFormSuccess');
                     var response, host;
                     try {
-                        Y.log('form::_onFormSuccess - responseText ' + Y.dump(e.response.responseText));
+                        //Y.log('form::_onFormSuccess - responseText ' + Y.dump(e.response.responseText));
                         response = Y.JSON.parse(e.response.responseText);
                     }
                     catch (err) {
@@ -287,7 +287,7 @@ YUI.add(
                 _onSuccessfulResponse: function (e) {
                     Y.log('form::_onSuccessfulResponse');
                     var response = e.details[0];
-                    Y.log('form::_onSuccessfulResponse - response: ' + Y.dump(response));
+                    //Y.log('form::_onSuccessfulResponse - response: ' + Y.dump(response));
 
                     var form = this;
 
@@ -295,7 +295,7 @@ YUI.add(
                         if (this._replacement_node == null) {
                             Y.log('form::_onSuccessfulResponse(replace): looking for ic_form_replaceable');
                             this._replacement_node = this.get("boundingBox").ancestor(function(node){
-                                    Y.log('form::_onSuccessfulResponse(replace): in ancestor test with ' + Y.dump(node));
+                                    //Y.log('form::_onSuccessfulResponse(replace): in ancestor test with ' + Y.dump(node));
                                     return node.hasClass("ic_form_replaceable");
                                 }
                             );
@@ -317,7 +317,7 @@ YUI.add(
                         if (this._replacement_node == null) {
                             Y.log('form::_onSuccessfulResponse(destroy): looking for ic_form_replaceable');
                             this._replacement_node = this.get("boundingBox").ancestor(function(node){
-                                    Y.log('form::_onSuccessfulResponse(destroy): in ancestor test with ' + Y.dump(node));
+                                    //Y.log('form::_onSuccessfulResponse(destroy): in ancestor test with ' + Y.dump(node));
                                     return node.hasClass("ic_form_destroyable");
                                 }
                             );

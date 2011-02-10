@@ -161,13 +161,13 @@ YUI.add(
 
                 _onRequestFailure: function (txnId, response) {
                     Y.log(Clazz.NAME + "::_onRequestFailure");
-                    Y.log(Clazz.NAME + "::_onRequestFailure - response: " + Y.dump(response));
+                    //Y.log(Clazz.NAME + "::_onRequestFailure - response: " + Y.dump(response));
 
                     this._mesg_node.setContent("Last Try: " + this._last_tried);
                 },
 
                 _handleNewData: function (new_data) {
-                    this.set("bodyContent", Y.dump(new_data));
+                    //this.set("bodyContent", Y.dump(new_data));
                 },
 
                 _handleEmptyData: function () {

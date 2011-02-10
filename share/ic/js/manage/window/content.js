@@ -77,7 +77,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_onShowContent");
 
                     var config = e.details[0];
-                    Y.log(Clazz.NAME + "::_onShowContent - config: " + Y.dump(config));
+                    //Y.log(Clazz.NAME + "::_onShowContent - config: " + Y.dump(config));
 
                     var kind       = config.kind;
                     var kind_class = _kind_map[kind];
@@ -112,7 +112,7 @@ YUI.add(
                         //       or region) vs. actual width/height in the grandchildren
                         new_child_config.width  = this.get("width");
                         new_child_config.height = this.get("height");
-                        Y.log(Clazz.NAME + "::_onShowContent - new_child_config: " + Y.dump(new_child_config));
+                        //Y.log(Clazz.NAME + "::_onShowContent - new_child_config: " + Y.dump(new_child_config));
 
                         child = new kind_class (new_child_config);
                         Y.log(Clazz.NAME + "::_onShowContent - child from new: " + child);
