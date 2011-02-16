@@ -15,9 +15,9 @@ use IC::Manage;
 use IC::C::Manage::Widget::Menu;
 
 use Moose;
-extends qw( IC::C );
+extends 'IC::C';
 
-has +layout => ( default => 'layouts/standard' );
+has '+layout' => ( default => 'layouts/standard' );
 
 has custom_js => (
     is      => 'rw',

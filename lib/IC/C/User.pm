@@ -17,7 +17,7 @@ use IC::M::User;
 use Moose;
 extends qw( IC::C );
 
-has +layout => ( default => 'layouts/standard' );
+has '+layout' => ( default => 'layouts/standard' );
 
 no Moose;
 
