@@ -52,6 +52,11 @@ sub _change_value_with_trigger {
 
     $args->{no_logging} ||= 0;
 
+    #{
+        #no warnings 'uninitialized';
+        #warn "_change_value_with_trigger: $self, $field, " . $self->$field . ", $new_value (" . join(', ', (caller(1))[1,2]) . ")\n";
+    #}
+
     #
     # this needs to be atomic so start a transaction if we aren't already in one,
     # Rose::DB returns -1 when already in a transaction
