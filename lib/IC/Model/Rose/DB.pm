@@ -20,7 +20,7 @@ use Rose::Object::MakeMethods::Generic (
 IC::Config->initialize;
 
 if (defined IC::Config->smart_variable('SQLDSN')) {
-    warn "Registering db: " . IC::Config->smart_variable('SQLDSN') . "\n";
+    #warn "Registering db: " . IC::Config->smart_variable('SQLDSN') . "\n";
     __PACKAGE__->standard_base_configuration;
     __PACKAGE__->register_db(
         username        => IC::Config->smart_variable( 'SQLUSER' ),
