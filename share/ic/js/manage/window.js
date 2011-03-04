@@ -338,28 +338,13 @@ YUI.add(
         // make all of that into a Singleton so that I can access the
         // window stuff from any module
         //
+        var instance = null;
         Y.namespace("IC").ManageWindow = function () {
-            var mw = new Clazz (
-                {
-                    prefix: "_mw"
-                }
-            );
-            this.instance = null;
+            if (! instance) {
+                instance =  new Clazz (); 
+            }
 
-            var getInstance = function () {
-                if (! this.instance) {
-                    this.instance = createInstance();
-                }
-                return this.instance;
-            };
-
-            var createInstance = function () {
-                return {
-                    mw: mw
-                };
-            };
-
-            return getInstance();
+            return instance;
         };
     },
     "@VERSION@",
