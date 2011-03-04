@@ -1,3 +1,17 @@
 div.yui3-ic_renderer_data_table-hidden {
     display: none;
 }
+
+div.yui3-ic_renderer_data_table div.yui3-datatable-content table caption {
+    padding: 0px;
+}
+
+div.yui3-ic_renderer_data_table div.yui3-datatable table {
+    font-family: inherit;
+}
+
+div.yui3-ic_renderer_data_table div.yui3-datatable-liner {
+    padding-top: 1px;
+    padding-bottom: 1px;
+    line-height: 1.15;
+}
