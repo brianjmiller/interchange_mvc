@@ -12,20 +12,22 @@ has '+_object_adjust_simple_subclass' => (
     default => 'Drop',
 );
 
-no Moose;
-
-sub _simple_object_adjust_ui_meta_struct {
-    #warn "IC::ManageRole::Drop::_simple_object_adjust_ui_meta_struct";
+after 'ui_meta_struct' => sub {
+    #warn "IC::ManageRole::Drop::ui_meta_struct(after)";
     my $self = shift;
-    my $struct = shift;
-    my $object = shift;
+    my %args = @_;
 
-    $struct->{+__PACKAGE__} = 1;
+    my $struct = $args{context}->{struct};
+    my $object = $args{context}->{object};
+
+    $struct->{'IC::ManageRole::Drop::ui_meta_struct(after)'} = 1;
 
     $struct->{config}->{caption} = 'Are you sure you wish to delete the following ' . $self->_model_display_name . ': <span class="emphasized">' . $object->manage_description . '</span>';
 
     return;
 };
+
+no Moose;
 
 sub _save_object_adjust {
     #warn "IC::ManageRole::Drop::_save_object_adjust";

@@ -6,11 +6,11 @@ with 'IC::ManageRole::Base';
 with 'IC::ManageRole::ObjectSaver';
 
 after 'ui_meta_struct' => sub {
-    warn "IC::ManageRole::Add::ui_meta_struct(after)";
+    #warn "IC::ManageRole::Add::ui_meta_struct(after)";
     my $self = shift;
     my %args = @_;
 
-    warn "IC::ManageRole::Add::ui_meta_struct(after) - args keys: " . join(', ', keys %args);
+    #warn "IC::ManageRole::Add::ui_meta_struct(after) - args keys: " . join(', ', keys %args);
 
     my $struct = $args{context}->{struct};
 

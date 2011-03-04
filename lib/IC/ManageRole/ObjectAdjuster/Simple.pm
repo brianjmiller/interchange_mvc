@@ -31,10 +31,6 @@ after 'ui_meta_struct' => sub {
 
     $struct->{label} ||= $self->_object_adjust_simple_label;
 
-    # TODO: is this still needed after the context restructure?
-    # provide a hook into the subclass to let it override what it needs to
-    $self->_simple_object_adjust_ui_meta_struct($struct, $object);
-
     unless (defined $struct->{type}) {
         $struct->{type} = 'FormWrapper';
     }
