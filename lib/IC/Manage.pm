@@ -425,6 +425,54 @@ sub check_priv {
 }
 
 #
+# takes an object and a set of field names and returns a configuration
+# structure that can be plugged directly into a KeyValue renderer's 
+# data property
+#
+# TODO: cache some of this on a per manage class basis so we don't
+#       need to rebuild the structures at least within a request
+#
+sub get_KeyValue_data {
+    my $self = shift;
+    my $object = shift;
+    my $args = { @_ };
+
+    my @all_fields = $self->_model_class->meta->columns;
+
+    my $select_fields;
+    if (defined $args->{field_names}) {
+        my $fields_by_name = {
+            map { $_->name => $_ } @all_fields
+        };
+        $select_fields = [
+            map {
+                $fields_by_name->{$_}
+            } @{ $args->{field_names} }
+        ];
+    }
+    else {
+        $select_fields       = \@all_fields;
+        $args->{field_names} = [ map { $_->name } @all_fields ];
+    }
+
+    my $data_kvs = $self->_fields_to_kv_defs(
+        object => $object,
+        fields => $select_fields,
+    );
+
+    my $data = [
+        map {
+            {
+                label => $data_kvs->{$_}->{label},
+                value => $data_kvs->{$_}->{value},
+            }
+        } @{ $args->{field_names} },
+    ];
+
+    return $data;
+}
+
+#
 # takes a set of named args, specifically a list of fields that we want to display 
 # in a common key/value pair manner and the object used to derive the values
 #
