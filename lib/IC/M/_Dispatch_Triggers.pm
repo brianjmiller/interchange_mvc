@@ -36,26 +36,25 @@ sub _change_value_with_trigger {
     my $new_value = shift;
     my $args      = { @_ };
 
-    unless (defined $new_value) {
-        IC::Exception->throw( q{Can't change value missing argument: new value} );
-    }
+    my @caller = caller(1);
+    my $caller_simple = sprintf '%s line %s', @caller[1,2];
 
     my $field = delete $args->{_field};
     unless (defined $field) {
-        IC::Exception->throw( q{Can't change value missing argument: _field} );
+        IC::Exception->throw( qq{Can't change value missing argument: _field ($caller_simple)} );
     }
+    unless (defined $new_value) {
+        IC::Exception->throw( qq{Can't change $field missing argument: new value ($caller_simple)} );
+    }
+
+    #warn sprintf "_change_value_with_trigger: $self, $field, %s, $new_value ($caller_simple)\n", $self->$field;
 
     my $get_trigger_structure_method = delete $args->{_get_trigger_structure_method};
     unless (defined $get_trigger_structure_method) {
-        IC::Exception->throw( q{Can't change value missing argument: _get_trigger_structure_method} );
+        IC::Exception->throw( qq{Can't change $field missing argument: _get_trigger_structure_method ($caller_simple)} );
     }
 
     $args->{no_logging} ||= 0;
-
-    #{
-        #no warnings 'uninitialized';
-        #warn "_change_value_with_trigger: $self, $field, " . $self->$field . ", $new_value (" . join(', ', (caller(1))[1,2]) . ")\n";
-    #}
 
     #
     # this needs to be atomic so start a transaction if we aren't already in one,
@@ -72,16 +71,16 @@ sub _change_value_with_trigger {
         my @additional_details = ();
         if (defined $args->{addtl_details}) {
             unless (ref $args->{addtl_details} eq 'ARRAY') {
-                IC::Exception->throw("Can't change status, invalid addtl details argument: $args->{addtl_details} (not an ARRAY ref)");
+                IC::Exception->throw("Can't change status, invalid addtl details argument: $args->{addtl_details} (not an ARRAY ref) ($caller_simple)");
             }
 
             for my $element (@additional_details) {
                 unless (ref $element eq 'HASH') {
-                    IC::Exception->throw("Can't change status, invalid addtl detail element: $element (not a HASH ref)");
+                    IC::Exception->throw("Can't change status, invalid addtl detail element: $element (not a HASH ref) ($caller_simple)");
                 }
                 for my $key qw( ref_code value ) {
                     unless (defined $element->{$key} and $element->{$key} ne '') {
-                        IC::Exception->throw("Can't change status, invalid addtl detail, missing key/value: $key");
+                        IC::Exception->throw("Can't change status, invalid addtl detail, missing key/value: $key ($caller_simple)");
                     }
                 }
             }
@@ -133,15 +132,15 @@ sub _change_value_with_trigger {
                     $return = $sub_ref->($self, _orig_value => $orig_value, _new_value => $new_value, %$args);
                 }
                 else {
-                    IC::Exception->throw("Can't change $descriptor $field: $orig_value to $new_value not a subroutine");
+                    IC::Exception->throw("Can't change $descriptor $field: $orig_value to $new_value not a subroutine ($caller_simple)");
                 }
             }
             else {
-                IC::Exception->throw("Can't change $descriptor $field: can't change from '$orig_value' to '$new_value' ($content)");
+                IC::Exception->throw("Can't change $descriptor $field: can't change from '$orig_value' to '$new_value' ($content) ($caller_simple)");
             }
         }
         else {
-            IC::Exception->throw("Can't change $descriptor $field: unrecognized old $field '$orig_value' ($content)");
+            IC::Exception->throw("Can't change $descriptor $field: unrecognized old $field '$orig_value' ($content) ($caller_simple)");
         }
     }
 
