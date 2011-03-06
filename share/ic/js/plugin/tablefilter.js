@@ -43,10 +43,10 @@ YUI.add(
                 _reference_data_table: null,
 
                 //
-                // store the local custom table that will sit on top of the data table to be filtered
+                // store the local custom thead that will sit on top of the data table to be filtered
                 // it has the same number of columns as the data table itself
                 //
-                _filter_table_node: null,
+                _filter_thead_node: null,
 
                 // store a list of filters, one per column this way we can track filters
                 // so that they can be adjusted in various ways when the underlying table
@@ -57,7 +57,7 @@ YUI.add(
                 _rendered: false,
 
                 // where to put our filter table
-                _prepend_to: null,
+                _insert_before: null,
 
                 // cache of records that have been removed by a set of filters, these need to be added
                 // back in for reconsideration upon resubmitting a filter
@@ -65,8 +65,8 @@ YUI.add(
 
                 initializer: function (config) {
                     //Y.log('plugin_tablefilter::initializer');
-                    if (config.prepend_to) {
-                        this._prepend_to = config.prepend_to;
+                    if (config.insert_before) {
+                        this._insert_before = config.insert_before;
                     }
 
                     this._reference_data_table = this.get("host")._data_table;
@@ -75,7 +75,8 @@ YUI.add(
                     // TODO: set up an event handler to build our filter table
                     //       once the data table has been rendered
 
-                    this._initFilterTable();
+                    this._initColumnFilters();
+                    this._drawFilterTBody();
                     this._bindFilter();
                 }, 
 
@@ -83,23 +84,15 @@ YUI.add(
                     Y.log('plugin_tablefilter::destructor');
 
                     this._reference_data_table = null;
-                    this._filter_table_node    = null;
+                    this._filter_thead_node    = null;
                     this._filters              = null;
-                    this._prepend_to           = null;
+                    this._insert_before        = null;
 
                     this._detachFilter();
                 },
 
-                _initFilterTable: function () {
-                    Y.log('plugin_tablefilter::_initFilterTable');
-                    var tr    = Y.Node.create('<tr></tr>');
-                    var tbody = Y.Node.create('<tbody></tbody>');
-                    tbody.append(tr);
-
-                    var table = Y.Node.create('<table></table>');
-                    table.append(tbody);
-
-                    this._filter_table_node = table;
+                _initColumnFilters: function () {
+                    Y.log('plugin_tablefilter::_initColumnFilters');
 
                     //
                     // build a column filter for each column in the reference table
@@ -116,17 +109,38 @@ YUI.add(
                                 }
                             );
                             this._filters[col.field] = column_filter;
+                        },
+                        this
+                    );
+                },
 
-                            // now actually append it if it is currently shown
+                _drawFilterTBody: function () {
+                    Y.log('plugin_tablefilter::_drawFilterTBody');
+                    //
+                    // the YUI2 DT has an essentially "hidden" table cell in each row at the start
+                    // so add an empty cell here so that they match up
+                    //
+                    var tr    = Y.Node.create('<tr><td></td></tr>');
+                    var thead = Y.Node.create('<thead></thead>');
+                    thead.append(tr);
+
+                    this._filter_thead_node = thead;
+
+                    //
+                    // add a table cell for each actively shown column
+                    //
+                    Y.each(
+                        this._reference_data_table.getColumnSet().flat,
+                        function (col, i, columns) {
                             if (! columns[i].hidden) {
-                                tr.append(column_filter._td);
+                                tr.append(this._filters[col.field]._td);
                             }
                         },
                         this
                     );
 
-                    if (this._prepend_to) {
-                        this._prepend_to.prepend(this._filter_table_node);
+                    if (this._insert_before) {
+                        this._insert_before.insert(this._filter_thead_node, "before");
                         this._rendered = true;
                     }
                 },
@@ -157,6 +171,19 @@ YUI.add(
                             )
                         );
                     }
+
+                    this._reference_data_table.subscribe(
+                        "columnReorderEvent",
+                        Y.bind(
+                            function () {
+                                Y.log('plugin_tablefilter::_bindFilter - columnReorderEvent');
+
+                                this._filter_thead_node.remove();
+                                this._drawFilterTBody();
+                            },
+                            this
+                        )
+                    );
                 },
 
                 _detachFilter: function () {
@@ -204,6 +231,12 @@ YUI.add(
                     Y.log('plugin_tablefilter::_submitFilter');
 
                     if (this._reference_data_table.get("dynamicData")) {
+                        // force them back to the first page of results
+                        this.get("host")._data_pager.setState(
+                            {
+                                recordOffset: 0
+                            }
+                        );
                         this.get("host").fire("updateData");
                     }
                     else {
@@ -349,6 +382,9 @@ YUI.add(
             {
                 NAME: "ic_plugin_tablefilter_columnfilter",
                 ATTRS: {
+                    current_value: {
+                        value: ''
+                    }
                 }
             }
         );
@@ -376,44 +412,40 @@ YUI.add(
                     this._filter_group     = config.group;
                     this._reference_column = config.column;
 
-                    // TODO: move the padding into a class stylesheet
-                    this._td = Y.Node.create('<td style="padding: 0 7px"></td>');
+                    // TODO: move the style into a class stylesheet
+                    this._td = Y.Node.create('<th class="yui-dt0-col-' + this._reference_column.field + '" style="text-align: center;"></td>');
 
                     var name  = this._reference_column.field + '_filter';
                     //Y.log("name: " + name);
 
                     this._controls = [];
 
-                    var column_region = Y.YUI2.util.Dom.getRegion( this._reference_column.getThLinerEl() );
-                    Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column: " + this._reference_column);
-                    //Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column: " + Y.dump(this._reference_column));
-                    Y.log("plugin_tablefilter_columnfilter::initializer - _reference_column.getElThLiner.region: " + Y.YUI2.util.Dom.getRegion(this._reference_column.getThLinerEl()));
-
-                    // TODO: need to set the width on the input type based on the column width
-                    var input_node = Y.Node.create('<input type="text" name="' + name + '" />');
-                    input_node.setStyle("width", column_region.width + "px");
+                    var liner_node = Y.Node.create('<div class="yui-dt-liner"></div>');
+                    var input_node = Y.Node.create('<input type="text" name="' + name + '" value="' + this.get("current_value") + '" style="width: 98%;" />');
+                    liner_node.append(input_node);
 
                     this._controls.push(input_node);
 
-                    // TODO: can this be delegated?
+                    // TODO: can this be delegated? - or better yet switch to value change and/or select event
+                    //       handler, etc. (will depend on the filter type)
                     input_node.on(
                         "key",
-                        Y.bind(
-                            this._filter_group._submitFilter,
-                            this._filter_group
-                        ),
-                        'down:13'
+                        function (e) {
+                            Y.log("key press - input_node value: " + input_node.get("value"));
+                            this.set("current_value", input_node.get("value"));
+                            this._filter_group._submitFilter();
+                        },
+                        'down:13',
+                        this
                     );
-                    this._td.append(input_node);
+                    this._td.append(liner_node);
 
                     this._bindEvents();
                 },
 
                 _bindEvents: function () {
                     Y.log("plugin_tablefilter_columnfilter::_bindEvents");
-                    // resize
                     // hide/show
-                    // switch places (i.e. drag)
                 },
 
                 // this method is used for non-dynamicData conditions (when the client should do the filtering)
@@ -554,7 +586,6 @@ YUI.add(
 
                     return result;
                 }
-
             }
         );
 

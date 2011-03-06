@@ -121,7 +121,7 @@ after 'ui_meta_struct' => sub {
 
             sortable  => (defined $col->{sortable} ? $col->{sortable} : 1)
                 ? JSON::true() : JSON::false(),
-            resizeable => (defined $col->{resizable} ? $col->{resizable} : 0)
+            resizeable => (defined $col->{resizable} ? $col->{resizable} : 1)
                 ? JSON::true() : JSON::false(),
 
             (defined $col->{formatter} ? (formatter => $col->{formatter}) : ()),

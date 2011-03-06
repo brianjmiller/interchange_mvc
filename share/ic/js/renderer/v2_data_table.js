@@ -103,7 +103,7 @@ YUI.add(
                     Y.log(Clazz.NAME + "::renderUI - max_rows: " + this.get("max_rows"));
 
                     var data_table_config = this._data_table_config = {
-                        draggableColumns: false
+                        draggableColumns: true
                     };
                     if (this.get("paging_provider") === "server") {
                         Y.log(Clazz.NAME + "::renderUI - setting dynamic data to true");
@@ -153,10 +153,11 @@ YUI.add(
                     Y.log(Clazz.NAME + "::renderUI - data_table_is_filterable: " + this.get("data_table_is_filterable"));
                     if (this.get("data_table_is_filterable")) {
                         Y.log(Clazz.NAME + "::renderUI - setting up filtering");
+
                         this.plug(
                             Y.IC.Plugin.TableFilter,
                             {
-                                prepend_to: this.get("contentBox")
+                                insert_before: Y.one(this._data_table.getMsgTbodyEl())
                             }
                         );
                     }
@@ -189,7 +190,7 @@ YUI.add(
                         Y.bind(this._onRowSelectEvent, this)
                     );
                     if (this.get("data_table_include_options")) {
-                        //Y.log(Clazz.NAME + "::_bindEvents - installing context menu handling");
+                        //Y.log(Clazz.NAME + "::bindUI - installing context menu handling");
                         Y.delegate(
                             "contextmenu",
                             function (e) {
@@ -367,7 +368,7 @@ YUI.add(
                     oState = oState || { pagination: null, sortedBy: null };
 
                     sort = (oState.sortedBy) ? oState.sortedBy.key : oSelf.getColumnSet().keys[0].getKey();
-                    dir  = (oState.sortedBy && oState.sortedBy.dir === oSelf.CLASS_DESC) ? "desc" : "asc";
+                    dir  = (oState.sortedBy && oState.sortedBy.dir === Y.YUI2.widget.DataTable.CLASS_DESC) ? "desc" : "asc";
 
                     startIndex = (oState.pagination) ? oState.pagination.recordOffset : 0;
                     results    = (oState.pagination) ? oState.pagination.rowsPerPage : null;
