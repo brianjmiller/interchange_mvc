@@ -167,12 +167,20 @@ sub data {
         }
 
         for my $list_by (@{ $params->{list_by} }) {
-            if (defined $params->{$list_by} and $params->{$list_by} ne '') {
-                if (ref $params->{$list_by} eq 'ARRAY') {
-                    push @$query, $list_by => $params->{$list_by};
+            my $param_field_name = $list_by;
+
+            # this is irritating, and necessary because IC eats "id" parameters
+            # done here for completion, list_by on 'id' is pretty unlikely
+            if ($list_by eq 'id') {
+                $param_field_name = '_work_around_ic_id';
+            }
+
+            if (defined $params->{$param_field_name} and $params->{$param_field_name} ne '') {
+                if (ref $params->{$param_field_name} eq 'ARRAY') {
+                    push @$query, $list_by => $params->{$param_field_name};
                 }
                 else {
-                    push @$query, $list_by => $params->{$list_by};
+                    push @$query, $list_by => $params->{$param_field_name};
                 }
             }
             else {
@@ -376,8 +384,13 @@ no Moose;
 
         for my $search_by (@{ $params->{search_by} }) {
             if ($search_by =~ /\A(.*)=(.*)\z/) {
-                my $field    = $1;
+                my $field    = my $param_field_name = $1;
                 my $operator = $2;
+
+                # this is irritating, and necessary because IC eats "id" parameters
+                if ($field eq 'id') {
+                    $param_field_name = '_work_around_ic_id';
+                }
 
                 if ($operator =~ /-/) {
                     my @operators = split /-/, $operator;
@@ -386,7 +399,7 @@ no Moose;
                         $delimiter = shift @operators;
                     }
 
-                    my @values = split /$delimiter/, $params->{$field};
+                    my @values = split /$delimiter/, $params->{$param_field_name};
                     unless (@values == @operators) {
                         IC::Exception->throw('_process_search_by failed: # of operators does not match # of values');
                     }
@@ -411,7 +424,7 @@ no Moose;
 
                     push @return, ( 
                         $field => {
-                            $operator => $_search_by_operators->{$operator}->($params->{$field}),
+                            $operator => $_search_by_operators->{$operator}->($params->{$param_field_name}),
                         },
                     );
                 }

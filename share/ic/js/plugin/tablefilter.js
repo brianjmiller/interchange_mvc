@@ -511,8 +511,19 @@ YUI.add(
 
                                 // strip off '_filter' (the 'name.length - 7')
                                 var field_name = name.substring(0, name.length - 7);
+                                var value_field_name = field_name;
+
+                                //
+                                // HACK: this is a hack to work within IC and should be improved
+                                // via meta data to set up the filters, it can be removed once 
+                                // that work has been done
+                                //
+                                if (field_name === "id") {
+                                    value_field_name = "_work_around_ic_id";
+                                }
+
                                 args.push(
-                                    'search_by[]=' + encodeURIComponent(field_name + '=' + parsed_value.op) + '&' + field_name + '=' + encodeURIComponent(parsed_value.value)
+                                    'search_by[]=' + encodeURIComponent(field_name + '=' + parsed_value.op) + '&' + value_field_name + '=' + encodeURIComponent(parsed_value.value)
                                 );
                             }
                         },
