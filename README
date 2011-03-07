@@ -8,7 +8,7 @@ Some key points:
 
 * MVC2 has been open sourced (though has next to no community, yet).
 
-* There are at least two other projects actively developing on the platform with likely a third in the wings, therefore improvements others make can be incorporated easily.
+* There are at least three projects actively developing on the platform with likely a fourth in the wings, therefore improvements others make can be incorporated easily.
 
 * The way in which we setup the application allows for easy upgrades of both IC and MVC2 *but* only when explicitly desired, keeping the ability to easily customize, and allowing for testing.
 
@@ -18,7 +18,7 @@ Some key points:
 
 * MVC within MVC2, there is support for a component based approach such that a component wraps up a view in a controller-esque library that can be utilized across multiple controllers.
 
-* MVC2 has a layout system that is integrated with the controllers such that site templates themselves are shared to element duplication of code. It is flexible at the controller level to allow for multiple layouts to be utilized by the same site.
+* MVC2 has a layout system that is integrated with the controllers such that site templates themselves are shared to eliminate duplication of code. It is flexible at the controller level to allow for multiple layouts to be utilized by the same site.
 
 * MVC2 has a fully implemented URL routing system to allow for easy, and complete control over the URL space which is critical for SEO.
 
