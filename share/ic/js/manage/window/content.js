@@ -33,7 +33,7 @@ YUI.add(
         var Clazz = Y.namespace("IC").ManageWindowContent = Y.Base.create(
             "ic_manage_window_content",
             Y.Widget,
-            [ Y.WidgetParent ],
+            [],
             {
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
@@ -106,18 +106,18 @@ YUI.add(
                         // TODO: should we clone this?
                         var new_child_config = config.config;
 
-                        // TODO: need to wire in resize stuff so that when our width/height change
-                        //       it gets passed to each of the children as well, but there needs
-                        //       to be the distinction between advisory width/height (or contained,
-                        //       or region) vs. actual width/height in the grandchildren
+                        //
+                        // start out with our child hidden, the act of selecting it will
+                        // cause it to be shown, but go ahead and render it otherwise
+                        // subcomponents tend to break (in particular the v2 data table)
+                        //
+                        new_child_config.visible = false;
+                        new_child_config.render  = this.get("contentBox");
                         new_child_config.width  = this.get("width");
                         new_child_config.height = this.get("height");
-                        //Y.log(Clazz.NAME + "::_onShowContent - new_child_config: " + Y.dump(new_child_config));
 
                         child = new kind_class (new_child_config);
                         Y.log(Clazz.NAME + "::_onShowContent - child from new: " + child);
-
-                        this.add(child);
 
                         this.cache.add(cache_key, child);
                     }
@@ -132,23 +132,51 @@ YUI.add(
                         child.setAction(config.config.action);
                     }
 
-                    this.selectChild(child.get("index"));
+                    this.set("selection", cache_key);
 
                     Y.log(Clazz.NAME + "::_onShowContent - done");
                 },
 
                 _afterSelectionChange: function (e) {
                     Y.log(Clazz.NAME + "::_afterSelectionChange");
+                    var next, prev;
+
                     if (Y.Lang.isValue(e.prevVal)) {
-                        e.prevVal.hide();
+                        prev = this.cache.retrieve(e.prevVal).response;
                     }
                     if (Y.Lang.isValue(e.newVal)) {
-                        e.newVal.show();
+                        next = this.cache.retrieve(e.newVal).response;
+                    }
+                    //Y.log(Clazz.NAME + "::_afterSelectionChange - next: " + next);
+                    //Y.log(Clazz.NAME + "::_afterSelectionChange - prev: " + prev);
+
+                    if (prev) {
+                        prev.hide();
+                    }
+                    if (next) {
+                        if (! Y.DOM.inDoc(next.get("boundingBox"))) {
+                            //Y.log(Clazz.NAME + "::_afterSelectionChange - next not in doc");
+                            this.get("contentBox").append(next.get("boundingBox"));
+                        }
+
+                        // TODO: need to wire in resize stuff so that when our width/height change
+                        //       it gets passed to each of the children as well, but there needs
+                        //       to be the distinction between advisory width/height (or contained,
+                        //       or region) vs. actual width/height in the grandchildren
+
+                        next.show();
+                    }
+                    if (prev) {
+                        prev.get("boundingBox").remove();
                     }
                 }
             },
             {
-                ATTRS: {}
+                ATTRS: {
+                    selection: {
+                        value: null
+                    }
+                }
             }
         );
     },
@@ -157,7 +185,6 @@ YUI.add(
         requires: [
             "ic-manage-window-content-css",
             "widget",
-            "widget-parent",
             "ic-manage-window-content-remote-dashboard",
             "ic-manage-window-content-remote-function"
         ]

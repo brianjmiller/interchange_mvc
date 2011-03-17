@@ -21,7 +21,7 @@ YUI.add(
         var Clazz = Y.namespace("IC").ManageWindowContentBase = Y.Base.create(
             "ic_manage_window_content_base",
             Y.Widget,
-            [ Y.WidgetChild, Y.WidgetStdMod ],
+            [ Y.WidgetStdMod ],
             {
                 // these are here as stubbed functions to allow for subclassing
                 renderUI: function () {},
@@ -45,7 +45,7 @@ YUI.add(
         requires: [
             //"ic-manage-window-content-base-css",
             "widget",
-            "widget-child"
+            "widget-stdmod"
         ]
     }
 );
