@@ -30,6 +30,18 @@
     display: none;
 }
 
+.ledger_value {
+    text-align: right;
+}
+
+.ledger_value.positive {
+    color: green;
+}
+
+.ledger_value.negative {
+    color: red;
+}
+
 .DEBUG {
     /* display: none;  /* comment out for testing */
     color: black;

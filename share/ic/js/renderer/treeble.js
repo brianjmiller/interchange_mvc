@@ -77,6 +77,11 @@ YUI.add(
                 else {
                     elCell.setContent("");
                 }
+            },
+            signed_number: function (elCell, oRecord, oColumn, oData) {
+                Y.log("ic-renderer-treeeble formatter::signed_number");
+                elCell.setNumberSignClass(Number(oData));
+                elCell.setContent(Y.Node.create(oData));
             }
         };
 
@@ -354,6 +359,9 @@ YUI.add(
                                 columns,
                                 function (column, ii, ia) {
                                     var col_node = Y.Node.create('<td></td>');
+                                    if (Y.Lang.isValue(column._add_class)) {
+                                        col_node.addClass(column._add_class);
+                                    }
 
                                     var value = null;
                                     if (column.formatter) {

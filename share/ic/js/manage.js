@@ -20,6 +20,24 @@
 YUI().use(
     "ic-manage-window",
     function (Y) {
+        Y.Node.prototype.setNumberSignClass = function (value) {
+            var POSITIVE = 'positive',
+                NEGATIVE = 'negative';
+
+            if (value < 0) {
+                this.replaceClass(POSITIVE, NEGATIVE);
+            }
+            else if (value > 0) {
+                this.replaceClass(NEGATIVE, POSITIVE);
+            }
+            else {
+                this.removeClass(POSITIVE);
+                this.removeClass(NEGATIVE);
+            }
+
+            return this;
+        };
+
         Y.on(
             "domready",
             function () {

@@ -62,8 +62,8 @@ YUI.add(
                         {
                             label:               "Common Actions",
                             id:                  "ic-manage-tools-common_actions",
-                            expanded:            true,
-                            content_module:      Y.IC.ManageTool.CommonActions
+                            content_module:      Y.IC.ManageTool.CommonActions,
+                            expanded:            true
                         },
                         {
                             label:               "Quick Access",
