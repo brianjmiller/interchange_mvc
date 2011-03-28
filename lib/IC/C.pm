@@ -351,16 +351,20 @@ sub add_js_lib {
     my $self = shift;
     my $args = { @_ };
 
-    for my $element qw( kind path ) {
-        unless (defined $args->{$element} and $args->{$element} ne '') {
-            IC::Exception::ArgumentMissing->throw("Can't add javascript lib argument missing: $element");
-        }
+
+    # 'kind' is optional, 'path' is required
+    if (defined $args->{kind} and $args->{kind} eq '') {
+        IC::Exception::ArgumentMissing->throw("Can't add javascript lib argument invalid: kind");
+    }
+    unless (defined $args->{path} and $args->{path} ne '') {
+        IC::Exception::ArgumentMissing->throw("Can't add javascript lib argument missing: path");
     }
 
     # now prevent duplicates
     my $found = 0;
     for my $element (@{ $self->additional_js_libs }) {
-        if ($element->{path} eq $args->{path} and $element->{kind} eq $args->{kind}) {
+        if ($element->{path} eq $args->{path} and
+            (!defined($element->{kind}) or $element->{kind} eq $args->{kind})) {
             $found = 1;
             last;
         }
