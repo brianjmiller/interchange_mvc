@@ -40,6 +40,7 @@ sub can_change_status {
         $self,
         $new_status,
         _get_trigger_structure_method => '_get_change_status_struct',
+        _field                        => (defined $args{_field} ? delete $args{_field} : 'kind_code'),
         %args,
     );
 }

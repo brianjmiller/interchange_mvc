@@ -40,6 +40,7 @@ sub can_change_kind {
         $self,
         $new_kind_code,
         _get_trigger_structure_method => '_get_change_kind_struct',
+        _field                        => (defined $args{_field} ? delete $args{_field} : 'kind_code'),
         %args,
     );
 }
