@@ -25,10 +25,24 @@ use IC::M::_Dispatch_Triggers;
 __PACKAGE__->export_tag(
     all => [
         qw(
+            can_change_kind
             change_kind
         ),
     ],
 );
+
+sub can_change_kind {
+    my $self = shift;
+    my $new_kind_code = shift;
+    my %args = @_;
+
+    return IC::M::_Dispatch_Triggers::_can_change_value(
+        $self,
+        $new_kind_code,
+        _get_trigger_structure_method => '_get_change_kind_struct',
+        %args,
+    );
+}
 
 sub change_kind {
     my $self = shift;

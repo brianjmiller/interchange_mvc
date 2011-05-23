@@ -25,10 +25,24 @@ use IC::M::_Dispatch_Triggers;
 __PACKAGE__->export_tag(
     all => [
         qw(
+            can_change_status
             change_status
         ),
     ],
 );
+
+sub can_change_status {
+    my $self = shift;
+    my $new_status = shift;
+    my %args = @_;
+
+    return IC::M::_Dispatch_Triggers::_can_change_value(
+        $self,
+        $new_status,
+        _get_trigger_structure_method => '_get_change_status_struct',
+        %args,
+    );
+}
 
 sub change_status {
     my $self = shift;

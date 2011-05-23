@@ -1,6 +1,6 @@
 =begin description
 
-This is really just a function that is generic enough to be leveraged
+These are really just functions that are generic enough to be leveraged
 to easily create MixIns that can then be included by models having a
 desire to use dispatch table based triggers.
 
@@ -27,6 +27,68 @@ package IC::M::_Dispatch_Triggers;
 
 use strict;
 use warnings;
+
+#
+# Verify that an object is allowed to change a value for a given field.
+# There are two modes:
+#
+# 1. Can change from current to a specific value
+# 2. Can change from current to *something*, but we don't care what
+#
+sub _can_change_value {
+    my $self      = shift;
+    my $new_value = shift;
+    my $args      = { @_ };
+
+    my @caller        = caller(1);
+    my $caller_simple = sprintf '%s line %s', @caller[1,2];
+
+    my $field = delete $args->{_field};
+    unless (defined $field) {
+        IC::Exception->throw( qq{Can't check for possible change in value missing argument: _field ($caller_simple)} );
+    }
+
+    #warn sprintf "_can_change_value: $self, $field, %s, $new_value ($caller_simple)\n", $self->$field;
+
+    my $get_trigger_structure_method = delete $args->{_get_trigger_structure_method};
+    unless (defined $get_trigger_structure_method) {
+        IC::Exception->throw( qq{Can't check for possible change in $field missing argument: _get_trigger_structure_method ($caller_simple)} );
+    }
+
+    my ($check, $message) = (1, '');
+
+    if ($self->can($get_trigger_structure_method)) {
+        my $change_struct = $self->$get_trigger_structure_method;
+        my $descriptor    = $self->_mixin_model_descriptor;
+
+        if (exists $change_struct->{$field}) {
+            $change_struct = $change_struct->{$field};
+        }
+
+        my $orig_value = $self->$field;
+        if (exists $change_struct->{$orig_value}) {
+            if (defined $new_value) {
+                if (exists $change_struct->{$orig_value}->{$new_value}) {
+                    my $sub_ref = $change_struct->{$orig_value}->{$new_value};
+
+                    if (ref $sub_ref eq 'HASH' && ref $sub_ref->{check} eq 'CODE') {
+                        $message = $sub_ref->{check}->($self, _orig_value => $orig_value, _new_value => $new_value, %$args);
+                    }
+                }
+                else {
+                    $message = "Can't change $descriptor $field: can't change from '$orig_value' to '$new_value' ($caller_simple)";
+                }
+            }
+        }
+        else {
+            $message = "Can't change $descriptor $field: unrecognized old $field '$orig_value' ($caller_simple)";
+        }
+    }
+
+    $check = 0 unless $message eq '';
+
+    return ($check, $message);
+}
 
 #
 # TODO: add modified_by handling
@@ -111,11 +173,8 @@ sub _change_value_with_trigger {
     $self->$field($new_value);
     $self->save;
 
-    #
-    # TODO: fix this based on new docs in UNIVERSAL
-    #
     my $return;
-    if (UNIVERSAL::can($self, $get_trigger_structure_method)) {
+    if ($self->can($get_trigger_structure_method)) {
         my $change_struct = $self->$get_trigger_structure_method;
         my $descriptor    = $self->_mixin_model_descriptor;
 
@@ -128,8 +187,12 @@ sub _change_value_with_trigger {
             if (exists $change_struct->{$orig_value}->{$new_value}) {
                 my $sub_ref = $change_struct->{$orig_value}->{$new_value};
 
+                my @call_args = ($self, _orig_value => $orig_value, _new_value => $new_value, %$args);
                 if (ref $sub_ref eq 'CODE') {
-                    $return = $sub_ref->($self, _orig_value => $orig_value, _new_value => $new_value, %$args);
+                    $return = $sub_ref->(@call_args);
+                }
+                elsif (ref $sub_ref eq 'HASH' and ref $sub_ref->{do} eq 'CODE') {
+                    $return = $sub_ref->{do}->(@call_args);
                 }
                 else {
                     IC::Exception->throw("Can't change $descriptor $field: $orig_value to $new_value not a subroutine ($caller_simple)");
