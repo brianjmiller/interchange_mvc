@@ -97,7 +97,6 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_onShowContent - cache_key: " + cache_key);
 
                     var cache_entry = this.cache.retrieve(cache_key);
-                    Y.log(Clazz.NAME + "::_onShowContent - cache_entry: " + Y.Object.keys(cache_entry));
 
                     var child;
 
@@ -122,6 +121,7 @@ YUI.add(
                         this.cache.add(cache_key, child);
                     }
                     else {
+                        Y.log(Clazz.NAME + "::_onShowContent - cache_entry: " + Y.Object.keys(cache_entry));
                         child = cache_entry.response;
                         Y.log(Clazz.NAME + "::_onShowContent - child from cache: " + child);
                     }
