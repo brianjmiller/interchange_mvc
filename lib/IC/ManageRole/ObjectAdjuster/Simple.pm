@@ -71,9 +71,7 @@ sub _build__object_adjust_simple_label {
     IC::Exception->throw('_object_adjust_simple_label attribute builder should be overridden in subclass');
 }
 
-sub _build__object_adjust_simple_subclass {
-    IC::Exception->throw('_build__object_adjust_simple_subclass attribute builder should be overridden in subclass');
-}
+sub _build__object_adjust_simple_subclass {}
 
 sub _build__save_method {
     return 'save';
