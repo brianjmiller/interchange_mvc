@@ -194,6 +194,7 @@ sub build_keys {
                     return $cache->{$key};
                 };
                 if ($@) {
+                    local $Data::Dumper::Maxdepth = 3;
                     die "$self: Failed to build object: $key ($@) ($key)\n" . Dumper($ref);
                 }
                 #warn "$self: objects built object ($key): " . $object . "\n";
