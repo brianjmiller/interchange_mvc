@@ -2,18 +2,18 @@ package IC::ManageRole::ObjectAdjuster::Simple;
 
 use Moose::Role;
 
-# must be overridden by the subclass
 has '_object_adjust_simple_subclass' => (
-    is => 'rw',
+    is      => 'rw',
+    builder => '_build__object_adjust_simple_subclass',
 );
 has '_object_adjust_simple_label' => (
     is      => 'rw',
-    default => 'Simple',
+    builder => '_build__object_adjust_simple_label',
 );
 
 has '_save_method' => (
     is      => 'rw',
-    default => 'save',
+    builder => '_build__save_method',
 );
 
 after 'ui_meta_struct' => sub {
@@ -66,6 +66,18 @@ after 'ui_meta_struct' => sub {
 };
 
 no Moose;
+
+sub _build__object_adjust_simple_label {
+    IC::Exception->throw('_object_adjust_simple_label attribute builder should be overridden in subclass');
+}
+
+sub _build__object_adjust_simple_subclass {
+    IC::Exception->throw('_build__object_adjust_simple_subclass attribute builder should be overridden in subclass');
+}
+
+sub _build__save_method {
+    return 'save';
+}
 
 1;
 

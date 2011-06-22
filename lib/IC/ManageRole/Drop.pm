@@ -5,12 +5,8 @@ use Moose::Role;
 with 'IC::ManageRole::Base';
 with 'IC::ManageRole::ObjectAdjuster::Simple';
 
-has '+_object_adjust_simple_label' => (
-    default => 'Drop',
-);
-has '+_object_adjust_simple_subclass' => (
-    default => 'Drop',
-);
+around '_build__object_adjust_simple_label'    => sub { return 'Drop' };
+around '_build__object_adjust_simple_subclass' => sub { return 'Drop' };
 
 after 'ui_meta_struct' => sub {
     #warn "IC::ManageRole::Drop::ui_meta_struct(after)";
