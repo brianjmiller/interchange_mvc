@@ -273,7 +273,7 @@ sub compare_moose_attributes {
 =cut
 
     for my $pair ([$test, \%test,], [$model, \%model],) {
-        for my $attrib ($pair->[0]->meta->compute_all_applicable_attributes) {
+        for my $attrib ($pair->[0]->meta->get_all_attributes) {
             my $sub = $pair->[0]->can($attrib->name);
             $pair->[1]->{$attrib->name} = $pair->[0]->$sub();
         }

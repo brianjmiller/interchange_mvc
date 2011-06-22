@@ -896,7 +896,7 @@ my $validate_view_parameter = sub {
 my $prepare_context_from_attributes = sub {
 	my $self = shift;
 	my %context;
-	for my $attrib ($self->meta->compute_all_applicable_attributes) {
+	for my $attrib ($self->meta->get_all_attributes) {
 		my $name = $attrib->name;
 		my $accessor = $self->can( $name );
 		$context{ $name } = $self->$accessor;

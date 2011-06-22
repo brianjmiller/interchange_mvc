@@ -112,7 +112,7 @@ sub render {
     # prepare view context from object attributes
     if (ref($params{context}) ne 'HASH') {
         my %context;
-        for my $attrib ($self->meta->compute_all_applicable_attributes) {
+        for my $attrib ($self->meta->get_all_attributes) {
             my $name = $attrib->name;
             my $sub = $self->can($name);
             $context{$name} = $self->$sub();
