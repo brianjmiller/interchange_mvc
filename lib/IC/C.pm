@@ -35,14 +35,42 @@ has role => (
     isa => 'IC::M::Role',
     trigger => sub { shift->_rights_cache( {} ) },
 );
+has 'build_header_component' => (
+    is => 'rw',
+    isa => 'Bool',
+    default => 1,
+);
 has 'html_header_component' => (
     is => 'rw',
     isa => 'Object',
+);
+has 'build_footer_component' => (
+    is => 'rw',
+    isa => 'Bool',
+    default => 1,
 );
 has 'html_footer_component' => (
     is => 'rw',
     isa => 'Object',
 );
+
+#
+# because our header/footer could contain components
+# that need to load their own styles, those
+# components need to be rendered before the header
+# is rendered, so to do so we pre-render the content
+# of these two components and just stuff them into
+# the layout as the last part of the render process
+#
+has 'html_header_content' => (
+    is => 'rw',
+    isa => 'Maybe[Str]',
+);
+has 'html_footer_content' => (
+    is => 'rw',
+    isa => 'Maybe[Str]',
+);
+
 has 'content_title' => (
     is => 'rw',
 );
@@ -234,10 +262,10 @@ sub BUILD {
         );
     }
 
-    if (! defined $self->html_header_component) {
+    if (! defined $self->html_header_component and $self->build_header_component) {
         $self->html_header_component( IC::Component::HTMLHeader->new( controller => $self ) );
     }
-    if (! defined $self->html_footer_component) {
+    if (! defined $self->html_footer_component and $self->build_footer_component) {
         $self->html_footer_component( IC::Component::HTMLFooter->new( controller => $self ) );
     }
 
@@ -266,6 +294,18 @@ sub render {
         if ($self->layout ne '') {
             $args{layout} = $self->layout;
         }
+    }
+
+    #
+    # order matters here, the footer has to have been rendered by the
+    # time the header is, otherwise styles needed in the footer won't
+    # be rendered by the header
+    #
+    if (defined $self->html_footer_content and ! defined $self->html_footer_content) {
+        $self->html_footer_content( $self->html_footer_component->content );
+    }
+    if (defined $self->html_header_content and ! defined $self->html_header_content) {
+        $self->html_header_content( $self->html_header_component->content );
     }
 
     return $self->SUPER::render(%args);
