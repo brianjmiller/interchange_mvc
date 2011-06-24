@@ -120,10 +120,10 @@
             },
             // set up for locally served 2in3
             yui2: {
-                base:      "/ic/vendor/yui-2in3/dist/2.8.2/build/",
+                base:      "/ic/vendor/yui-2in3/dist/2.9.0/build/",
                 combine:   true,
                 comboBase: "/combo?",
-                root:      "ic/vendor/yui-2in3/dist/2.8.2/build/",
+                root:      "ic/vendor/yui-2in3/dist/2.9.0/build/",
                 patterns:  {
                     "yui2-": {
                         configFn: function (me) {
