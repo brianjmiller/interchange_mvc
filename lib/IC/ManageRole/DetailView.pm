@@ -51,7 +51,7 @@ before 'ui_meta_struct' => sub {
         }
     }
 
-    $struct->{'IC::ManageRole::DetailView::ui_meta_struct(after)'} = 1;
+    $struct->{'IC::ManageRole::DetailView::ui_meta_struct(before)'} = 1;
 
     $struct->{type} = 'Tabs';
 

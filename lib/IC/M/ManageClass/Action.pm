@@ -47,6 +47,12 @@ sub manage_description {
 
 sub rights_class { 'IC::M::RightTarget::SiteMgmtAction' }
 
+sub right_target_description {
+    my $self = shift;
+
+    return sprintf '%s: %s', $self->class_code, $self->display_label;
+}
+
 1;
 
 __END__
