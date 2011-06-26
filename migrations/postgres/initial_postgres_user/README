@@ -1,0 +1,9 @@
+These files need to be loaded into the production database by a superuser level role
+(such as postgres) then dump the DB before loading the rest of the initial schema files 
+like normal migrations.
+
+The 008 file needs to be adjusted to set the owner to the primary database user.
+
+In the same manner the tablefunc.sql contrib file needs to be loaded.
+
+    * psql -qXf /usr/share/pgsql/contrib/tablefunc.sql <dbname>

@@ -76,5 +76,41 @@ Files__Properties	Drop	Drop File Property	f	2010-11-17 10:55:43.00000	schema	201
 Files__Properties	Add	Add File Property	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
 \.
 
+INSERT INTO ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) (
+    SELECT
+        'schema',
+        'schema',
+        3,
+        id
+    FROM
+        ic_manage_class_actions
+    WHERE
+        class_code IN ('RightTypes', 'TimeZones')
+);
+
+INSERT INTO ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) (
+    SELECT
+        'schema',
+        'schema',
+        4,
+        id
+    FROM
+        ic_manage_class_actions
+    WHERE
+        class_code IN ('Roles', 'Users', 'Rights')
+);
+
+INSERT INTO ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) (
+    SELECT
+        'schema',
+        'schema',
+        5,
+        id
+    FROM
+        ic_manage_class_actions
+    WHERE
+        class_code IN ('Files__Properties')
+);
+
 --ROLLBACK;
 COMMIT;

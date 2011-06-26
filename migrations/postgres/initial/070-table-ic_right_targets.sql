@@ -40,41 +40,5 @@ CREATE TRIGGER ic_right_targets_last_modified
     FOR EACH ROW
     EXECUTE PROCEDURE ic_update_last_modified();
 
-INSERT INTO ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) (
-    SELECT
-        'schema',
-        'schema',
-        3,
-        id
-    FROM
-        ic_manage_class_actions
-    WHERE
-        class_code IN ('RightTypes', 'TimeZones')
-);
-        
-INSERT INTO ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) (
-    SELECT
-        'schema',
-        'schema',
-        4,
-        id
-    FROM
-        ic_manage_class_actions
-    WHERE
-        class_code IN ('Roles', 'Users', 'Rights')
-);
-
-INSERT INTO ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) (
-    SELECT
-        'schema',
-        'schema',
-        5,
-        id
-    FROM
-        ic_manage_class_actions
-    WHERE
-        class_code IN ('Files__Properties')
-);
-
 --ROLLBACK;
 COMMIT;
