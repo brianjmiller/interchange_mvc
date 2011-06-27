@@ -29,6 +29,8 @@ sub config {
         nodes             => [],
     };
 
+    my $su = $self->is_superuser;
+
     #
     # all actions associated with a given menu item node will need to be
     # checked for privilege so just get them all and check them all at
@@ -46,14 +48,20 @@ sub config {
         },
     ];
 
-    #
-    # we have finer grained control over actions, so we are not calling 
-    # the controller's check_right
-    #
-    my $privileged = $self->role->check_right(
-        'execute',
-        $check_privileged,
-    );
+    my $privileged;
+    if ($su) {
+        $privileged = $check_privileged;
+    }
+    else {
+        #
+        # we have finer grained control over actions, so we are not calling 
+        # the controller's check_right
+        #
+        $privileged = $self->role->check_right(
+            'execute',
+            $check_privileged,
+        );
+    }
 
     my $branch_sort_map = {
         map {

@@ -55,10 +55,50 @@ COPY ic_manage_menu_items (id, created_by, modified_by, parent_id, branch_order,
 2	schema	schema	1	\N	General Maintenance
 3	schema	schema	2	\N	List Time Zones
 4	schema	schema	1	\N	Access Controls
-5	schema	schema	3	0	List Users
-6	schema	schema	3	1	List Roles
-7	schema	schema	3	2	List Right Types
+5	schema	schema	4	0	List Users
+6	schema	schema	4	1	List Roles
+7	schema	schema	4	2	List Right Types
 \.
+
+UPDATE
+    ic_manage_menu_items
+SET
+    manage_class_action_id=(
+        SELECT id FROM ic_manage_class_actions WHERE class_code='TimeZones' AND code='List'
+    )
+WHERE
+    id = 3
+;
+
+UPDATE
+    ic_manage_menu_items
+SET
+    manage_class_action_id=(
+        SELECT id FROM ic_manage_class_actions WHERE class_code='Users' AND code='List'
+    )
+WHERE
+    id = 5
+;
+
+UPDATE
+    ic_manage_menu_items
+SET
+    manage_class_action_id=(
+        SELECT id FROM ic_manage_class_actions WHERE class_code='Roles' AND code='List'
+    )
+WHERE
+    id = 6
+;
+
+UPDATE
+    ic_manage_menu_items
+SET
+    manage_class_action_id=(
+        SELECT id FROM ic_manage_class_actions WHERE class_code='RightTypes' AND code='List'
+    )
+WHERE
+    id = 7
+;
 
 SELECT pg_catalog.setval('ic_manage_menu_items_id_seq', (SELECT MAX(id) FROM ic_manage_menu_items), true);
 
