@@ -301,10 +301,10 @@ sub render {
     # time the header is, otherwise styles needed in the footer won't
     # be rendered by the header
     #
-    if (defined $self->html_footer_content and ! defined $self->html_footer_content) {
+    if (defined $self->html_footer_component and ! defined $self->html_footer_content) {
         $self->html_footer_content( $self->html_footer_component->content );
     }
-    if (defined $self->html_header_content and ! defined $self->html_header_content) {
+    if (defined $self->html_header_component and ! defined $self->html_header_content) {
         $self->html_header_content( $self->html_header_component->content );
     }
 
