@@ -350,7 +350,9 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
+            "ic-manage-window-css",
             "base-base",
+            "base-build",
             "yui2-layout",
             "yui2-resize",
             "ic-manage-window-menu",

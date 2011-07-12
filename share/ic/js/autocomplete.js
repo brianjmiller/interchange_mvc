@@ -27,13 +27,12 @@ YUI.add(
     "ic-autocomplete",
     function(Y) {
         var Clazz = Y.namespace("IC").AutoComplete = Y.Base.create(
-            "custom_manage_autocomplete",
+            "custom_autocomplete",
             Y.Base,
             [ Y.AutoCompleteBase ],
             {
                 initializer: function (config) {
-                    Y.log(Clazz.NAME + "::initializer");
-
+                    //Y.log(Clazz.NAME + "::initializer");
                     this._bindUIACBase();
                     this._syncUIACBase();
                 }
@@ -46,7 +45,8 @@ YUI.add(
     "@VERSION@",
     {
         requires: [
-            "autocomplete-base"
+            "autocomplete-base",
+            "autocomplete-sources"
         ]
     }
 );

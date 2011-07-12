@@ -152,6 +152,7 @@
                         requires: [
                             "ic-manage-window-css",
                             "base-base",
+                            "base-build",
                             "yui2-layout",
                             "yui2-resize",
                             "ic-manage-window-menu",
@@ -556,7 +557,8 @@
                     "ic-autocomplete": {
                         path: "autocomplete.js",
                         requires: [
-                            "autocomplete-base"
+                            "autocomplete-base",
+                            "autocomplete-sources"
                         ]
                     },
 
