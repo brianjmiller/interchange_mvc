@@ -282,7 +282,7 @@ sub _post_login_redirect {
         $self->response->headers->content_type( $self->content_type || $self->default_content_type )
             if ! defined $self->response->headers->content_type
         ;
-        $self->response->headers->status( defined($params->{status}) ? delete $params->{status} : '301 moved' );
+        $self->response->headers->status( defined($params->{status}) ? delete $params->{status} : '303 See Other' );
         $self->response->headers->location( $params->{redirect} );
     }
     else {

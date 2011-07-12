@@ -269,7 +269,7 @@ sub default_content_type {
     return  __PACKAGE__->_magical_meta_delegator( 'default_content_type', 'content_type', @_ );
 }
 
-__PACKAGE__->default_content_type( 'text/html' );
+__PACKAGE__->default_content_type( 'text/html; charset=utf-8' );
 
 sub default_helper_modules {
     return __PACKAGE__->_magical_meta_delegator( 'default_helper_modules', 'helper_modules', @_ );
@@ -1011,7 +1011,7 @@ sub redirect {
     $self->response->headers->content_type( $self->content_type || $self->default_content_type )
         if ! defined $self->response->headers->content_type
     ;
-    $self->response->headers->status( defined($params{status}) ? delete $params{status} : '301 moved' );
+    $self->response->headers->status( defined($params{status}) ? delete $params{status} : '303 See Other' );
     $self->response->headers->location( $self->url( %params ) );
     return 1;
 }
