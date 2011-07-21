@@ -12,7 +12,18 @@ has '_use_default_summary_tab' => (
 );
 has '_action_log_configuration' => (
     is      => 'ro',
-    default => sub { {} },
+    default => sub {
+        {
+            from_to_action_codes => [
+                qw(
+                    status_change
+                    kind_change
+                    condition_change
+                    location_change
+                ),
+            ],
+        }
+    },
 );
 
 my $edit_action = 'Properties';
@@ -242,101 +253,112 @@ before 'ui_meta_struct' => sub {
     if (UNIVERSAL::can($object, 'log_actions')) {
         my $log_tab = {
             label   => 'Log',
-            content => {
-                type   => 'DataTable',
-                config => {
-                    table_config => {},
-                },
-            },
         };
         push @$tabs, $log_tab;
 
-        my $configuration = $self->_action_log_configuration;
-        if (defined $configuration->{description}) {
-            $log_tab->{content}->{config}->{table_config}->{caption} = $configuration->{description};
-        }
-
-        $log_tab->{content}->{config}->{table_config}->{columnset} = [
-            {
-                key => 'action',
-                label => 'Action',
-            },
-            {
-                key => 'performed_by',
-                label => 'Performed By',
-            },
-            {
-                key => 'performed_at',
-                label => 'Performed At',
-            },
-            {
-                key => 'details',
-                label => 'Details',
-            },
-            {
-                key => 'content',
-                label => 'Content',
-            },
-        ];
-
-        my $rows = $log_tab->{content}->{config}->{table_config}->{recordset} = [];
-
-        for my $entry (@{ $object->action_log }) {
-            my $details = [];
-
-            #
-            # handle any customized details, marking those details as seen
-            #
-            my $seen = [];
-            if (exists $configuration->{action_code_handlers}->{$entry->action_code}) {
-                my $custom_sub = $configuration->{action_code_handlers}->{$entry->action_code};
-                my ($custom_details, $custom_seen) = $custom_sub->($entry, $args{context}->{controller}->role);
-
-                if (defined $custom_details) {
-                    push @$details, @$custom_details;
-                }
-                if (defined $custom_seen) {
-                    push @$seen, @$custom_seen;
-                }
-            }
-            elsif (grep { $entry->action_code eq $_ } qw( status_change kind_change condition_change location_change )) {
-                my ($from, $to) = ('', '');
-                for my $detail (@{ $entry->details }) {
-                    if ($detail->ref_code eq 'from') {
-                        $from = $detail->value;
-                        push @$seen, $detail->ref_code;
-                    }
-                    elsif ($detail->ref_code eq 'to') {
-                        $to = $detail->value;
-                        push @$seen, $detail->ref_code;
-                    }
-                }
-                push @$details, "from '$from' to '$to'" if (defined $from or defined $to);
-            }
-
-            #
-            # now loop through all details adding the ones that haven't been previously handled (seen)
-            #
-            for my $detail (@{ $entry->details }) {
-                unless (grep { $detail->ref_code eq $_ } @$seen) {
-                    push @$details, $detail->ref_code . ': ' . $detail->value;
-                }
-            }
-
-            push @$rows, {
-                action       => $entry->action->display_label,
-                performed_by => $entry->created_by_name,
-                performed_at => $entry->date_created . '',
-                details      => $details,
-                content      => ($entry->content || ''),
-            };
-        }
+        $log_tab->{content} = $self->action_log_content($object, $self->_action_log_configuration);
     }
 
     return;
 };
 
 no Moose;
+
+sub action_log_content {
+    my $self = shift;
+    my $object = shift;
+    my $config = shift;
+
+    $config->{from_to_action_codes} //= [];
+
+    my $content = {
+        type   => 'DataTable',
+        config => {},
+    };
+    my $table_config = $content->{config}->{table_config} = {};
+
+    if (defined $config->{description}) {
+        $table_config->{caption} = $config->{description};
+    }
+
+    $table_config->{columnset} = [
+        {
+            key   => 'action',
+            label => 'Action',
+        },
+        {
+            key   => 'performed_by',
+            label => 'Performed By',
+        },
+        {
+            key   => 'performed_at',
+            label => 'Performed At',
+        },
+        {
+            key   => 'details',
+            label => 'Details',
+        },
+        {
+            key   => 'content',
+            label => 'Content',
+        },
+    ];
+
+    my $rows = $table_config->{recordset} = [];
+
+    for my $entry (@{ $object->action_log }) {
+        my $details = [];
+
+        #
+        # handle any customized details, marking those details as seen
+        #
+        my $seen = [];
+        if (exists $config->{action_code_handlers}->{$entry->action_code}) {
+            my $custom_sub = $config->{action_code_handlers}->{$entry->action_code};
+            my ($custom_details, $custom_seen) = $custom_sub->($entry);
+
+            if (defined $custom_details) {
+                push @$details, @$custom_details;
+            }
+            if (defined $custom_seen) {
+                push @$seen, @$custom_seen;
+            }
+        }
+        elsif (grep { $entry->action_code eq $_ } @{ $config->{from_to_action_codes} }) {
+            my ($from, $to) = ('', '');
+            for my $detail (@{ $entry->details }) {
+                if ($detail->ref_code eq 'from') {
+                    $from = $detail->value;
+                    push @$seen, $detail->ref_code;
+                }
+                elsif ($detail->ref_code eq 'to') {
+                    $to = $detail->value;
+                    push @$seen, $detail->ref_code;
+                }
+            }
+            push @$details, "from '$from' to '$to'" if (defined $from or defined $to);
+        }
+
+        #
+        # now loop through all details adding the ones that haven't been previously handled (seen)
+        #
+        for my $detail (@{ $entry->details }) {
+            unless (grep { $detail->ref_code eq $_ } @$seen) {
+                push @$details, $detail->ref_code . ': ' . $detail->value;
+            }
+        }
+
+        push @$rows, {
+            action       => $entry->action->display_label,
+            performed_by => $entry->created_by_name,
+            performed_at => $entry->date_created . '',
+            details      => $details,
+            content      => ($entry->content || ''),
+        };
+    }
+
+    return $content;
+}
 
 sub _file_resource_config {
     my $self = shift;
