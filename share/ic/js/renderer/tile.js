@@ -204,13 +204,29 @@ YUI.add(
                             function (v, k, obj) {
                                 Y.log(Clazz.NAME + "::_MySyncUI - adding action button: " + v.label);
                                 var button = Y.Node.create('<button>' + v.label + '</button>');
+
                                 button.on(
                                     "click",
                                     function (e) {
                                         Y.log(Clazz.NAME + "::_MySyncUI - button callback: " + k);
                                         e.preventDefault();
     
-                                        this.set("action", k);
+                                        if (Y.Lang.isValue(v.renderer)) {
+                                            this.set("action", k);
+                                        }
+                                        else if (Y.Lang.isValue(v.link)) {
+                                            if (Y.Lang.isValue(v.link.config.target)) {
+                                                if (v.link.config.target === "_blank") {
+                                                    window.open(v.link.config.url);
+                                                }
+                                            }
+                                            else {
+                                                window.location.assign(v.link.config.url);
+                                            }
+                                        }
+                                        else {
+                                            Y.log(Clazz.NAME + "::_MySyncUI - unrecognized execution type for tile button: " + v.label, "error");
+                                        }
                                     },
                                     this
                                 );

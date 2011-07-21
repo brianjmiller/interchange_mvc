@@ -304,8 +304,10 @@ sub _object_ui_meta_struct_config {
         unless (defined $action_ref->{label}) {
             $action_ref->{label} = $action_model->display_label; 
         }
-        unless (defined $action_ref->{renderer}) {
-            my $sub_struct = $action_ref->{renderer} = {};
+
+        my $sub_struct_key = $action->display_type;
+        if (! defined $action_ref->{$sub_struct_key}) {
+            my $sub_struct = $action_ref->{$sub_struct_key} = {};
             $action->ui_meta_struct(
                 context => {
                     object     => $model_object,

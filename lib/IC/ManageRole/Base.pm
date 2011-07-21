@@ -2,6 +2,11 @@ package IC::ManageRole::Base;
 
 use Moose::Role;
 
+has 'display_type' => (
+    is      => 'rw',
+    default => 'renderer',
+);
+
 no Moose;
 
 1;
