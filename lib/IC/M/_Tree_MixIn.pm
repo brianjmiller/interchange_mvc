@@ -10,6 +10,7 @@ __PACKAGE__->export_tag(
         qw(
             get_all_parents
             get_all_descendents
+            full_label
         ),
     ],
 );
@@ -26,7 +27,8 @@ sub get_all_parents {
     my $self = shift;
     my $args = { @_ };
 
-    $args->{as_object} ||= 0;
+    $args->{as_object}    ||= 0;
+    $args->{exclude_root} ||= 0;
     
     my @parents;
     
@@ -41,6 +43,8 @@ sub get_all_parents {
     
         $obj = $obj->parent;
     }
+
+    pop @parents if $args->{exclude_root};
 
     return wantarray ? @parents : \@parents;
 }
@@ -95,6 +99,26 @@ sub get_all_descendents {
         ? wantarray ? values %descendents : [ values %descendents ]
         : wantarray ? keys %descendents : [ keys %descendents ]
     ;
+}
+
+sub full_label {
+    my $self = shift;
+    my %args = @_;
+
+    my $label_method   = $args{label_method};
+    $label_method    //= 'label';
+
+    my @path_objects = reverse $self->get_all_parents( as_object => 1, exclude_root => 1 );
+    push @path_objects, $self;
+
+    if (defined $args{first_span_class} and $args{first_span_class} ne '') {
+        $path_objects[0] = qq|<span class="$args{first_span_class}">| . $path_objects[0]->$label_method . '</span>';
+    }
+
+    my $delimiter = $args{delimiter} || '/';
+    my $return    = join $delimiter, map { ref $_ ? $_->$label_method : $_ } @path_objects;
+
+    return $return;
 }
 
 1;
