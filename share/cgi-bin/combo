@@ -6,7 +6,6 @@ use File::Slurp qw();
 use File::Spec qw();
 
 use Interchange::Deployment;
-use IC::Config;
 
 my $type_map = {
     js  => 'application/x-javascript',
@@ -19,7 +18,7 @@ eval {
         die 'No files to combo';
     }
 
-    my $htdocs_path = IC::Config->adhoc_htdocs_path;
+    my $htdocs_path = File::Spec->catfile( Interchange::Deployment->base_path, 'htdocs' );
 
     my $content_type;
     my @buffer;
