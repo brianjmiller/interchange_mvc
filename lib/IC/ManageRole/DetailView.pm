@@ -562,7 +562,7 @@ sub _file_resource_config {
                             ],
                             buttons => [
                                 {
-                                    name  => 'submit',
+                                    name  => 'ic_submit',
                                     value => (defined $file ? 'Replace' : 'Upload'),
                                     type  => 'SubmitButton',
                                 },

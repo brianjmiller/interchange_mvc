@@ -61,14 +61,14 @@ YUI.add(
 
                     this._form_node.delegate(
                         "click",
-                        this.submit,
-                        "button.submit",
+                        this.zubmit,
+                        "button.ic_submit",
                         this
                     );
                 },
 
-                submit: function (e) {
-                    Y.log(Clazz.NAME + "::submit");
+                zubmit: function (e) {
+                    Y.log(Clazz.NAME + "::zubmit");
 
                     e.preventDefault();
 

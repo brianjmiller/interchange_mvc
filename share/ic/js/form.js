@@ -125,12 +125,12 @@ YUI.add(
                 else if (! config.no_buttons) {
                     var _buttons  = [
                         {
-                            name:  'submit',
+                            name:  'ic_submit',
                             value: 'Submit',
                             type:  'SubmitButton'
                         },
                         {
-                            name:  'reset',
+                            name:  'ic_reset',
                             value: 'Reset',
                             type:  'ResetButton'
                         }
