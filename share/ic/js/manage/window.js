@@ -19,19 +19,10 @@ YUI.add(
     "ic-manage-window",
     function (Y) {
         var Clazz = Y.Base.create (
-            // module identifier  
             "ic_manage_window",
-
-            // what to extend
             Y.Base,
-
-            // classes to mix in
             [],
-
-            // overrides/additions
             {
-                ATTRS: {},
-
                 //
                 // dealing with two layouts, one outer and one inner
                 // (we may add more... or the left layout could
@@ -53,7 +44,7 @@ YUI.add(
                 _panes: {
                     menu:    null,
                     tools:   null,
-                    content: null,
+                    content: null
                 },
 
                 initializer: function (config) {
@@ -126,7 +117,7 @@ YUI.add(
                                     body:     "manage_window_content_pane",
                                     zIndex:   0,
                                     scroll:   false
-                                },
+                                }
                             ]
                         }
                     );
@@ -274,7 +265,7 @@ YUI.add(
                         {
                             render: unit.body.childNodes[0],
                             width:  unit_body_region.width,
-                            height: unit_body_region.height,
+                            height: unit_body_region.height
                         }
                     );
                 },
@@ -331,6 +322,9 @@ YUI.add(
                         config
                     );
                 }
+            }
+            {
+                ATTRS: {}
             }
         );
 
