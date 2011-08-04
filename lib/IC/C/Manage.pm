@@ -77,61 +77,69 @@ sub index {
         );
     }
 
-    my $context = {
-        IC_manage_config => {
-            #
-            # these are double quoted so that they are quoted in the output after rendering
-            #
-            remote_function_url_template => qq{"$remote_function_url_template"},
-            remote_record_url_template   => qq{"$remote_record_url_template"},
-            dashboard_config             => JSON::encode_json(
-                {
+    #
+    # build a configuration structure that will then be turned into JSON
+    # and dropped into the view directly as a JSON object
+    #
+    my $ic_manage_config = {
+        remote_function_url_template => $remote_function_url_template,
+        remote_record_url_template   => $remote_record_url_template,
+        dashboard_config             => {
+            data_path => $self->url(
+                controller     => 'manage/widget/dashboard',
+                action         => 'data',
+                match_security => 1,
+            ),
+        },
+        window_config                => {
+            menu_config => {
+                config_path => $self->url(
+                    controller     => 'manage/widget/menu',
+                    action         => 'config',
+                    match_security => 1,
+                ),
+            },
+            tools_config => {
+                common_actions => {
                     data_path => $self->url(
-                        controller     => 'manage/widget/dashboard',
+                        controller     => 'manage/widget/tools/common_actions',
                         action         => 'data',
                         match_security => 1,
                     ),
                 },
-            ),
-            window_config                => JSON::encode_json(
-                {
-                    menu_config => {
-                        config_path => $self->url(
-                            controller     => 'manage/widget/menu',
-                            action         => 'config',
-                            match_security => 1,
-                        ),
-                    },
-                    tools_config => {
-                        common_actions => {
-                            data_path => $self->url(
-                                controller     => 'manage/widget/tools/common_actions',
-                                action         => 'data',
-                                match_security => 1,
-                            ),
-                        },
-                        quick_access => {
-                            data_path => $self->url(
-                                controller     => 'manage/widget/tools/quick_access',
-                                action         => 'data',
-                                match_security => 1,
-                            ),
-                        },
-                    },
+                quick_access => {
+                    data_path => $self->url(
+                        controller     => 'manage/widget/tools/quick_access',
+                        action         => 'data',
+                        match_security => 1,
+                    ),
                 },
-            ),
+            },
         },
     };
 
+    my $custom_groups;
     for my $method qw( custom_js custom_css ) {
-        if (keys %{ $self->$method }) {
-            $context->{$method} = $self->$method;
+        my $value = $self->$method;
+        if (defined $value) {
+            $custom_groups->{$method} = $value;
         }
+    }
+    if (defined $custom_groups) {
+        $ic_manage_config->{YUI_config_additional_groups} = $custom_groups;
     }
 
     $self->render(
         layout  => '',
-        context => $context,
+        context => {
+            IC_manage_config => JSON::to_json(
+                $ic_manage_config,
+                {
+                    utf8   => 1,
+                    pretty => 1,
+                },
+            ),
+        },
     );
 
     return;

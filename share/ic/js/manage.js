@@ -129,13 +129,6 @@ YUI_config = {
                         "ic-manage-window-menu",
                         "ic-manage-window-tools",
                         "ic-manage-window-content",
-
-                        // TODO: correct this
-                        //// our custom ones which we can be reasonably sure we'll use
-                        //<% if (defined $custom_js) { %>
-                            //<%= join ', ', map { qq{"$_->{name}"} } @{ $custom_js->{modules} } %>,
-                        //<% } %>
-
                         // for debugging
                         "dump"
                     ]
@@ -715,7 +708,22 @@ YUI_config = {
 };
 if (IC_manage_config.YUI_config_additional_groups !== undefined) {
     for (key in IC_manage_config.YUI_config_additional_groups) {
-        YUI_config.groups[key] = IC_manage_config.YUI_config_additional_groups[key];
+        var config  = IC_manage_config.YUI_config_additional_groups[key];
+
+        var group_object = {
+            combine:   true,
+            comboBase: "/combo?",
+            root:      config.root,
+            base:      "/" + config.root,
+            modules:   config.modules
+        };
+        YUI_config.groups[key] = group_object;
+
+        if ('base_requires' in config) {
+            for (module_name in config.modules) {
+                YUI_config.groups.icjs.modules["ic-manage-window"].requires.push(module_name);
+            }
+        }
     }
 }
 

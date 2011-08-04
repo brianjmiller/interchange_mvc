@@ -49,42 +49,12 @@
     # elements and to allow customization of the components loaded by YUI
     # Pulling this out and storing it in the view means we can adjust it through
     # the controller's context like any other view.
+    #
+    # This view expects it to be a JSON encoded object string, the upstream
+    # controller should be handling that for us.
 %>
 <script type="text/javascript">
-    var IC_manage_config = {
-        <%
-            my $comma = 0;
-            while (my ($key, $val) = each %$IC_manage_config) {
-        %>
-            <%= $comma ? ',' : '' %><%= $key %>: <%= $val %>
-        <%
-                $comma = 1;
-            }
-        %>
-        <% if (defined $custom_js || defined $custom_css) { %>
-            ,YUI_config_additional_groups: {
-                <% if (defined $custom_js) { %>
-                    customjs: {
-                        combine:   true,
-                        comboBase: "/combo?",
-                        root:      "controlled/js/",
-                        base:      "/controlled/js/",
-                        modules:   <%= $custom_js->{modules} %>
-                    }
-                <% } %>
-                <% if (defined $custom_css) { %>
-                    <% if (defined $custom_js) { %>,<% } %>
-                    customcss: {
-                        combine:   true,
-                        comboBase: "/combo?",
-                        root:      "controlled/styles/",
-                        base:      "/controlled/styles/",
-                        modules:   <%= $custom_css->{modules} %>
-                    }
-                <% } %>
-            }
-        <% } %>
-    };
+    var IC_manage_config = <%= $IC_manage_config %>;
 </script>
 
 <!-- YUI Seed, Loader, and our primary source -->
