@@ -1,3 +1,13 @@
+General
+
 - Improve use of IC::Config to allow for registering a config module to be used
   so that subclassing may be used to override all functionality
 - Build dependency list
+
+Manage Area
+
+- Move pulling in of YUI CSS files as part of manage/index.tst into combo handling from YUI_config
+- Eliminate pre-determined application structure in DOM, let manage.js build it
+- Set ID of application-loading node into configuration and then only remove it when necessary
+- Basically reduce as much as possible that is required in the html for the manage app
+- Pull the manage app out into a standalone project
