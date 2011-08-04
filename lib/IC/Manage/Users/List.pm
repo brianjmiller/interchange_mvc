@@ -14,6 +14,33 @@ with 'IC::ManageRole::List';
 has '+_paging_provider' => (
     default => 'server',
 );
+has '+_cols' => (
+    default => sub {
+        [
+            {
+                display         => 'Username',
+                method          => 'username',
+                is_default_sort => 1,
+            },
+            {
+                display => 'E-mail',
+                method  => 'email',
+            },
+            {
+                display => 'Status',
+                method  => 'status_code',
+            },
+            {
+                display => 'Time Zone',
+                method  => 'time_zone_code',
+            },
+            {
+                display => 'Last Modified',
+                method  => 'last_modified',
+            },
+        ];
+    },
+);
 
 no Moose;
 
