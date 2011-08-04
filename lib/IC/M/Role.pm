@@ -57,6 +57,12 @@ sub manage_description {
 
 sub rights_class { 'IC::M::RightTarget::Role' }
 
+sub right_target_description {
+    my $self = shift;
+
+    return $self->display_label;
+}
+
 sub roles_referenced_by {
     my ($invocant, $set, $db) = @_;
 
