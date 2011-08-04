@@ -212,12 +212,22 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_initMenuPane");
                     var menu_unit = layout.getUnitByPosition(unit_position).body.childNodes[0];
 
-                    this._panes.menu = new Y.IC.ManageMenu(
+                    var menu_config = Y.merge(
+                        this.get("menu_config"),
                         {
                             orientation: orientation,
+
+                            //
+                            // this is 'render_to' instead of 'render' so that we can
+                            // control when render is called based on the successful
+                            // return of an I/O request to get the rest of the menu's
+                            // configuration (eventually it'd be nice to make this
+                            // function more like a normal YUI widget)
+                            //
                             render_to:   menu_unit
                         }
                     );
+                    this._panes.menu = new Y.IC.ManageMenu (menu_config);
 
                     // need to let the nodemenu's dropdowns spill into the the next unit
                     var cbody = Y.one( layout.getUnitByPosition(unit_position).body );
@@ -240,7 +250,8 @@ YUI.add(
                     Y.log(Clazz.NAME + "::_initToolsPane");
                     var unit = layout.getUnitByPosition(unit_position);
 
-                    this._panes.tools = new Y.IC.ManageTools (
+                    var tools_config = Y.merge(
+                        this.get("tools_config"),
                         {
                             window:      this,
                             layout:      layout,
@@ -248,6 +259,8 @@ YUI.add(
                             render:      unit.body.childNodes[0]
                         }
                     );
+
+                    this._panes.tools = new Y.IC.ManageTools (tools_config);
                 },
 
                 _initContentPane: function (layout, unit_position) {
@@ -322,9 +335,16 @@ YUI.add(
                         config
                     );
                 }
-            }
+            },
             {
-                ATTRS: {}
+                ATTRS: {
+                    menu_config: {
+                        value: null
+                    },
+                    tools_config: {
+                        value: null
+                    }
+                }
             }
         );
 
@@ -333,9 +353,9 @@ YUI.add(
         // window stuff from any module
         //
         var instance = null;
-        Y.namespace("IC").ManageWindow = function () {
+        Y.namespace("IC").ManageWindow = function (config) {
             if (! instance) {
-                instance =  new Clazz (); 
+                instance =  new Clazz (config);
             }
 
             return instance;

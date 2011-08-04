@@ -18,6 +18,8 @@
 YUI.add(
     "ic-manage-window-content-remote-record",
     function (Y) {
+        var default_url_template = "/manage/{clazz}/object_ui_meta_struct?_format=json";
+
         var Clazz = Y.namespace("IC").ManageWindowContentRemoteRecord = Y.Base.create(
             "ic_manage_window_content_remote_record",
             Y.IC.ManageWindowContentRemote,
@@ -27,8 +29,16 @@ YUI.add(
                     Y.log(Clazz.NAME + "::initializer");
                     //Y.log(Clazz.NAME + "::initializer - config: " + Y.dump(config));
 
-                    this._data_url = "/manage/" + config.clazz + "/object_ui_meta_struct?_format=json&" + Y.QueryString.stringify(config.addtl_args);
-                    Y.log(Clazz.NAME + "::initializer - _data_url: " + this._data_url);
+                    var data_url_template;
+                    if (Y.Lang.isValue(IC_manage_config.remote_record_url_template)) {
+                        data_url_template = IC_manage_config.remote_function_url_template;
+                    }
+                    else {
+                        data_url_template = default_url_template;
+                    }
+
+                    var data_url = Y.Lang.sub(data_url_template, config) + "&" + Y.QueryString.stringify(config.addtl_args);
+                    this.set("data_url", data_url);
                 }
             },
             {

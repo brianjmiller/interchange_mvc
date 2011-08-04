@@ -60,20 +60,22 @@ YUI.add(
 
                     var items = [
                         {
-                            label:               "Common Actions",
-                            id:                  "ic-manage-tools-common_actions",
-                            content_module:      Y.IC.ManageTool.CommonActions,
-                            expanded:            true
+                            label:                 "Common Actions",
+                            id:                    "ic-manage-tools-common_actions",
+                            content_module:        Y.IC.ManageTool.CommonActions,
+                            content_module_config: this.get("common_actions"),
+                            expanded:              true
                         },
                         {
-                            label:               "Quick Access",
-                            id:                  "ic-manage-tools-quick_access",
-                            content_module:      Y.IC.ManageTool.QuickAccess
+                            label:                 "Quick Access",
+                            id:                    "ic-manage-tools-quick_access",
+                            content_module:        Y.IC.ManageTool.QuickAccess,
+                            content_module_config: this.get("quick_access")
                         },
                         {
-                            label:               "Your Links",
-                            id:                  "ic-manage-tools-your_links",
-                            content_module:      Y.IC.ManageTool.YourLinks
+                            label:          "Your Links",
+                            id:             "ic-manage-tools-your_links",
+                            content_module: Y.IC.ManageTool.YourLinks
                         }
                     ];
 
@@ -88,6 +90,9 @@ YUI.add(
                             delete config.content_module;
                             //Y.log(Clazz.NAME + "::renderUI - content_module: " + content_module);
 
+                            var content_module_config = config.content_module_config;
+                            delete config.content_module_config;
+
                             var acc_item = new Y.AccordionItem (config);
                             //Y.log(Clazz.NAME + "::renderUI - acc_item: " + acc_item);
 
@@ -96,13 +101,16 @@ YUI.add(
 
                             // TODO: this means we need to listen for resize events on the accordion item
                             //Y.log(Clazz.NAME + "::renderUI - acc_item render to: " + acc_item.getStdModNode(Y.WidgetStdMod.BODY));
-                            var content = new content_module.prototype.constructor (
+                            content_module_config = content_module_config || {};
+                            Y.mix(
+                                content_module_config,
                                 {
                                     render: acc_item.getStdModNode(Y.WidgetStdMod.BODY),
                                     window: this.get("window"),
                                     height: content_height
                                 }
                             );
+                            var content = new content_module.prototype.constructor (content_module_config);
                         },
                         this
                     );
@@ -167,6 +175,12 @@ YUI.add(
                     },
                     // the layout_unit i'm inside
                     layout_unit: {
+                        value: null
+                    },
+                    common_actions: {
+                        value: null
+                    },
+                    quick_access: {
                         value: null
                     }
                 }

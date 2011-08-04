@@ -18,6 +18,8 @@
 YUI.add(
     "ic-manage-window-content-remote-function",
     function (Y) {
+        var default_url_template = "/manage/{clazz}/ui_meta_struct?_format=json";
+
         var Clazz = Y.namespace("IC").ManageWindowContentRemoteFunction = Y.Base.create(
             "ic_manage_window_content_remote_function",
             Y.IC.ManageWindowContentRemote,
@@ -26,8 +28,16 @@ YUI.add(
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
 
-                    this._data_url = "/manage/" + config.clazz + "/ui_meta_struct?_format=json";
-                    Y.log(Clazz.NAME + "::initializer - _data_url: " + this._data_url);
+                    var data_url_template;
+                    if (Y.Lang.isValue(IC_manage_config.remote_function_url_template)) {
+                        data_url_template = IC_manage_config.remote_function_url_template;
+                    }
+                    else {
+                        data_url_template = default_url_template;
+                    }
+
+                    var data_url = Y.Lang.sub(data_url_template, config);
+                    this.set("data_url", data_url);
                 }
             },
             {

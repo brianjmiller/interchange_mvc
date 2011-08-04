@@ -38,31 +38,31 @@ YUI.add(
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
 
-                    if (config.orientation === 'horizontal') {
+                    if (this.get("orientation") === 'horizontal') {
                         this.orientation_class         = 'yui3-menu-horizontal yui3-menubuttonnav';
                         this.menu_item_content_wrapper = 'em';
                     }
 
-                    var menu = this;
-
                     Y.io(
-                        // TODO: rename this to window
-                        "/manage/widget/menu/config",
+                        this.get("config_path"),
                         {
                             on: {
-                                success: function (txnId, response) {
-                                    try {
-                                        menu._menu_config = Y.JSON.parse(response.responseText);
-                                    }
-                                    catch (e) {
-                                        Y.log(Clazz.NAME + "::initializer - io success handler - Can't parse JSON: " + e, "error");
+                                success: Y.bind(
+                                    function (txnId, response) {
+                                        try {
+                                            this._menu_config = Y.JSON.parse(response.responseText);
+                                        }
+                                        catch (e) {
+                                            Y.log(Clazz.NAME + "::initializer - io success handler - Can't parse JSON: " + e, "error");
+                                            return;
+                                        }
+
+                                        this.render(config.render_to);
+
                                         return;
-                                    }
-
-                                    menu.render(config.render_to);
-
-                                    return;
-                                },
+                                    },
+                                    this
+                                ),
 
                                 failure: function (txnId, response) {
                                     Y.log(Clazz.NAME + "::initializer - io failure handler - Failed to get menu options", "error");
@@ -154,7 +154,15 @@ YUI.add(
                 }
             },
             {
-                ATTRS: {}
+                ATTRS: {
+                    config_path: {
+                        // TODO: rename this to window
+                        value: "/manage/widget/menu/config"
+                    },
+                    orientation: {
+                        value: 'vertical'
+                    }
+                }
             }
         );
     },

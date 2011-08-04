@@ -64,9 +64,9 @@ sub _get_config_struct {
     return {
         title             => 'Dashboard',
         url               => $self->url(
-            controller => 'manage/widget/dashboard',
-            action     => 'config',
-            secure     => 1,
+            controller     => 'manage/widget/dashboard',
+            action         => 'config',
+            match_security => 1,
         ),
         polling_interval  => 10,
         polling_is_active => JSON::false(),

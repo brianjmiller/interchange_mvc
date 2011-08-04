@@ -9,6 +9,8 @@ package IC::C::Manage;
 use strict;
 use warnings;
 
+use JSON ();
+
 use IC::M::Right;
 use IC::Manage;
 
@@ -38,8 +40,88 @@ sub index {
 
     # TODO: move this check into an 'around'
     return $self->forbid unless $self->check_right('access_site_mgmt');
+    
+    my $remote_function_url_template;
+    my $remote_record_url_template;
+    {
+        #
+        # prevent IC's normal URL processing from escaping the '{' and '}' characters
+        # that we need in the template URL for post processing by the client libs
+        #
+        no warnings 'redefine';
+        local *Vend::Util::escape_chars_url = sub { return $_[0]; };
 
-    my $context = {};
+        $remote_function_url_template = $self->url(
+            controller => 'manage',
+            action     => 'run_action_method',
+            parameters => {
+                _class  => '{clazz}',
+                _method => 'ui_meta_struct',
+            },
+            get        => {
+                _format => 'json',
+            },
+            match_security => 1,
+        );
+        $remote_record_url_template = $self->url(
+            controller => 'manage',
+            action     => 'run_action_method',
+            parameters => {
+                _class  => '{clazz}',
+                _method => 'object_ui_meta_struct',
+            },
+            get        => {
+                _format => 'json',
+            },
+            match_security => 1,
+        );
+    }
+
+    my $context = {
+        IC_manage_config => {
+            #
+            # these are double quoted so that they are quoted in the output after rendering
+            #
+            remote_function_url_template => qq{"$remote_function_url_template"},
+            remote_record_url_template   => qq{"$remote_record_url_template"},
+            dashboard_config             => JSON::encode_json(
+                {
+                    data_path => $self->url(
+                        controller     => 'manage/widget/dashboard',
+                        action         => 'data',
+                        match_security => 1,
+                    ),
+                },
+            ),
+            window_config                => JSON::encode_json(
+                {
+                    menu_config => {
+                        config_path => $self->url(
+                            controller     => 'manage/widget/menu',
+                            action         => 'config',
+                            match_security => 1,
+                        ),
+                    },
+                    tools_config => {
+                        common_actions => {
+                            data_path => $self->url(
+                                controller     => 'manage/widget/tools/common_actions',
+                                action         => 'data',
+                                match_security => 1,
+                            ),
+                        },
+                        quick_access => {
+                            data_path => $self->url(
+                                controller     => 'manage/widget/tools/quick_access',
+                                action         => 'data',
+                                match_security => 1,
+                            ),
+                        },
+                    },
+                },
+            ),
+        },
+    };
 
     for my $method qw( custom_js custom_css ) {
         if (keys %{ $self->$method }) {

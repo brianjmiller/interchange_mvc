@@ -23,7 +23,6 @@ YUI.add(
             Y.IC.ManageTool.Base,
             [ Y.WidgetStdMod ],
             {
-                _data_url:     null,
                 _last_updated: null,
                 _last_tried:   null,
                 _timer:        null,
@@ -120,7 +119,7 @@ YUI.add(
                     this._mesg_node.setContent("Requesting data from server...");
 
                     Y.io(
-                        this._data_url,
+                        this.get("data_path"),
                         {
                             on: {
                                 success: Y.bind(this._onRequestSuccess, this),
@@ -176,6 +175,9 @@ YUI.add(
             },
             {
                 ATTRS: {
+                    data_path: {
+                        value: null
+                    },
                     bodyContent: {
                         value: ""
                     },

@@ -27,8 +27,14 @@ YUI.add(
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
 
-                    this._data_url = "/manage/widget/dashboard/data?_format=json";
-                    Y.log(Clazz.NAME + "::initializer - _data_url: " + this._data_url);
+                    var data_url;
+                    if (Y.Lang.isValue(IC_manage_config.dashboard_config)) {
+                        data_url = IC_manage_config.dashboard_config.data_path;
+                    }
+                    else {
+                        data_url = "/manage/widget/dashboard/data?_format=json";
+                    }
+                    this.set("data_url", data_url);
                 }
             },
             {

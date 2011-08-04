@@ -32,15 +32,15 @@ IC::Controller::Route->route(
 );
 
 IC::Controller::Route->route(
-    pattern     => 'manage/widget/dashboard/data',
-    controller  => 'manage/widget/dashboard',
-    action      => 'data',
-);
-
-IC::Controller::Route->route(
     pattern     => 'manage/widget/dashboard/config',
     controller  => 'manage/widget/dashboard',
     action      => 'config',
+);
+
+IC::Controller::Route->route(
+    pattern     => 'manage/widget/dashboard/data',
+    controller  => 'manage/widget/dashboard',
+    action      => 'data',
 );
 
 IC::Controller::Route->route(

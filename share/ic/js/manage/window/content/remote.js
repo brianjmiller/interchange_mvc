@@ -26,9 +26,6 @@ YUI.add(
                 _last_updated:        null,
                 _last_tried:          null,
 
-                // _data_url should be set in the initializer of the subclass
-                _data_url:            null,
-
                 // reference of the object that makes up the content
                 _built_data:          null,
 
@@ -50,7 +47,6 @@ YUI.add(
                     this._last_updated        = null;
                     this._last_tried          = null;
 
-                    this._data_url            = null;
                     this._built_data.destroy();
                     this._built_data          = null;
 
@@ -117,7 +113,7 @@ YUI.add(
 
                     // TODO: protect against more than one call at once
                     Y.io(
-                        this._data_url,
+                        this.get("data_url"),
                         {
                             on: {
                                 success: Y.bind(this._onRequestSuccess, this),
@@ -196,7 +192,11 @@ YUI.add(
                 }
             },
             {
-                ATTRS: {},
+                ATTRS: {
+                    data_url: {
+                        value: null
+                    }
+                },
 
                 getCacheKey: function (config) {
                     Y.log(Clazz.NAME + "::getCacheKey");
