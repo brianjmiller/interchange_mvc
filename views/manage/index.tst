@@ -58,7 +58,7 @@
 </script>
 
 <!-- YUI Seed, Loader, and our primary source -->
-<script type="text/javascript" src="/combo?ic/vendor/yui3/build/yui/yui.js&ic/vendor/yui3/build/loader/loader.js&ic/js/manage.js"></script>
+<script type="text/javascript" src="/combo?ic/vendor/yui3/build/yui/yui-min.js&ic/vendor/yui3/build/loader/loader-min.js&ic/js/manage.js"></script>
 
 </body>
 </html>
