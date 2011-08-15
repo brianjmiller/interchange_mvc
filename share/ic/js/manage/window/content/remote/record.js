@@ -31,7 +31,7 @@ YUI.add(
 
                     var data_url_template;
                     if (Y.Lang.isValue(IC_manage_config.remote_record_url_template)) {
-                        data_url_template = IC_manage_config.remote_function_url_template;
+                        data_url_template = IC_manage_config.remote_record_url_template;
                     }
                     else {
                         data_url_template = default_url_template;
