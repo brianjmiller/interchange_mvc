@@ -19,6 +19,20 @@
     overflow: visible !important;
 }
 
+input.yui3-aclist-input {
+}
+
+input.yui3-aclist-input-loading {
+    background-image: url(spinner.gif);
+    background-repeat: no-repeat;
+    background-position: right;
+}
+
+.yui3-aclist-content {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
 #ic-manage-window {
     text-align: left;
 }
