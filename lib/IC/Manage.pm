@@ -439,7 +439,7 @@ sub get_KeyValue_data {
     my $object = shift;
     my $args = { @_ };
 
-    my @all_fields = $self->_model_class->meta->columns;
+    my @all_fields = ($self->_model_class->meta->columns, $self->_model_class->meta->nonpersistent_columns);
 
     my $select_fields;
     if (defined $args->{field_names}) {
@@ -495,6 +495,11 @@ sub _fields_to_kv_defs {
     my $adjustments = $self->_field_adjustments || {};
 
     for my $field (@{ $args->{fields} }) {
+        unless (defined $field) {
+            warn "IC::Manage::_fields_to_kv_defs - Undefined field requested\n";
+            next;
+        }
+
         my $field_name = $field->name;
         my $adjust     = $adjustments->{$field_name} || {};
 
