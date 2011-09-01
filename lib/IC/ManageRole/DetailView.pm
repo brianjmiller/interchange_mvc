@@ -589,7 +589,7 @@ sub _file_resource_config {
     push @$grid_rows, $display_row;
 
     if (defined $file) {
-        my $content;
+        my $content = sprintf 'Modified: %s<br />', scalar localtime($file->mtime);
 
         my $url_path = $file->url_path;
         if ($file->is_image) {
@@ -598,14 +598,14 @@ sub _file_resource_config {
             #
             my ($use_width, $use_height, $use_alt) = $file->property_values( [ qw( width height alt ) ] );
 
-            $content = qq{<img src="$url_path" width="$use_width" height="$use_height"};
+            $content .= qq{<img src="$url_path" width="$use_width" height="$use_height"};
             if (defined $use_alt) {
                 $content .= qq{ alt="$use_alt"};
             }
             $content .= ' />';
         }
         else {
-            $content = qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
+            $content .= qq{<a href="$url_path"><img src="} . $self->_icon_path . q{" /></a>};
         }
 
         $display_row->[0]->{content}->{config}->{data} = $content;

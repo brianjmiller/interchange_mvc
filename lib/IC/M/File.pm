@@ -142,6 +142,23 @@ sub is_image {
     return ($self->get_mimetype =~ /\Aimage/ ? 1 : 0);
 }
 
+sub get_stat {
+    my $self = shift;
+
+    my $path = $self->local_path;
+    return unless defined $path;
+
+    my @stat = stat $path;
+
+    return @stat;
+}
+
+sub mtime {
+    my $self = shift;
+
+    return ($self->get_stat)[9];
+}
+
 sub property_values {
     my $self = shift;
     my $properties = shift;
