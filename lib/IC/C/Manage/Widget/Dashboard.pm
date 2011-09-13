@@ -81,7 +81,12 @@ sub _get_config_struct {
 }
 
 sub _get_primary_renderer_struct {
-    return {};
+    return {
+        type   => 'Basic',
+        config => {
+            data => 'No custom dashboard content.',
+        },
+    };
 }
 
 1;
