@@ -178,7 +178,7 @@ sub store_file_for_resource {
             $file_resource_obj->add_files(
                 {
                     db          => $db,
-                    object_pk   => $self->serialize_pk,
+                    object_pk   => $self->as_hashkey,
                     created_by  => $user_id,
                     modified_by => $user_id,
                 },

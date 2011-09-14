@@ -315,7 +315,7 @@ sub save {
                 'uncontrolled',
                 '_manage_properties_upload',
                 $object->meta->table,
-                $object->serialize_pk,
+                $object->as_hashkey,
                 $file_resource_obj->sub_path( '_manage_properties_upload' ),
             );
             my $temporary_path = File::Spec->catfile(
@@ -368,7 +368,7 @@ sub save {
                 $file_resource_obj->add_files(
                     {
                         db          => $object->db,
-                        object_pk   => $object->serialize_pk,
+                        object_pk   => $object->as_hashkey,
                         created_by  => $modified_by,
                         modified_by => $modified_by,
                     },

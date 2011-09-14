@@ -102,7 +102,7 @@ sub get_file_for_object {
     my $files = $self->find_files(
         db    => $ref_object->db,
         query => [
-            object_pk => $ref_object->serialize_pk,
+            object_pk => $ref_object->as_hashkey,
         ],
     );
     if (@$files == 1) {
