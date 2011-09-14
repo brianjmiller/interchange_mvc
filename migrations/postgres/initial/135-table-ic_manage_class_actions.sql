@@ -38,7 +38,7 @@ CREATE TABLE ic_manage_class_actions (
     is_primary              BOOLEAN NOT NULL,
 
     UNIQUE(class_code, code),
-    UNIQUE(display_label)
+    UNIQUE(class_code, display_label)
 );
 
 CREATE TRIGGER ic_manage_class_actions_last_modified
@@ -47,33 +47,33 @@ CREATE TRIGGER ic_manage_class_actions_last_modified
     EXECUTE PROCEDURE ic_update_last_modified();
 
 COPY ic_manage_class_actions (class_code, code, display_label, is_primary, date_created, created_by, last_modified, modified_by) FROM stdin;
-TimeZones	Add	Add Time Zone	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-TimeZones	List	List Time Zones	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-TimeZones	DetailView	Time Zone Detail View	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-TimeZones	Drop	Drop Time Zone	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-TimeZones	Properties	Edit Time Zone Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Users	Add	Add User	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Users	List	List Users	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Users	DetailView	User Detail View	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Users	Drop	Drop User	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Users	Properties	Edit User Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Roles	Add	Add Role	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Roles	List	List Roles	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Roles	DetailView	Role Detail View	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Roles	Drop	Drop Role	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Roles	Properties	Edit Role Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-RightTypes	Add	Add Right Type	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-RightTypes	List	List Right Types	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-RightTypes	DetailView	Right Type Detail View	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-RightTypes	Drop	Drop Right Type	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-RightTypes	Properties	Edit Right Type Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Rights	Add	Add Right	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Rights	DetailView	Right Detail View	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Rights	Drop	Drop Right	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Rights	Properties	Edit Right Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
-Files__Properties	Properties	Edit File Properties Properties	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
-Files__Properties	Drop	Drop File Property	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
-Files__Properties	Add	Add File Property	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
+TimeZones	Add	Add	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+TimeZones	List	List	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+TimeZones	DetailView	Details	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+TimeZones	Drop	Drop	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+TimeZones	Properties	Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Users	Add	Add	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Users	List	List	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Users	DetailView	Details	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Users	Drop	Drop	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Users	Properties	Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Roles	Add	Add	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Roles	List	List	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Roles	DetailView	Details	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Roles	Drop	Drop	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Roles	Properties	Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+RightTypes	Add	Add	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+RightTypes	List	List	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+RightTypes	DetailView	Details	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+RightTypes	Drop	Drop	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+RightTypes	Properties	Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Rights	Add	Add	t	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Rights	DetailView	Details	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Rights	Drop	Drop	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Rights	Properties	Properties	f	2009-04-17 07:33:12.814683	schema	2009-04-17 07:33:12.814683	schema
+Files__Properties	Properties	Properties	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
+Files__Properties	Drop	Drop	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
+Files__Properties	Add	Add	f	2010-11-17 10:55:43.00000	schema	2010-11-17 10:55:43.00000	schema
 \.
 
 INSERT INTO ic_right_targets (created_by, modified_by, right_id, ref_obj_pk) (
