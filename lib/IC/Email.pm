@@ -65,6 +65,11 @@ has 'attachments' => (
     isa     => 'ArrayRef',
     default => sub { [] },
 );
+has 'raw_headers' => (
+    is      => 'rw',
+    isa     => 'HashRef',
+    default => sub { {} },
+);
 
 no Moose;
 
@@ -122,7 +127,7 @@ sub send {
         IC::Exception->throw('Invalid or missing body');
     }
 
-    my $subject = $self->subject_prefix . $self->subject;
+    my $subject  = $self->subject_prefix . $self->subject;
     my $bcc      = $self->bcc;
     my $reply_to = $self->reply_to;
 
@@ -152,6 +157,10 @@ sub send {
         $addtl_headers{'Reply-To'} = $reply_to;
     }
 
+    if (keys %{ $self->raw_headers }) {
+        @addtl_headers{ keys %{ $self->raw_headers } } = values %{ $self->raw_headers };
+    }
+
     my $message = MIME::Lite->new(
         To      => $to,
         From    => $self->from,
@@ -163,6 +172,8 @@ sub send {
     unless (defined $message) {
         IC::Exception->throw( q{Can't instantiate mail message} );
     }
+
+    $message->attr("content-type.charset" => 'UTF-8');
 
     if (@{ $self->attachments }) {
         for my $attachment (@{ $self->attachments }) {
