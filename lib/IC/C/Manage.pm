@@ -214,6 +214,9 @@ sub run_action_method {
             context => $context,
         );
 
+        my $status       = delete $struct->{_status} // '200 OK';
+        my $content_type = delete $struct->{_content_type} // 'text/plain';
+
         my $formatted;
         if (! defined $params->{_format}) {
             $formatted = $struct;
@@ -226,9 +229,8 @@ sub run_action_method {
         }
 
         my $response = $self->response;
-        $response->headers->status('200 OK');
-        $response->headers->content_type('text/plain');
-        #$response->headers->content_type('application/json');
+        $response->headers->status($status);
+        $response->headers->content_type($content_type);
         $response->buffer( $formatted );
     };
     if (my $e = IC::Exception->caught()) {
