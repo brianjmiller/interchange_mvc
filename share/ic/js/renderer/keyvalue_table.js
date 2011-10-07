@@ -16,32 +16,62 @@
 */
 
 YUI.add(
-    "ic-renderer-keyvalue",
+    "ic-renderer-keyvalue_table",
     function(Y) {
-        var Clazz = Y.namespace("IC").RendererKeyValue = Y.Base.create(
-            "ic_renderer_keyvalue",
+        var Clazz = Y.namespace("IC").RendererKeyValueTable = Y.Base.create(
+            "ic_renderer_keyvalue_table",
             Y.IC.RendererBase,
             [],
             {
+                CONTENT_TEMPLATE: '<table></table>',
+
                 _title: null,
-                _def_list: null,
+                _data:  null,
 
                 initializer: function (config) {
                     Y.log(Clazz.NAME + "::initializer");
-                    //Y.log(Clazz.NAME + "::initializer: " + Y.dump(config));
                     this._title = config.label;
+                    this._data  = config.data;
+                },
 
-                    this._def_list = Y.Node.create('<dl></dl>');
+                destructor: function () {
+                    Y.log(Clazz.NAME + "::destructor");
+
+                    this._data = null;
+                },
+
+                renderUI: function () {
+                    Y.log(Clazz.NAME + "::renderUI");
+                    Clazz.superclass.renderUI.apply(this, arguments);
+
+                    var cb = this.get("contentBox");
+
+                    var title_row  = Y.Node.create('<tr></tr>');
+                    var title_cell = Y.Node.create('<td colspan="2" class="' + this.getClassName("titleCell") + '"></td>');
+                    if (Y.Lang.isValue(this._title)) {
+                        title_cell.setContent(this._title);
+                    }
+                    title_row.append(title_cell);
+                    cb.append(title_row);
 
                     Y.each(
-                        config.data,
+                        this._data,
                         function (v, i, a) {
                             Y.log(Clazz.NAME + "::initializer - adding key/value pair: " + v.label + " => " + v.value);
-                            var dt = Y.Node.create('<dt>' + v.label + '</dt>');
-                            var dd = Y.Node.create('<dd>' + (v.value !== "" ? v.value : '&nbsp;') + '</dd>');
+                            var row        = Y.Node.create('<tr></tr>');
+
+                            var label_cell = Y.Node.create('<td>' + v.label + '</td>');
+                            label_cell.addClass( this.getClassName("labelCell") );
+
+                            var value_cell = Y.Node.create('<td>' + v.value + '</td>');
+                            value_cell.addClass( this.getClassName("valueCell") );
+
+                            row.append(label_cell);
+                            row.append(value_cell);
+                            cb.append(row);
 
                             if (v.form) {
-                                dd.plug(
+                                value_cell.plug(
                                     Y.IC.Plugin.EditableInPlace,
                                     {
                                         form_config:             v.form,
@@ -65,29 +95,9 @@ YUI.add(
                                     }
                                 );
                             }
-
-                            this.append(dt);
-                            this.append(dd);
                         },
-                        this._def_list
+                        this
                     );
-                },
-
-                destructor: function () {
-                    Y.log(Clazz.NAME + "::destructor");
-
-                    this._title    = null;
-                    this._def_list = null;
-                },
-
-                renderUI: function () {
-                    Y.log(Clazz.NAME + "::renderUI");
-                    Clazz.superclass.renderUI.apply(this, arguments);
-
-                    if (Y.Lang.isValue(this._title)) {
-                        this.get("contentBox").append('<span class="key_value_title">' + this._title + '</span><br />');
-                    }
-                    this.get("contentBox").append(this._def_list);
                 }
             },
             {
@@ -95,12 +105,12 @@ YUI.add(
             }
         );
 
-        Y.IC.Renderer.registerConstructor("KeyValue", Clazz.prototype.constructor);
+        Y.IC.Renderer.registerConstructor("KeyValueTable", Clazz.prototype.constructor);
     },
     "@VERSION@",
     {
         requires: [
-            "ic-renderer-keyvalue-css",
+            "ic-renderer-keyvalue_table-css",
             "ic-renderer-base",
             "ic-plugin-editable-in_place"
         ]

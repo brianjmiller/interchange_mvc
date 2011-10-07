@@ -251,6 +251,7 @@ try {
                             "ic-renderer-v2_data_table",
                             "ic-renderer-treeble",
                             "ic-renderer-keyvalue",
+                            "ic-renderer-keyvalue_table",
                             "ic-renderer-chart",
                             "ic-renderer-panel_loader",
                             "ic-renderer-record_set",
@@ -495,6 +496,14 @@ try {
                             "ic-plugin-editable-in_place"
                         ]
                     },
+                    "ic-renderer-keyvalue_table": {
+                        path: "renderer/keyvalue_table.js",
+                        requires: [
+                            "ic-renderer-keyvalue_table-css",
+                            "ic-renderer-base",
+                            "ic-plugin-editable-in_place"
+                        ]
+                    },
                     "ic-renderer-chart": {
                         path: "renderer/chart.js",
                         requires: [
@@ -611,6 +620,10 @@ try {
                     },
                     "ic-renderer-keyvalue-css": {
                         path: "renderer/keyvalue.css",
+                        type: "css"
+                    },
+                    "ic-renderer-keyvalue_table-css": {
+                        path: "renderer/keyvalue_table.css",
                         type: "css"
                     },
                     "ic-renderer-chart-css": {

@@ -1,0 +1,36 @@
+div.yui3-ic_renderer_keyvalue_table-hidden {
+    display: none;
+}
+
+table.yui3-ic_renderer_keyvalue_table-content {
+    border: 0px;
+    width: 100%;
+    border-bottom: 1px solid #d7d7d7;
+}
+
+table.yui3-ic_renderer_keyvalue_table-content td {
+    padding: 1px 0.5em 1px 0.5em;
+    border: 0px;
+}
+
+table.yui3-ic_renderer_keyvalue_table-content td.yui3-ic_renderer_keyvalue_table-titleCell {
+    font-weight: bold;
+    border-bottom: 1px solid #d7d7d7;
+}
+
+table.yui3-ic_renderer_keyvalue_table-content td.yui3-ic_renderer_keyvalue_table-labelCell {
+    white-space: nowrap;
+    border-right: 1px dotted #d7d7d7;
+    border-left: 1px solid #d7d7d7;
+    border-top: 1px dotted #d7d7d7;
+    border-bottom: 1px dotted #d7d7d7;
+    background-color: #f8f8f8;
+}
+
+table.yui3-ic_renderer_keyvalue_table-content td.yui3-ic_renderer_keyvalue_table-valueCell {
+    width: 100%;
+    border-right: 1px solid #d7d7d7;
+    border-top: 1px dotted #d7d7d7;
+    border-bottom: 1px dotted #d7d7d7;
+    background-color: #f8f8f8;
+}
