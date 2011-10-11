@@ -91,7 +91,7 @@ sub _can_change_value {
 }
 
 #
-# TODO: add modified_by handling
+#
 #
 sub _change_value_with_trigger {
     my $self      = shift;
@@ -117,6 +117,17 @@ sub _change_value_with_trigger {
     }
 
     $args->{no_logging} ||= 0;
+
+    my $has_created_by  = $self->meta->column('created_by') ? 1 : 0;
+    my $has_modified_by = $self->meta->column('modified_by') ? 1 : 0;
+
+    my %common;
+    if ($has_created_by and (defined $args->{created_by} || defined $args->{modified_by})) {
+        $common{created_by} = $args->{created_by} // $args->{modified_by};
+    }
+    if ($has_modified_by and defined $args->{modified_by}) {
+        $common{modified_by} = $args->{modified_by};
+    }
 
     #
     # this needs to be atomic so start a transaction if we aren't already in one,
@@ -158,19 +169,25 @@ sub _change_value_with_trigger {
                     {   
                         ref_code => 'from',
                         value    => $self->$field,
+                        %common,
                     },
                     {   
                         ref_code => 'to',
                         value    => $new_value,
+                        %common,
                     },
                     @additional_details,
                 ],
+                %common,
             },
         );
     }
 
     my $orig_value = $self->$field;
     $self->$field($new_value);
+    if ($has_modified_by && defined $args->{modified_by}) {
+        $self->modified_by($has_modified_by);
+    }
     $self->save;
 
     my $return;

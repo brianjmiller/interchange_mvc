@@ -322,6 +322,44 @@ sub boilerplate_columns {
     );
 }
 
+sub created_by_name {
+    my $self = shift;
+
+    return undef unless defined $self->created_by;
+    return '' if $self->created_by eq '';
+
+    if ($self->created_by =~ /\D/) {
+        # can't be just an id, so return it
+        return $self->created_by;
+    }
+
+    my $role = IC::M::Role->new( id => $self->created_by );
+    unless ($role->load( speculative => 1 )) {
+        return $self->created_by;
+    }
+
+    return $role->code;
+}
+
+sub modified_by_name {
+    my $self = shift;
+
+    return undef unless defined $self->modified_by;
+    return '' if $self->modified_by eq '';
+
+    if ($self->modified_by =~ /\D/) {
+        # can't be just an id, so return it
+        return $self->modified_by;
+    }
+
+    my $role = IC::M::Role->new( id => $self->modified_by );
+    unless ($role->load( speculative => 1 )) {
+        return $self->modified_by;
+    }
+
+    return $role->code;
+}
+
 sub init_db {
     return IC::Model::Rose::DB->new;
 }
