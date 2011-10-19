@@ -25,6 +25,9 @@ has '_action_log_configuration' => (
         }
     },
 );
+has '_data_load_param_with' => (
+    is => 'ro',
+);
 
 my $edit_action = 'Properties';
 
@@ -263,6 +266,29 @@ before 'ui_meta_struct' => sub {
 };
 
 no Moose;
+
+sub data {
+    my $self = shift;
+    my %args = @_;
+
+    my $context = $args{context};
+
+    my $c      = $context->{controller};
+    my $struct = $context->{struct};
+    my $params = $c->parameters;
+
+
+    my %object_call_args;
+    if (defined $self->_data_load_param_with) {
+        $object_call_args{load_params}->{with} = $self->_data_load_param_with;
+    }
+
+    my ($object, $used_params) = $self->object_from_params( $params, %object_call_args );
+
+    %$struct = %{ $object->as_tree };
+
+    return;
+}
 
 sub action_log_content {
     my $self = shift;

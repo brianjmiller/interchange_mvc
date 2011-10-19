@@ -8,6 +8,8 @@ use IC::Model::Rose::DB;
 use Rose::DB::Object;
 use base qw(Rose::DB::Object IC::Model);
 
+use Rose::DB::Object::Helpers qw( as_json as_tree );
+
 # Make a _logger attribute with get_logger/set_logger accessors,
 # which will fit nicely into the IC::Log::Logger paradigm inherited
 # from IC::Model.

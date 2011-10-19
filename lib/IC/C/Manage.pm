@@ -150,6 +150,7 @@ sub index {
 #
 sub run_action_method {
     my $self = shift;
+    my $log_prefix = 'Cannot run action method';
 
     return $self->forbid unless $self->check_right('access_site_mgmt');
 
@@ -157,46 +158,46 @@ sub run_action_method {
 
     my $_method = $params->{_method};
     unless (defined $_method and $_method ne '') {
-        IC::Exception->throw(q{Can't run action method: none provided});
+        IC::Exception->throw("$log_prefix: not provided");
     }
 
-    my $class;
+    my ($class, $model);
     eval {
-        ($class) = IC::Manage->load_class(
+        ($class, $model) = IC::Manage->load_class(
             $params->{_class},
             $params->{_subclass},
         );
     };
     if (my $e = Exception::Class->caught) {
-        IC::Exception->throw("Can't run action method: can't load class ($params->{_class}:$params->{_subclass}) - $e (" . $e->trace . ')');
+        IC::Exception->throw(
+            sprintf '%s: failed to load class (%s:%s) - %s (%s)', $log_prefix, $params->{_class}, $params->{_subclass}, $e, $e->trace,
+        );
     }
 
     unless (defined $class) {
-        IC::Exception->throw("Can't run action method: load_class returned nothing ($params->{_class}:$params->{_subclass})");
+        IC::Exception->throw("$log_prefix: load_class returned nothing ($params->{_class}:$params->{_subclass})");
     }
 
     my $invokee;
     if (defined $params->{_subclass}) {
-        # TODO: need to check privilege
-        #my $function_obj = IC::M::ManageFunction->new( code => $function )->load;
-        #unless ($self->check_right( 'execute', $function_obj )) {
-            #IC::Exception->throw('Role ' . $self->role->display_label . " can't execute $function");
-        #}
+        unless ($self->role->check_right('execute' => $model)) {
+            IC::Exception->throw("$log_prefix: permission denied");
+        }
 
         eval {
             $invokee = $class->new();
         };
         if (my $e = Exception::Class->caught) {
-            IC::Exception->throw("Can't instantiate manage class ($class): $e");
+            IC::Exception->throw("$log_prefix: failed to instantiate manage class ($class): $e");
         }
     }
     else {
-        # TODO: do we need to restrict privs on class method invocations?
+        # TODO: do we need to handle class method permission checks?
         $invokee = $class;
     }
 
     unless (defined $invokee) {
-        IC::Exception->throw("Can't run action method $_method: Unable to determine invokee ($params->{_class}:$params->{_subclass})"); 
+        IC::Exception->throw("$log_prefix: Unable to determine invokee ($params->{_class}:$params->{_subclass}:$_method)"); 
     }
 
     my $result = eval {
@@ -225,7 +226,7 @@ sub run_action_method {
             $formatted = JSON::encode_json($struct);
         }
         else {
-            IC::Exception->throw("Unrecognized struct format: '$params->{_format}'");
+            IC::Exception->throw("$log_prefix: unrecognized struct format ($params->{_format})");
         }
 
         my $response = $self->response;
@@ -234,10 +235,10 @@ sub run_action_method {
         $response->buffer( $formatted );
     };
     if (my $e = IC::Exception->caught()) {
-        IC::Exception->throw("Failed manage method ($_method) execution (explicitly): $e (" . $e->trace . ')');
+        IC::Exception->throw("$log_prefix: failed manage method ($_method) execution (explicitly): $e (" . $e->trace . ')');
     }
     elsif ($@) {
-        IC::Exception->throw("Failed manage method ($_method) execution: $@");
+        IC::Exception->throw("$log_prefix: failed manage method ($_method) execution: $@");
     }
 
     return;

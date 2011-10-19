@@ -371,6 +371,7 @@ sub load_class {
 sub object_from_params {
     my $self = shift;
     my $params = shift;
+    my %args = @_;
 
     my $_model_class = $self->_model_class;
 
@@ -394,7 +395,13 @@ sub object_from_params {
     unless (defined $object) {
         IC::Exception::ModelInstantiateFailure->throw( $self->_model_display_name );
     }
-    unless ($object->load(speculative => 1)) {
+
+    my %load_params = (
+        speculative => 1,
+        (defined $args{load_params} ? %{ $args{load_params} } : ()),
+    );
+
+    unless ($object->load(%load_params)) {
         IC::Exception::ModelLoadFailure->throw( 'Unrecognized ' . $self->_model_display_name . ': ' . (join ' => ', %object_params) );
     }
 
@@ -415,7 +422,7 @@ sub check_priv {
         $check_role = $args->{role};
     }
     else {
-        my ($package, $filename, $line) = caller(1);
+        my ($package, $filename, $line) = caller(0);
         warn "$package called check_priv() but was unable to determine 'role' properties at line $line\n";
         return '';
     }
