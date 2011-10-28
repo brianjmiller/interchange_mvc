@@ -50,13 +50,13 @@ YUI.add(
 
             _setM: function (cfg, name) {
                 var m_class = this._getAttrCfg(name).mClass;
-    
+
                 if (cfg instanceof m_class) {
                     return cfg; 
                 }
-            
+
                 var load = false;
-                if (! Y.Lang.isObject(cfg)) {
+                if (cfg && ! Y.Lang.isObject(cfg)) {
                     cfg = {
                         id: cfg
                     };

@@ -392,6 +392,7 @@ sub save {
         }
     };
     if ($@) {
+        $struct->{_status}   = '400 Bad Request';
         $struct->{code}      = 0;
         $struct->{exception} = "$@";
     }

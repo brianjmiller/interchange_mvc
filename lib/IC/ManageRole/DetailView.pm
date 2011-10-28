@@ -25,9 +25,6 @@ has '_action_log_configuration' => (
         }
     },
 );
-has '_data_load_param_with' => (
-    is => 'ro',
-);
 
 my $edit_action = 'Properties';
 
@@ -277,15 +274,15 @@ sub data {
     my $struct = $context->{struct};
     my $params = $c->parameters;
 
+    my ($object, $used_params) = $self->object_from_params(
+        $params,
+    );
 
-    my %object_call_args;
-    if (defined $self->_data_load_param_with) {
-        $object_call_args{load_params}->{with} = $self->_data_load_param_with;
-    }
-
-    my ($object, $used_params) = $self->object_from_params( $params, %object_call_args );
-
-    %$struct = %{ $object->as_tree };
+    #
+    # allow_loops turned on because of an issue with as_tree not providing
+    # related objects for each object even outside of loops
+    #
+    %$struct = %{ $object->as_tree( allow_loops => 1 ) };
 
     return;
 }

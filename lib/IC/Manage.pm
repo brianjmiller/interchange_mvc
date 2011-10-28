@@ -20,6 +20,7 @@ class_has '_model_display_name'        => ( is => 'ro', default => undef );
 class_has '_model_display_name_plural' => ( is => 'ro', default => undef );
 class_has '_field_adjustments'         => ( is => 'ro', default => undef );
 class_has '_role_class'                => ( is => 'ro', default => 'IC::M::Role' );
+class_has '_object_load_with'          => ( is => 'ro', default => undef );
 
 # order matters here, by making "DetailView" the first in this list
 # it then becomes the default unless an override of _record_actions
@@ -398,6 +399,7 @@ sub object_from_params {
 
     my %load_params = (
         speculative => 1,
+        (defined $self->_object_load_with ? (with => $self->_object_load_with) : ()),
         (defined $args{load_params} ? %{ $args{load_params} } : ()),
     );
 
