@@ -387,6 +387,75 @@ sub save {
         elsif ($params->{_properties_mode} eq 'unlink') {
             my $object = $self->object_from_params($params);
         }
+        elsif ($params->{_properties_mode} eq 'rest') {
+            #
+            # TODO: give this the ability to do creations too
+            #
+            my ($object, $used_params) = $self->object_from_params($params);
+
+            unless (defined $params->{_send_format} and $params->{_send_format} ne '') {
+                IC::Exception->throw('Cannot update object: interface violation (missing _send_format)');
+            }
+            unless (defined $params->{ $params->{_send_format} } and $params->{ $params->{_send_format} } ne '') {
+                IC::Exception->throw('Cannot update object: interface violation (missing object data)');
+            }
+
+            my $data;
+            if ($params->{_send_format} eq 'json') {
+                $data = JSON::from_json($params->{ $params->{_send_format} });
+            }
+            else {
+                IC::Exception->throw(sprintf q{Cannot update object: interface violation (unrecognized send format '%s')}, $params->{_send_format});
+            }
+
+            my $db = $object->db;
+            $db->begin_work;
+
+            my %_params = %$params;
+            delete @_params{
+                qw(
+                    controller
+                    action
+                    _method
+                    _class
+                    _subclass
+                    _format
+                    _send_format
+                    _properties_mode
+                    mv_session_id
+                    mv_form_charset
+                ),
+                keys %$used_params,
+                $params->{_send_format},
+            };
+
+            eval {
+                $self->_save_object_rest($object, $data, \%_params, { modified_by => $modified_by });
+            };
+            my $e;
+            if ($e = Exception::Class->caught) {
+               eval { $db->rollback; };
+
+               ref $e && $e->can('rethrow') ? $e->rethrow : die $e;
+            }
+
+            $db->commit;
+
+            #
+            # reload our object in case things were changed from under us, making sure
+            # any data that we normally use for this object is also loaded
+            #
+            my %reload_args = (
+                (defined $self->_object_load_with ? (with => $self->_object_load_with) : ()),
+            );
+            $object->load(%reload_args);
+
+            #
+            # allow_loops turned on because of an issue with as_tree not providing
+            # related objects for each object even outside of loops
+            #
+            return $object->as_tree( allow_loops => 1 );
+        }
         else {
             IC::Exception->throw("Unrecognized _properties_mode: $params->{_properties_mode}");
         }
