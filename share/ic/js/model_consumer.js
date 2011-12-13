@@ -37,6 +37,11 @@ YUI.add(
                 }
 
                 var ml_class = this._getAttrCfg(name).mlClass;
+                if (list instanceof ml_class) {
+                    list.addTarget(this);
+
+                    return list;
+                }
 
                 var new_list = new ml_class (
                     {
@@ -52,7 +57,12 @@ YUI.add(
                 var m_class = this._getAttrCfg(name).mClass;
 
                 if (cfg instanceof m_class) {
+                    cfg.addTarget(this);
+
                     return cfg; 
+                }
+                if (! Y.Lang.isValue(cfg)) {
+                    return;
                 }
 
                 var load = false;
@@ -67,6 +77,7 @@ YUI.add(
                 if (load) {
                     m.load();
                 }
+                m.addTarget(this);
 
                 return m;
             }
