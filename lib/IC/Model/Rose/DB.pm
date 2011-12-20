@@ -20,18 +20,28 @@ use Rose::Object::MakeMethods::Generic (
 IC::Config->initialize;
 
 if (defined IC::Config->smart_variable('SQLDSN')) {
-    #warn "Registering db: " . IC::Config->smart_variable('SQLDSN') . "\n";
+    my $dsn = IC::Config->smart_variable('SQLDSN');
+    #warn "Registering db: $dsn\n";
+
     __PACKAGE__->standard_base_configuration;
-    __PACKAGE__->register_db(
+
+    my %register_db_config = (
         username        => IC::Config->smart_variable( 'SQLUSER' ),
         password        => IC::Config->smart_variable( 'SQLPASS' ),
-        dsn             => IC::Config->smart_variable( 'SQLDSN'  ),
+        dsn             => $dsn,
         connect_options => {
-            AutoCommit        => 1,
-            RaiseError        => 1,
-            pg_enable_utf8    => 1,
+            AutoCommit => 1,
+            RaiseError => 1,
         },
     );
+    if ($dsn =~ /dbi:Pg/) {
+        $register_db_config{connect_options}->{pg_enable_utf8} = 1;
+    }
+    elsif ($dsn =~ /dbi:mysql/) {
+        $register_db_config{driver} = 'mysql';
+    }
+
+    __PACKAGE__->register_db(%register_db_config);
 }
 
 sub add_commit_callbacks {
