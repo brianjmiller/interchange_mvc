@@ -112,7 +112,7 @@ sub type_sensitive_render {
 
 sub slurp_view {
 	my ($self, $view) = @_;
-	local $/ = '';
+	local $/;
 	open(my $fh, '<', $view)
 		or confess "Could not open view for reading: $!"
 	;
