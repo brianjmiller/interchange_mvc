@@ -38,6 +38,7 @@ if (defined IC::Config->smart_variable('SQLDSN')) {
         $register_db_config{connect_options}->{pg_enable_utf8} = 1;
     }
     elsif ($dsn =~ /dbi:mysql/) {
+        $register_db_config{connect_options}->{ChopBlanks} = 0;
         $register_db_config{driver} = 'mysql';
     }
 
