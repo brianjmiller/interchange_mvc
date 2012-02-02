@@ -304,7 +304,7 @@ sub action_log_content {
         $table_config->{caption} = $config->{description};
     }
 
-    $table_config->{columnset} = [
+    $table_config->{columns} = [
         {
             key   => 'action',
             label => 'Action',
@@ -327,7 +327,7 @@ sub action_log_content {
         },
     ];
 
-    my $rows = $table_config->{recordset} = [];
+    my $rows = $table_config->{data} = [];
 
     for my $entry (@{ $object->action_log }) {
         my $details = [];
