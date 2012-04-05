@@ -536,15 +536,10 @@ try {
                             "autocomplete-sources"
                         ]
                     },
-
-                    "ic-model-consumer": {
-                        path: "model_consumer.js"
-                    },
                     "ic-m-base": {
                         path: "m/base.js",
                         requires: [
-                            "model",
-                            "ic-model-consumer"
+                            "model"
                         ]
                     },
 

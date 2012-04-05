@@ -28,22 +28,23 @@ YUI.add(
         var Clazz = Y.namespace("IC.M").Base = Y.Base.create(
             "ic_m_base",
             Y.Model,
-            [ Y.IC.ModelConsumer ],
-            {   
+            [],
+            {
                 toJSON: function () {
+                    Y.log(Clazz.NAME + "::toJSON");
                     var attrs = Clazz.superclass.toJSON.apply(this, arguments);
                     Y.each(
                         attrs,
                         function (v, k, o) {
                             var attr_cfg = this._getAttrCfg(k);
-            
+
                             if (Y.Lang.isValue(attr_cfg.toJSON) && ! attr_cfg.toJSON) {
                                 delete attrs[k];
                             }
                         },
                         this
                     );
-            
+
                     return attrs;
                 }
             },
@@ -53,8 +54,7 @@ YUI.add(
     "0.0.1",
     {
         requires: [
-            "model",
-            "ic-model-consumer"
+            "model"
         ]
     }
 );
