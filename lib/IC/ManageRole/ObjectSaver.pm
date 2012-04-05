@@ -11,7 +11,7 @@ sub save {
     my $params      = $args{context}->{controller}->parameters;
     my $modified_by = $args{context}->{controller}->user->id;
 
-    my $response_value = eval {
+    my ($response_value, $direct_response) = eval {
         #
         # TODO: include modified by and created by where necessary
         #
@@ -454,7 +454,7 @@ sub save {
             # allow_loops turned on because of an issue with as_tree not providing
             # related objects for each object even outside of loops
             #
-            return $object->as_tree( allow_loops => 1 );
+            return ($object->as_tree( allow_loops => 1 ), 1);
         }
         else {
             IC::Exception->throw("Unrecognized _properties_mode: $params->{_properties_mode}");
@@ -466,8 +466,13 @@ sub save {
         $struct->{exception} = "$@";
     }
     else {
-        $struct->{code}  = 1;
-        $struct->{value} = $response_value;
+        if ($direct_response) {
+            %$struct = %$response_value;
+        }
+        else {
+            $struct->{code}  = 1;
+            $struct->{value} = $response_value;
+        }
     }
 
     return;
