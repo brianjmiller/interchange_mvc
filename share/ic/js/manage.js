@@ -768,6 +768,10 @@ try {
                 return this;
             };
 
+            Y.MakeNode.prototype._templateHandlers["r"] = function (arg) {
+                return this.getRelated(arg);
+            };
+
             Y.on(
                 "domready",
                 function () {
