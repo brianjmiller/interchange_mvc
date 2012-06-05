@@ -536,6 +536,19 @@ try {
                             "autocomplete-sources"
                         ]
                     },
+                    "ic-manage-ml-base": {
+                        path: "manage/ml/base.js",
+                        requires: [
+                            "model-list"
+                        ]
+                    },
+                    "ic-manage-ml-filterable-by_status": {
+                        path: "manage/ml/filterable/by_status.js",
+                        requires: [
+                            "plugin"
+                        ]
+                    },
+
                     "ic-m-base": {
                         path: "m/base.js",
                         requires: [
